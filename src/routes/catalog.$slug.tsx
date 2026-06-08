@@ -1,0 +1,129 @@
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { PageShell } from "@/components/site/PageShell";
+import { categories, products } from "@/data/products";
+import { site, whatsappLink } from "@/lib/site";
+
+export const Route = createFileRoute("/catalog/$slug")({
+  loader: ({ params }) => {
+    const product = products.find((p) => p.slug === params.slug);
+    if (!product) throw notFound();
+    return { product };
+  },
+  head: ({ loaderData }) => {
+    const product = loaderData?.product;
+    if (!product) {
+      return { meta: [{ title: "Not found — Dainty Handd" }] };
+    }
+    return {
+      meta: [
+        { title: `${product.name} — Dainty Handd` },
+        { name: "description", content: product.blurb },
+        { property: "og:title", content: `${product.name} — Dainty Handd` },
+        { property: "og:description", content: product.blurb },
+        { property: "og:image", content: product.image },
+        { name: "twitter:image", content: product.image },
+      ],
+    };
+  },
+  component: ProductPage,
+  notFoundComponent: () => (
+    <PageShell>
+      <div className="max-w-3xl mx-auto px-6 py-32 text-center">
+        <h1 className="font-display text-5xl italic mb-4">Piece not found</h1>
+        <p className="text-sm text-muted mb-8">That one's no longer on display.</p>
+        <Link
+          to="/catalog"
+          className="text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5"
+        >
+          Back to catalog
+        </Link>
+      </div>
+    </PageShell>
+  ),
+  errorComponent: ({ reset }) => (
+    <PageShell>
+      <div className="max-w-3xl mx-auto px-6 py-32 text-center">
+        <h1 className="font-display text-3xl italic mb-4">Something went wrong</h1>
+        <button
+          onClick={() => reset()}
+          className="text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5"
+        >
+          Try again
+        </button>
+      </div>
+    </PageShell>
+  ),
+});
+
+function ProductPage() {
+  const { product } = Route.useLoaderData();
+  const category = categories.find((c) => c.id === product.category);
+
+  return (
+    <PageShell>
+      <section className="px-6 pt-12 pb-24">
+        <div className="max-w-7xl mx-auto">
+          <Link
+            to="/catalog"
+            className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted hover:text-primary inline-block mb-12"
+          >
+            ← Back to catalog
+          </Link>
+
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-16 items-start">
+            <div className="aspect-[4/5] overflow-hidden bg-surface">
+              <img
+                src={product.image}
+                alt={product.name}
+                width={1024}
+                height={1280}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="lg:sticky lg:top-24">
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                {category?.label}
+              </span>
+              <h1 className="font-display text-4xl md:text-6xl tracking-tighter mt-3 mb-6 leading-[0.95]">
+                {product.name}
+              </h1>
+              {product.priceFrom ? (
+                <p className="font-mono text-[11px] uppercase tracking-widest text-primary mb-8">
+                  From {product.priceFrom}
+                </p>
+              ) : null}
+              <p className="text-sm text-muted leading-relaxed mb-10 text-pretty">
+                {product.description}
+              </p>
+
+              <ul className="space-y-3 mb-12 border-t border-border pt-6">
+                {product.details.map((d) => (
+                  <li key={d} className="flex gap-3 text-sm">
+                    <span className="font-mono text-[10px] text-muted pt-1">·</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={whatsappLink(
+                  `Hi ${site.founder}, I'd like to request the "${product.name}". Could we discuss customisation?`,
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
+              >
+                Request this on WhatsApp
+                <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
+              </a>
+              <p className="text-[11px] text-muted mt-4">
+                Every piece is customisable — colours, contents and dressings.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </PageShell>
+  );
+}
