@@ -80,11 +80,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Dainty Handd — Custom hampers, bouquets & invitations in Kerala" },
       { name: "description", content: "Hand-wrapped hampers, artisanal bouquets, and bespoke invitations by Nafisa in Perinthalmanna, Kerala." },
       { name: "author", content: "Dainty Handd" },
-      { property: "og:title", content: "Dainty Handd — Custom celebrations" },
+      { property: "og:title", content: "Dainty Handd — Custom hampers, bouquets & invitations in Kerala" },
       { property: "og:description", content: "Hand-wrapped hampers, artisanal bouquets, and bespoke invitations by Nafisa in Perinthalmanna, Kerala." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@dainty.handd" },
+      { name: "twitter:title", content: "Dainty Handd — Custom hampers, bouquets & invitations in Kerala" },
+      { name: "twitter:description", content: "Hand-wrapped hampers, artisanal bouquets, and bespoke invitations by Nafisa in Perinthalmanna, Kerala." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/834d92aa-d9fe-45c9-a222-83a011a781ad/id-preview-6402b5c5--aeccbcc9-8353-4330-ad68-780f08039adb.lovable.app-1780921668749.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/834d92aa-d9fe-45c9-a222-83a011a781ad/id-preview-6402b5c5--aeccbcc9-8353-4330-ad68-780f08039adb.lovable.app-1780921668749.png" },
     ],
     links: [
       {
