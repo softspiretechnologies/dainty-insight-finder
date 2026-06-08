@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as CustomRouteImport } from './routes/custom'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as CatalogSlugRouteImport } from './routes/catalog.$slug'
 const CustomRoute = CustomRouteImport.update({
   id: '/custom',
   path: '/custom',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogRoute = CatalogRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/catalog': typeof CatalogRouteWithChildren
+  '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/catalog/': typeof CatalogIndexRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/catalog': typeof CatalogIndexRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/catalog': typeof CatalogRouteWithChildren
+  '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/catalog/': typeof CatalogIndexRoute
@@ -77,16 +86,18 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/catalog'
+    | '/contact'
     | '/custom'
     | '/catalog/$slug'
     | '/catalog/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/custom' | '/catalog/$slug' | '/catalog'
+  to: '/' | '/about' | '/contact' | '/custom' | '/catalog/$slug' | '/catalog'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/catalog'
+    | '/contact'
     | '/custom'
     | '/catalog/$slug'
     | '/catalog/'
@@ -96,6 +107,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CatalogRoute: typeof CatalogRouteWithChildren
+  ContactRoute: typeof ContactRoute
   CustomRoute: typeof CustomRoute
 }
 
@@ -106,6 +118,13 @@ declare module '@tanstack/react-router' {
       path: '/custom'
       fullPath: '/custom'
       preLoaderRoute: typeof CustomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalog': {
@@ -163,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CatalogRoute: CatalogRouteWithChildren,
+  ContactRoute: ContactRoute,
   CustomRoute: CustomRoute,
 }
 export const routeTree = rootRouteImport
