@@ -98,7 +98,7 @@ function ProductPage() {
               </p>
 
               <ul className="space-y-3 mb-12 border-t border-border pt-6">
-                {product.details.map((d) => (
+                {(product.details as string[]).map((d: string) => (
                   <li key={d} className="flex gap-3 text-sm">
                     <span className="font-mono text-[10px] text-muted pt-1">·</span>
                     <span>{d}</span>
