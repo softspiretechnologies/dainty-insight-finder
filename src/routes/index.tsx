@@ -69,7 +69,6 @@ function Index() {
             <Link
               key={cat.id}
               to="/catalog"
-              search={{ category: cat.id }}
               className="bg-background p-10 group hover:bg-surface transition-colors"
             >
               <span className="font-mono text-[9px] text-muted mb-8 block">
