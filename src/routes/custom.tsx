@@ -1,16 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
-import { categories } from "@/data/products";
 import { site, whatsappLink } from "@/lib/site";
+
+const serviceOptions = [
+  "Hamper",
+  "Bouquet",
+  "Invitation",
+  "Engagement Gift",
+  "Acrylic / Frame Gift",
+  "Album",
+  "Calligraphy",
+  "Save The Date Shoot",
+  "Birthday Surprise",
+  "Event Styling",
+  "Memory Video",
+  "Other",
+];
 
 export const Route = createFileRoute("/custom")({
   head: () => ({
     meta: [
-      { title: "Custom Order — Dainty Handd" },
-      { name: "description", content: "Start a custom hamper, bouquet, invitation or engagement gift with Nafisa on WhatsApp." },
-      { property: "og:title", content: "Custom Order — Dainty Handd" },
-      { property: "og:description", content: "Start a custom hamper, bouquet, invitation or engagement gift with Nafisa on WhatsApp." },
+      { title: "Custom Order — DaintyHand | Tell us what you have in mind" },
+      { name: "description", content: "Start a custom hamper, bouquet, invitation, engagement gift, save-the-date shoot or birthday surprise with Nafisa on WhatsApp." },
+      { property: "og:title", content: "Custom Order — DaintyHand" },
+      { property: "og:description", content: "Tell us what you have in mind — we'll continue the conversation on WhatsApp." },
     ],
   }),
   component: CustomPage,
@@ -18,9 +32,13 @@ export const Route = createFileRoute("/custom")({
 
 function CustomPage() {
   const [name, setName] = useState("");
-  const [type, setType] = useState<string>("hampers");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [eventType, setEventType] = useState("");
+  const [service, setService] = useState<string>("Hamper");
   const [date, setDate] = useState("");
   const [budget, setBudget] = useState("");
+  const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
 
   function buildMessage() {
@@ -28,10 +46,14 @@ function CustomPage() {
       `Hi ${site.founder}, I'd like to start a custom order.`,
       "",
       `Name: ${name || "—"}`,
-      `Type: ${categories.find((c) => c.id === type)?.label ?? type}`,
+      `Phone / WhatsApp: ${phone || "—"}`,
+      `Email: ${email || "—"}`,
+      `Service: ${service}`,
+      `Event type: ${eventType || "—"}`,
       `Event date: ${date || "—"}`,
+      `Delivery location: ${location || "—"}`,
       `Budget: ${budget || "—"}`,
-      `Notes: ${notes || "—"}`,
+      `Description: ${notes || "—"}`,
     ];
     return lines.join("\n");
   }
@@ -61,29 +83,58 @@ function CustomPage() {
           onSubmit={onSubmit}
           className="max-w-2xl mx-auto bg-surface/60 border border-border rounded-sm p-8 md:p-12 space-y-8"
         >
-          <Field label="Your name">
+          <Field label="Full name">
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
-              placeholder="Nafisa"
+              placeholder="Your name"
             />
           </Field>
 
-          <Field label="What kind of piece?">
+          <div className="grid sm:grid-cols-2 gap-8">
+            <Field label="Phone / WhatsApp">
+              <input
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+                placeholder="+91 ..."
+              />
+            </Field>
+            <Field label="Email (optional)">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+                placeholder="you@email.com"
+              />
+            </Field>
+          </div>
+
+          <Field label="Service required">
             <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
+              value={service}
+              onChange={(e) => setService(e.target.value)}
               className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
             >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
+              {serviceOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
                 </option>
               ))}
-              <option value="other">Something else</option>
             </select>
+          </Field>
+
+          <Field label="Event type (wedding, birthday, engagement…)">
+            <input
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value)}
+              className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+              placeholder="Engagement"
+            />
           </Field>
 
           <div className="grid sm:grid-cols-2 gap-8">
@@ -96,7 +147,7 @@ function CustomPage() {
               />
             </Field>
 
-            <Field label="Budget (optional)">
+            <Field label="Budget range (optional)">
               <input
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
@@ -106,7 +157,16 @@ function CustomPage() {
             </Field>
           </div>
 
-          <Field label="The brief">
+          <Field label="Delivery location">
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+              placeholder="City / area"
+            />
+          </Field>
+
+          <Field label="Description / the brief">
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -115,6 +175,10 @@ function CustomPage() {
               placeholder="Colours, theme, names, recipient, anything else…"
             />
           </Field>
+
+          <p className="text-[11px] text-muted">
+            Have reference images? Share them on WhatsApp once you continue — it's the easiest way to send pictures.
+          </p>
 
           <div className="pt-4">
             <button
