@@ -50,36 +50,35 @@ function CatalogPage() {
       <section className="px-6 py-16">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
           {visible.map((p) => (
-            <Link
-              key={p.slug}
-              to="/catalog/$slug"
-              params={{ slug: p.slug }}
-              className="group block"
-            >
-              <div className="aspect-[4/5] overflow-hidden bg-surface mb-5">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  width={512}
-                  height={640}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </div>
+            <article key={p.slug} className="group flex flex-col">
+              <Link to="/catalog/$slug" params={{ slug: p.slug }} className="block">
+                <div className="aspect-[4/5] overflow-hidden bg-surface mb-5">
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    width={512}
+                    height={640}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </div>
+              </Link>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted block mb-2">
                     {categories.find((c) => c.id === p.category)?.label}
                   </span>
-                  <h3 className="font-display text-xl italic">{p.name}</h3>
+                  <Link to="/catalog/$slug" params={{ slug: p.slug }}>
+                    <h3 className="font-display text-xl italic hover:text-primary transition-colors">{p.name}</h3>
+                  </Link>
                   <p className="text-xs text-muted leading-relaxed mt-2 max-w-xs">{p.blurb}</p>
                   <span className="inline-block mt-3 font-mono text-[9px] uppercase tracking-[0.2em] text-primary border border-primary/40 rounded-full px-2 py-0.5">
                     Fully customisable
                   </span>
                 </div>
                 {p.priceFrom ? (
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted shrink-0 pt-1 text-right">
-                    Starting<br/>from {p.priceFrom}
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted shrink-0 pt-1 text-right leading-snug">
+                    Starting<br />from {p.priceFrom}
                   </span>
                 ) : null}
               </div>
@@ -87,12 +86,11 @@ function CatalogPage() {
                 href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about "${p.name}".`)}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="mt-4 inline-block text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
+                className="mt-4 self-start text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
               >
                 Enquire on WhatsApp →
               </a>
-            </Link>
+            </article>
           ))}
         </div>
 
