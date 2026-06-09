@@ -5,9 +5,9 @@ import { site, whatsappLink } from "@/lib/site";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Dainty Handd" },
+      { title: "Contact DaintyHand — WhatsApp, Instagram & Studio, Kerala" },
       { name: "description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
-      { property: "og:title", content: "Contact — Dainty Handd" },
+      { property: "og:title", content: "Contact — DaintyHand" },
       { property: "og:description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
     ],
   }),
@@ -53,7 +53,17 @@ function ContactPage() {
 
           <div className="mt-16 border-t border-border pt-8">
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted block mb-2">Hours</span>
-            <p className="text-sm">Mon–Sat · 10:00 – 19:00 IST · By appointment on Sundays</p>
+            <p className="text-sm">{site.hours} · By appointment on Sundays</p>
+          </div>
+
+          <div className="mt-12 border border-border rounded-sm overflow-hidden aspect-[16/9]">
+            <iframe
+              title="DaintyHand studio location — Perinthalmanna"
+              src="https://www.google.com/maps?q=Perinthalmanna,+Malappuram,+Kerala&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="w-full h-full border-0"
+            />
           </div>
         </div>
       </section>

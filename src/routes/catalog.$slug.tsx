@@ -12,13 +12,13 @@ export const Route = createFileRoute("/catalog/$slug")({
   head: ({ loaderData }) => {
     const product = loaderData?.product;
     if (!product) {
-      return { meta: [{ title: "Not found — Dainty Handd" }] };
+      return { meta: [{ title: "Not found — DaintyHand" }] };
     }
     return {
       meta: [
-        { title: `${product.name} — Dainty Handd` },
+        { title: `${product.name} — DaintyHand` },
         { name: "description", content: product.blurb },
-        { property: "og:title", content: `${product.name} — Dainty Handd` },
+        { property: "og:title", content: `${product.name} — DaintyHand` },
         { property: "og:description", content: product.blurb },
         { property: "og:image", content: product.image },
         { name: "twitter:image", content: product.image },
@@ -90,7 +90,7 @@ function ProductPage() {
               </h1>
               {product.priceFrom ? (
                 <p className="font-mono text-[11px] uppercase tracking-widest text-primary mb-8">
-                  From {product.priceFrom}
+                  Starting from {product.priceFrom}
                 </p>
               ) : null}
               <p className="text-sm text-muted leading-relaxed mb-10 text-pretty">
@@ -106,6 +106,20 @@ function ProductPage() {
                 ))}
               </ul>
 
+              <div className="mb-10 border border-border rounded-sm p-6 bg-surface/50">
+                <p className="font-display italic text-base mb-3">
+                  Every creation is made to order and fully customisable.
+                </p>
+                <p className="text-xs text-muted mb-4">Customise across:</p>
+                <div className="flex flex-wrap gap-2">
+                  {["Names", "Colours", "Themes", "Flowers", "Packaging", "Messages", "Event Type"].map((o) => (
+                    <span key={o} className="font-mono text-[10px] uppercase tracking-[0.15em] border border-border rounded-full px-3 py-1">
+                      {o}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
               <a
                 href={whatsappLink(
                   `Hi ${site.founder}, I'd like to request the "${product.name}". Could we discuss customisation?`,
@@ -114,11 +128,11 @@ function ProductPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
               >
-                Request this on WhatsApp
+                Discuss this design on WhatsApp
                 <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
               </a>
               <p className="text-[11px] text-muted mt-4">
-                Every piece is customisable — colours, contents and dressings.
+                We'll talk through your idea, share visuals and confirm pricing before anything is made.
               </p>
             </div>
           </div>

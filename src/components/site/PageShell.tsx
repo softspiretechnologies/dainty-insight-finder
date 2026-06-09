@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
+import { FloatingWhatsApp } from "./FloatingWhatsApp";
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export function PageShell({ children }: { children: ReactNode }) {
       <SiteHeader />
       <main>{children}</main>
       <SiteFooter />
+      <FloatingWhatsApp />
     </div>
   );
 }

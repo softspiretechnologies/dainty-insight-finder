@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { site, whatsappLink } from "@/lib/site";
 
 const navItems = [
-  { to: "/catalog", label: "Catalog" },
+  { to: "/catalog", label: "Past Creations" },
+  { to: "/services", label: "Services" },
   { to: "/custom", label: "Custom Order" },
   { to: "/about", label: "Our Story" },
   { to: "/contact", label: "Contact" },
