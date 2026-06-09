@@ -12,13 +12,13 @@ export const Route = createFileRoute("/catalog/$slug")({
   head: ({ loaderData }) => {
     const product = loaderData?.product;
     if (!product) {
-      return { meta: [{ title: "Not found — Dainty Handd" }] };
+      return { meta: [{ title: "Not found — DaintyHand" }] };
     }
     return {
       meta: [
-        { title: `${product.name} — Dainty Handd` },
+        { title: `${product.name} — DaintyHand` },
         { name: "description", content: product.blurb },
-        { property: "og:title", content: `${product.name} — Dainty Handd` },
+        { property: "og:title", content: `${product.name} — DaintyHand` },
         { property: "og:description", content: product.blurb },
         { property: "og:image", content: product.image },
         { name: "twitter:image", content: product.image },
