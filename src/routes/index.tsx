@@ -308,6 +308,51 @@ function Index() {
               </figure>
             ))}
           </div>
+          <div className="text-center mt-12">
+            <a
+              href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
+            >
+              Become our next happy story →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Kerala specialties SEO strip */}
+      <section className="py-20 px-6 bg-surface/60 border-y border-border">
+        <div className="max-w-6xl mx-auto text-center">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Serving All Kerala</span>
+          <h2 className="font-display text-3xl md:text-5xl tracking-tighter mt-4 mb-10 italic text-balance">
+            From Perinthalmanna, <span className="text-primary">for all of Kerala.</span>
+          </h2>
+          <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto mb-10">
+            {[
+              "Wedding Gifts Kerala",
+              "Nikah Invitations Kerala",
+              "Save The Date Shoots Kerala",
+              "Custom Hampers Kerala",
+              "Proposal Setups Kerala",
+              "Birthday Surprises Kerala",
+              "Engagement Gifts Malappuram",
+              "Couple Shoots Kozhikode",
+              "Memory Reels Kochi",
+            ].map((k) => (
+              <span key={k} className="font-mono text-[10px] uppercase tracking-[0.15em] px-4 py-2 border border-border rounded-full bg-background text-muted">
+                {k}
+              </span>
+            ))}
+          </div>
+          <a
+            href={whatsappLink(`Hi ${site.founder}, I'm enquiring from Kerala about your services.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all"
+          >
+            Enquire on WhatsApp
+          </a>
         </div>
       </section>
 
