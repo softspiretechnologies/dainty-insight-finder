@@ -4,20 +4,34 @@ import { categories, galleryImages } from "@/data/products";
 import { site, whatsappLink } from "@/lib/site";
 import hampersImg from "@/assets/service-hampers.jpg";
 import portraitImg from "@/assets/portrait-nafisa.jpg";
+import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
+import momentBirthday from "@/assets/moment-birthday.jpg";
+import momentProposal from "@/assets/moment-proposal.jpg";
+import momentCouple from "@/assets/moment-couple.jpg";
+import momentReel from "@/assets/moment-reel.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DaintyHand — Premium handcrafted gifts & wedding studio, Kerala" },
-      { name: "description", content: "Custom hampers, bouquets, invitations, engagement gifts and celebration services handcrafted by Nafisa in Perinthalmanna, Kerala." },
-      { property: "og:title", content: "DaintyHand — Handcrafted gifts & celebration studio" },
-      { property: "og:description", content: "Custom hampers, bouquets, invitations, engagement gifts and celebration services handcrafted in Kerala." },
+      { title: "DaintyHand Kerala — Wedding Gifts, Nikah Invitations & Save The Date Shoots" },
+      { name: "description", content: "Custom hampers Kerala, nikah & wedding invitations Kerala, save the date shoots, proposal setups, birthday surprises and memory reels — handcrafted by Nafisa in Perinthalmanna, Malappuram." },
+      { name: "keywords", content: "Wedding Gifts Kerala, Nikah Invitations Kerala, Save The Date Shoots Kerala, Custom Hampers Kerala, Proposal Setup Kerala, Birthday Surprise Kerala, Wedding Invitations Malappuram, Perinthalmanna gifting studio" },
+      { property: "og:title", content: "DaintyHand Kerala — Handcrafted gifts, invitations & celebration moments" },
+      { property: "og:description", content: "Wedding gifts, nikah invitations, save the date shoots and surprise setups handcrafted across Kerala." },
       { property: "og:image", content: hampersImg },
       { name: "twitter:image", content: hampersImg },
     ],
   }),
   component: Index,
 });
+
+const moments = [
+  { title: "Save The Date Shoots", image: momentSaveTheDate, blurb: "Styled couple shoots edited as your save-the-date film & cards." },
+  { title: "Birthday Surprise Setups", image: momentBirthday, blurb: "Decor, florals and signage set up while they're away." },
+  { title: "Proposal Moments", image: momentProposal, blurb: "Intimate styled setups for the moment you ask." },
+  { title: "Couple Content", image: momentCouple, blurb: "Editorial portraits and pre-wedding content shoots." },
+  { title: "Memory Reels", image: momentReel, blurb: "Cinematic 30–60s reels from your photos & clips." },
+];
 
 function Index() {
   return (
@@ -64,9 +78,17 @@ function Index() {
         <h2 className="font-display text-4xl md:text-6xl tracking-tighter mt-4 mb-8 text-balance">
           More than gifts. <span className="italic text-primary">We create memories.</span>
         </h2>
-        <p className="text-sm md:text-base text-muted leading-relaxed text-pretty max-w-2xl mx-auto">
-          From handcrafted hampers and bouquets to save-the-date shoots and surprise celebrations, DaintyHand helps turn meaningful moments into unforgettable memories.
+        <p className="text-sm md:text-base text-muted leading-relaxed text-pretty max-w-2xl mx-auto mb-8">
+          From <em className="italic">wedding gifts Kerala</em>, <em className="italic">nikah invitations</em> and <em className="italic">custom hampers</em> to <em className="italic">save the date shoots</em> and surprise celebrations — DaintyHand turns meaningful moments into unforgettable memories across Kerala.
         </p>
+        <a
+          href={whatsappLink(`Hi ${site.founder}, I'd love to know more about ${site.name}.`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
+        >
+          Start a conversation on WhatsApp →
+        </a>
       </section>
 
       {/* Categories grid (8) */}
@@ -95,6 +117,106 @@ function Index() {
               <p className="text-xs text-muted leading-relaxed">{cat.blurb}</p>
             </Link>
           ))}
+        </div>
+        <div className="text-center mt-10">
+          <a
+            href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-4 bg-foreground text-background px-7 py-3.5 rounded-full text-[11px] font-semibold uppercase tracking-widest hover:bg-primary transition-all"
+          >
+            Enquire on WhatsApp
+          </a>
+        </div>
+      </section>
+
+      {/* Moments We Captured */}
+      <section className="py-24 px-6 bg-surface/60 border-y border-border">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Beyond Gifting</span>
+            <h2 className="font-display text-4xl md:text-6xl tracking-tighter mt-4 italic text-balance">Moments We Captured.</h2>
+            <p className="text-sm text-muted mt-6 max-w-xl mx-auto">From the first yes to the surprise reveal — celebration services planned, styled and filmed across Kerala.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-5">
+            {moments.map((m, i) => (
+              <figure key={m.title} className={`group relative overflow-hidden ${i === 0 ? "col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto" : "aspect-[3/4]"}`}>
+                <img src={m.image} alt={m.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <figcaption className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/10 to-transparent flex flex-col justify-end p-5">
+                  <h3 className="font-display italic text-background text-lg md:text-2xl leading-tight">{m.title}</h3>
+                  <p className="text-background/80 text-[11px] mt-1.5 hidden md:block">{m.blurb}</p>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link to="/services" className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary">
+              Explore celebration services →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">How It Works</span>
+            <h2 className="font-display text-4xl md:text-5xl tracking-tighter mt-4 italic">A simple, considered process.</h2>
+          </div>
+          <div className="grid md:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
+            {[
+              { t: "Share Your Idea", d: "Message us on WhatsApp with the occasion, vibe and budget." },
+              { t: "We Design", d: "We send mood, materials and a custom quote — usually within 24 hours." },
+              { t: "Approve & Confirm", d: "Approve the design, confirm with advance and we begin handcrafting." },
+              { t: "Delivery", d: "Hand-delivered in Perinthalmanna or shipped across Kerala on date." },
+            ].map((s, i) => (
+              <div key={s.t} className="bg-background p-8">
+                <span className="font-mono text-[10px] text-primary block mb-4">Step 0{i + 1}</span>
+                <h3 className="font-display italic text-2xl mb-3">{s.t}</h3>
+                <p className="text-xs text-muted leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <a
+              href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all"
+            >
+              Start your order on WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Credibility */}
+      <section className="py-24 px-6 bg-foreground text-background">
+        <div className="max-w-6xl mx-auto text-center">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/60">Trusted Across Kerala</span>
+          <h2 className="font-display text-4xl md:text-5xl tracking-tighter mt-4 mb-14 italic">Numbers that speak quietly.</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-background/10">
+            {[
+              { n: "1,100+", l: "Instagram Posts" },
+              { n: "3,000+", l: "Followers" },
+              { n: "Hundreds", l: "Custom Creations" },
+              { n: "All Kerala", l: "Customers Served" },
+            ].map((s) => (
+              <div key={s.l} className="bg-foreground p-8 md:p-10">
+                <div className="font-display text-4xl md:text-6xl text-primary italic">{s.n}</div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-background/60 mt-3">{s.l}</div>
+              </div>
+            ))}
+          </div>
+          <a
+            href={site.instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-12 text-[10px] uppercase tracking-[0.2em] border-b border-background/30 pb-1 hover:border-background"
+          >
+            Follow {site.instagramHandle} on Instagram
+          </a>
         </div>
       </section>
 
