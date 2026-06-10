@@ -2,17 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { site, whatsappLink } from "@/lib/site";
 import shootImg from "@/assets/service-invitations.jpg";
-import birthdayImg from "@/assets/service-engagement.jpg";
-import stylingImg from "@/assets/gallery-5.jpg";
-import videoImg from "@/assets/gallery-3.jpg";
+import proposalImg from "@/assets/moment-proposal.jpg";
+import coupleImg from "@/assets/moment-couple.jpg";
+import savedateImg from "@/assets/moment-savethedate.jpg";
+import reelImg from "@/assets/moment-reel.jpg";
+import birthdaySetupImg from "@/assets/moment-birthday.jpg";
 
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Celebration Services — DaintyHand | Shoots, surprises & event styling Kerala" },
-      { name: "description", content: "Save the date shoots, birthday surprise planning, proposal setups, event styling and memory videos — handcrafted by DaintyHand in Kerala." },
-      { property: "og:title", content: "Celebration Services — DaintyHand" },
-      { property: "og:description", content: "Save the date shoots, birthday surprises, event styling and memory videos in Kerala." },
+      { title: "Celebration Services Kerala — Save The Date, Proposals, Birthday Surprises | DaintyHand" },
+      { name: "description", content: "Save the date shoots Kerala, proposal setups, birthday surprise planning, couple shoots and memory reels — planned and styled by DaintyHand across Kerala." },
+      { name: "keywords", content: "Save The Date Shoots Kerala, Proposal Setup Kerala, Birthday Surprise Kerala, Couple Shoot Kerala, Memory Reels Kerala, Wedding Studio Malappuram, Perinthalmanna celebrations" },
+      { property: "og:title", content: "Celebration Services Kerala — DaintyHand" },
+      { property: "og:description", content: "Save the date shoots, proposals, surprises, couple shoots and memory reels across Kerala." },
       { property: "og:image", content: shootImg },
     ],
   }),
@@ -22,28 +25,35 @@ export const Route = createFileRoute("/services")({
 const services = [
   {
     title: "Save The Date Shoots",
-    image: shootImg,
+    image: savedateImg,
     blurb:
-      "A 1–2 hour styled couple shoot, edited as a save-the-date film with matching cards. Locations in and around Perinthalmanna.",
+      "A 1–2 hour styled couple shoot, edited as a save-the-date film with matching cards. Locations across Kerala — Perinthalmanna, Kozhikode, Kochi and beyond.",
     bullets: ["Styled couple shoot", "Edited reel + stills", "Save-the-date card design", "Packages from ₹12,000"],
   },
   {
     title: "Birthday Surprise Planning",
-    image: birthdayImg,
+    image: birthdaySetupImg,
     blurb:
       "Decor concept, balloons, florals, signage and styled cake table — set up at home or venue while the guest of honour is away.",
     bullets: ["Decor + florals + signage", "Cake table styling", "Optional hamper add-on", "Packages from ₹4,500"],
   },
   {
-    title: "Event Styling",
-    image: stylingImg,
+    title: "Proposal Setups",
+    image: proposalImg,
     blurb:
-      "Engagement styling, proposal styling, table styling and gift styling — coordinated end-to-end for a quiet, considered look.",
-    bullets: ["Engagement / proposal setups", "Table & gift styling", "Florals + signage", "On-site setup"],
+      "A private styled setup — florals, candles, signage, ring tray and an optional reel — for proposals at home, terrace or venue.",
+    bullets: ["Styled florals & candles", "Custom signage", "Ring tray & hamper option", "Reel video add-on"],
   },
   {
-    title: "Memory Videos",
-    image: videoImg,
+    title: "Couple Shoots",
+    image: coupleImg,
+    blurb:
+      "Editorial pre-wedding and anniversary couple shoots — softly styled, candid, and edited in our warm signature tone.",
+    bullets: ["Styled outdoor / indoor shoot", "Wardrobe & prop guidance", "25+ edited portraits", "Reel highlight add-on"],
+  },
+  {
+    title: "Reels & Memory Videos",
+    image: reelImg,
     blurb:
       "Short reels and edited videos from your photos and clips — for birthdays, anniversaries, engagement surprises and couple stories.",
     bullets: ["30–60s cinematic reels", "Birthday & anniversary edits", "Engagement & couple videos", "From ₹1,500"],
