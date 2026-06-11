@@ -66,10 +66,10 @@ function CustomPage() {
 
   return (
     <PageShell>
-      <section className="px-6 pt-20 pb-12">
+      <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">
         <div className="max-w-3xl mx-auto text-center">
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Custom Order</span>
-          <h1 className="font-display text-5xl md:text-7xl tracking-tighter mt-4 mb-6 text-balance">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl tracking-tighter mt-4 mb-5 md:mb-6 text-balance">
             Tell us what you have <span className="italic text-primary">in mind.</span>
           </h1>
           <p className="text-sm text-muted leading-relaxed text-pretty max-w-lg mx-auto">
@@ -78,10 +78,10 @@ function CustomPage() {
         </div>
       </section>
 
-      <section className="px-6 pb-32">
+      <section className="px-5 md:px-6 pb-16 md:pb-32">
         <form
           onSubmit={onSubmit}
-          className="max-w-2xl mx-auto bg-surface/60 border border-border rounded-sm p-8 md:p-12 space-y-8"
+          className="max-w-2xl mx-auto bg-surface/60 border border-border rounded-sm p-5 sm:p-8 md:p-12 space-y-6 md:space-y-8"
         >
           <Field label="Full name">
             <input
@@ -93,7 +93,7 @@ function CustomPage() {
             />
           </Field>
 
-          <div className="grid sm:grid-cols-2 gap-8">
+          <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
             <Field label="Phone / WhatsApp">
               <input
                 required
@@ -137,7 +137,7 @@ function CustomPage() {
             />
           </Field>
 
-          <div className="grid sm:grid-cols-2 gap-8">
+          <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
             <Field label="Event date">
               <input
                 type="date"
@@ -183,7 +183,7 @@ function CustomPage() {
           <div className="pt-4">
             <button
               type="submit"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
+              className="w-full inline-flex items-center justify-center gap-4 bg-foreground text-background px-6 sm:px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
             >
               Continue on WhatsApp
               <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
