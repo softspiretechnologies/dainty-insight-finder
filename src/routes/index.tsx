@@ -322,13 +322,13 @@ function Index() {
       </section>
 
       {/* Kerala specialties SEO strip */}
-      <section className="py-20 px-6 bg-surface/60 border-y border-border">
+      <section className="py-14 md:py-20 px-5 md:px-6 bg-surface/60 border-y border-border">
         <div className="max-w-6xl mx-auto text-center">
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Serving All Kerala</span>
-          <h2 className="font-display text-3xl md:text-5xl tracking-tighter mt-4 mb-10 italic text-balance">
+          <h2 className="font-display text-2xl sm:text-3xl md:text-5xl tracking-tighter mt-4 mb-8 md:mb-10 italic text-balance">
             From Perinthalmanna, <span className="text-primary">for all of Kerala.</span>
           </h2>
-          <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto mb-10">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3 max-w-4xl mx-auto mb-8 md:mb-10">
             {[
               "Wedding Gifts Kerala",
               "Nikah Invitations Kerala",
@@ -340,7 +340,7 @@ function Index() {
               "Couple Shoots Kozhikode",
               "Memory Reels Kochi",
             ].map((k) => (
-              <span key={k} className="font-mono text-[10px] uppercase tracking-[0.15em] px-4 py-2 border border-border rounded-full bg-background text-muted">
+              <span key={k} className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 md:px-4 md:py-2 border border-border rounded-full bg-background text-muted">
                 {k}
               </span>
             ))}
@@ -357,9 +357,9 @@ function Index() {
       </section>
 
       {/* About strip */}
-      <section className="py-32 px-6">
+      <section className="py-16 md:py-32 px-5 md:px-6">
         <div className="max-w-3xl mx-auto">
-          <div className="flex flex-col md:flex-row gap-16 items-center">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center text-center md:text-left">
             <div className="shrink-0">
               <img
                 src={portraitImg}
@@ -367,11 +367,11 @@ function Index() {
                 width={512}
                 height={512}
                 loading="lazy"
-                className="size-48 rounded-full object-cover grayscale"
+                className="size-36 md:size-48 rounded-full object-cover grayscale"
               />
             </div>
             <div>
-              <h4 className="font-display text-3xl mb-4 italic">From {site.founder}'s hands</h4>
+              <h4 className="font-display text-2xl md:text-3xl mb-4 italic">From {site.founder}'s hands</h4>
               <p className="text-sm text-muted leading-relaxed text-pretty">
                 Based in Perinthalmanna, I founded {site.name} on the belief that a gift is more than an object — it's a memory. From hampers and invitations to engagement setups and save-the-date shoots, every creation is assembled around your story.
               </p>
