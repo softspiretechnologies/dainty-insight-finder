@@ -17,18 +17,18 @@ export const Route = createFileRoute("/contact")({
 function ContactPage() {
   return (
     <PageShell>
-      <section className="px-6 pt-20 pb-32">
+      <section className="px-5 md:px-6 pt-12 md:pt-20 pb-16 md:pb-32">
         <div className="max-w-3xl mx-auto">
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Contact</span>
-          <h1 className="font-display text-5xl md:text-7xl tracking-tighter mt-4 mb-12 leading-[0.95] text-balance">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl tracking-tighter mt-4 mb-8 md:mb-12 leading-[0.95] text-balance">
             Say <span className="italic text-primary">hello.</span>
           </h1>
 
-          <p className="text-sm text-muted max-w-lg leading-relaxed mb-16 text-pretty">
+          <p className="text-sm text-muted max-w-lg leading-relaxed mb-10 md:mb-16 text-pretty">
             We answer fastest on WhatsApp. For larger event briefs, email is fine too — we typically reply within a day.
           </p>
 
-          <div className="grid sm:grid-cols-2 gap-px bg-border border border-border rounded-sm overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border rounded-sm overflow-hidden">
             <ContactCard
               kind="WhatsApp"
               value="Chat with Nafisa"
@@ -51,12 +51,12 @@ function ContactPage() {
             />
           </div>
 
-          <div className="mt-16 border-t border-border pt-8">
+          <div className="mt-12 md:mt-16 border-t border-border pt-8">
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted block mb-2">Hours</span>
             <p className="text-sm">{site.hours} · By appointment on Sundays</p>
           </div>
 
-          <div className="mt-12 border border-border rounded-sm overflow-hidden aspect-[16/9]">
+          <div className="mt-10 md:mt-12 border border-border rounded-sm overflow-hidden aspect-[4/3] sm:aspect-[16/9]">
             <iframe
               title="DaintyHand studio location — Perinthalmanna"
               src="https://www.google.com/maps?q=Perinthalmanna,+Malappuram,+Kerala&output=embed"
@@ -83,10 +83,10 @@ function ContactCard({
   primary?: boolean;
 }) {
   const inner = (
-    <div className="bg-background p-8 h-full flex flex-col justify-between min-h-[140px] group">
+    <div className="bg-background p-6 sm:p-8 h-full flex flex-col justify-between min-h-[120px] sm:min-h-[140px] group">
       <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">{kind}</span>
       <span
-        className={`font-display text-2xl italic mt-6 ${
+        className={`font-display text-xl sm:text-2xl italic mt-4 sm:mt-6 break-words ${
           primary ? "text-primary" : ""
         } group-hover:text-primary transition-colors`}
       >
