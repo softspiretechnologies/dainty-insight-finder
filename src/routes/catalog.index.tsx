@@ -24,10 +24,10 @@ function CatalogPage() {
 
   return (
     <PageShell>
-      <section className="px-6 pt-20 pb-12">
+      <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">
         <div className="max-w-7xl mx-auto">
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Past Creations</span>
-          <h1 className="font-display text-5xl md:text-7xl tracking-tighter mt-4 mb-6 text-balance">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl tracking-tighter mt-4 mb-5 md:mb-6 text-balance">
             A look at <span className="italic font-normal text-primary">past creations.</span>
           </h1>
           <p className="max-w-xl text-sm text-muted leading-relaxed text-pretty">
@@ -36,8 +36,8 @@ function CatalogPage() {
         </div>
       </section>
 
-      <section className="px-6 border-y border-border">
-        <div className="max-w-7xl mx-auto flex flex-wrap gap-2 py-6">
+      <section className="px-5 md:px-6 border-y border-border">
+        <div className="max-w-7xl mx-auto flex gap-2 py-4 md:py-6 overflow-x-auto md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Chip active={filter === "all"} onClick={() => setFilter("all")}>All</Chip>
           {categories.map((c) => (
             <Chip key={c.id} active={filter === c.id} onClick={() => setFilter(c.id)}>
@@ -47,12 +47,12 @@ function CatalogPage() {
         </div>
       </section>
 
-      <section className="px-6 py-16">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+      <section className="px-5 md:px-6 py-10 md:py-16">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-8 gap-y-10 md:gap-y-16">
           {visible.map((p) => (
             <article key={p.slug} className="group flex flex-col">
               <Link to="/catalog/$slug" params={{ slug: p.slug }} className="block">
-                <div className="aspect-[4/5] overflow-hidden bg-surface mb-5">
+                <div className="aspect-[4/5] overflow-hidden bg-surface mb-3 md:mb-5">
                   <img
                     src={p.image}
                     alt={p.name}
@@ -63,21 +63,21 @@ function CatalogPage() {
                   />
                 </div>
               </Link>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted block mb-2">
+              <div className="flex items-start justify-between gap-2 sm:gap-4">
+                <div className="min-w-0">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted block mb-1.5 sm:mb-2">
                     {categories.find((c) => c.id === p.category)?.label}
                   </span>
                   <Link to="/catalog/$slug" params={{ slug: p.slug }}>
-                    <h3 className="font-display text-xl italic hover:text-primary transition-colors">{p.name}</h3>
+                    <h3 className="font-display text-base sm:text-xl italic leading-tight hover:text-primary transition-colors">{p.name}</h3>
                   </Link>
-                  <p className="text-xs text-muted leading-relaxed mt-2 max-w-xs">{p.blurb}</p>
+                  <p className="text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">{p.blurb}</p>
                   <span className="inline-block mt-3 font-mono text-[9px] uppercase tracking-[0.2em] text-primary border border-primary/40 rounded-full px-2 py-0.5">
                     Fully customisable
                   </span>
                 </div>
                 {p.priceFrom ? (
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted shrink-0 pt-1 text-right leading-snug">
+                  <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted shrink-0 pt-1 text-right leading-snug">
                     Starting<br />from {p.priceFrom}
                   </span>
                 ) : null}
@@ -86,7 +86,7 @@ function CatalogPage() {
                 href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about "${p.name}".`)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 self-start text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
+                className="mt-3 sm:mt-4 self-start text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
               >
                 Enquire on WhatsApp →
               </a>
@@ -99,9 +99,9 @@ function CatalogPage() {
         ) : null}
       </section>
 
-      <section className="px-6 pb-24">
-        <div className="max-w-3xl mx-auto text-center border-t border-border pt-16">
-          <h2 className="font-display text-3xl italic mb-4">Don't see what you want?</h2>
+      <section className="px-5 md:px-6 pb-16 md:pb-24">
+        <div className="max-w-3xl mx-auto text-center border-t border-border pt-12 md:pt-16">
+          <h2 className="font-display text-2xl md:text-3xl italic mb-4">Don't see what you want?</h2>
           <p className="text-sm text-muted mb-8 leading-relaxed">
             Almost everything is made-to-order. Tell {site.founder} what you have in mind.
           </p>

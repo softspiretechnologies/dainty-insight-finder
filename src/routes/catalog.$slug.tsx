@@ -61,16 +61,16 @@ function ProductPage() {
 
   return (
     <PageShell>
-      <section className="px-6 pt-12 pb-24">
+      <section className="px-5 md:px-6 pt-8 md:pt-12 pb-16 md:pb-24">
         <div className="max-w-7xl mx-auto">
           <Link
             to="/catalog"
-            className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted hover:text-primary inline-block mb-12"
+            className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted hover:text-primary inline-block mb-6 md:mb-12"
           >
             ← Back to catalog
           </Link>
 
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-16 items-start">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-16 items-start">
             <div className="aspect-[4/5] overflow-hidden bg-surface">
               <img
                 src={product.image}
@@ -85,19 +85,19 @@ function ProductPage() {
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
                 {category?.label}
               </span>
-              <h1 className="font-display text-4xl md:text-6xl tracking-tighter mt-3 mb-6 leading-[0.95]">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-3 mb-5 md:mb-6 leading-[0.95] text-balance">
                 {product.name}
               </h1>
               {product.priceFrom ? (
-                <p className="font-mono text-[11px] uppercase tracking-widest text-primary mb-8">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-primary mb-6 md:mb-8">
                   Starting from {product.priceFrom}
                 </p>
               ) : null}
-              <p className="text-sm text-muted leading-relaxed mb-10 text-pretty">
+              <p className="text-sm text-muted leading-relaxed mb-8 md:mb-10 text-pretty">
                 {product.description}
               </p>
 
-              <ul className="space-y-3 mb-12 border-t border-border pt-6">
+              <ul className="space-y-3 mb-8 md:mb-12 border-t border-border pt-5 md:pt-6">
                 {(product.details as string[]).map((d: string) => (
                   <li key={d} className="flex gap-3 text-sm">
                     <span className="font-mono text-[10px] text-muted pt-1">·</span>
@@ -106,7 +106,7 @@ function ProductPage() {
                 ))}
               </ul>
 
-              <div className="mb-10 border border-border rounded-sm p-6 bg-surface/50">
+              <div className="mb-8 md:mb-10 border border-border rounded-sm p-5 sm:p-6 bg-surface/50">
                 <p className="font-display italic text-base mb-3">
                   Every creation is made to order and fully customisable.
                 </p>
@@ -126,7 +126,7 @@ function ProductPage() {
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-4 bg-foreground text-background px-6 sm:px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
               >
                 Discuss this design on WhatsApp
                 <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
