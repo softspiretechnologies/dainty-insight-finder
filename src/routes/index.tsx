@@ -324,8 +324,8 @@ function Index() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {[
-              { q: "DaintyHand created the most beautiful engagement hamper exactly how we imagined.", n: "Aisha & Rayan", l: "Malappuram", s: "Engagement Hamper" },
-              { q: "Everything was customised perfectly and delivered on time.", n: "Fathima", l: "Kozhikode", s: "Wedding Invitations" },
+              { q: "DaintyHand created the most beautiful engagement hamper exactly how we imagined.", n: "Aisha & Rayan", l: "Dubai, UAE", s: "Engagement Hamper" },
+              { q: "Everything was customised perfectly and delivered on time.", n: "Fathima", l: "Bengaluru", s: "Wedding Invitations" },
               { q: "Our save-the-date shoot came out beautifully — every frame felt like us.", n: "Hana & Adil", l: "Kochi", s: "Save The Date Shoot" },
               { q: "The birthday surprise setup exceeded expectations. Everyone was speechless.", n: "Saleem", l: "Perinthalmanna", s: "Birthday Surprise" },
             ].map((t) => (
