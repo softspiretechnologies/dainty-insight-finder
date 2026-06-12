@@ -1,0 +1,14 @@
+# DaintyHand
+
+> Premium handcrafted gifting, wedding essentials and celebration studio based in Perinthalmanna, Malappuram, Kerala. Founded by Nafisa.
+
+DaintyHand creates custom hampers, bouquets, wedding & nikah invitations, engagement gifts, frames, calligraphy and runs celebration services like save-the-date shoots, proposal setups, birthday surprises and memory reels across Kerala.
+
+## Pages
+
+- [Home](/): Overview of DaintyHand's gifting and celebration services in Kerala.
+- [Past Creations](/catalog): Catalog of hampers, bouquets, invitations, frames and calligraphy work.
+- [Celebration Services](/services): Save-the-date shoots, proposal setups, birthday surprises, couple shoots and memory reels.
+- [About](/about): The story of founder Nafisa and the DaintyHand studio.
+- [Custom Order](/custom): Start a custom hamper, bouquet, invitation or celebration brief.
+- [Contact](/contact): WhatsApp, Instagram, email and studio location in Perinthalmanna.

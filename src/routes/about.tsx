@@ -13,6 +13,9 @@ export const Route = createFileRoute("/about")({
       { property: "og:image", content: portraitImg },
       { name: "twitter:image", content: portraitImg },
     ],
+    links: [
+      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/about" },
+    ],
   }),
   component: AboutPage,
 });

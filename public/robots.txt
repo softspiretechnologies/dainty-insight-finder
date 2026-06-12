@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dainty-insight-finder.lovable.app/sitemap.xml

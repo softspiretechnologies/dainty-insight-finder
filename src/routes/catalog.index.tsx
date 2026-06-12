@@ -7,10 +7,14 @@ import { site, whatsappLink } from "@/lib/site";
 export const Route = createFileRoute("/catalog/")({
   head: () => ({
     meta: [
-      { title: "Past Creations — DaintyHand | Custom hampers, bouquets & gifts Kerala" },
-      { name: "description", content: "Browse past creations: hampers, bouquets, invitations, engagement gifts, frames, calligraphy and celebration services — fully customisable, handcrafted in Kerala." },
+      { title: "Past Creations — DaintyHand | Custom Gifts & Hampers" },
+      { name: "description", content: "Browse past creations: hampers, bouquets, invitations, frames and calligraphy — fully customisable, handcrafted in Kerala." },
       { property: "og:title", content: "Past Creations — DaintyHand" },
       { property: "og:description", content: "Browse past creations — every piece is fully customisable to your occasion." },
+      { property: "og:url", content: "https://dainty-insight-finder.lovable.app/catalog" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/catalog" },
     ],
   }),
   component: CatalogPage,
