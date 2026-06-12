@@ -13,11 +13,11 @@ import momentReel from "@/assets/moment-reel.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DaintyHand — Handcrafted Gifts & Wedding Studio, Kerala" },
-      { name: "description", content: "Custom hampers, nikah invitations, save-the-date shoots, proposal setups & memory reels — handcrafted by Nafisa in Perinthalmanna, Kerala." },
-      { name: "keywords", content: "Wedding Gifts Kerala, Nikah Invitations Kerala, Save The Date Shoots Kerala, Custom Hampers Kerala, Proposal Setup Kerala, Birthday Surprise Kerala, Wedding Invitations Malappuram, Perinthalmanna gifting studio" },
-      { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio, Kerala" },
-      { property: "og:description", content: "Wedding gifts, nikah invitations, save-the-date shoots & surprise setups handcrafted across Kerala." },
+      { title: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
+      { name: "description", content: "Custom hampers, nikah invitations, save-the-date shoots, proposal setups & memory reels — handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide." },
+      { name: "keywords", content: "Wedding Gifts India, Nikah Invitations, Save The Date Shoots, Custom Hampers India, Proposal Setup, Birthday Surprise, Wedding Invitations, Handcrafted Gifts Worldwide, Perinthalmanna gifting studio" },
+      { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
+      { property: "og:description", content: "Wedding gifts, nikah invitations, save-the-date shoots & surprise setups handcrafted and shipped across India & worldwide." },
       { property: "og:url", content: "https://dainty-insight-finder.lovable.app/" },
       { property: "og:image", content: hampersImg },
       { name: "twitter:image", content: hampersImg },
