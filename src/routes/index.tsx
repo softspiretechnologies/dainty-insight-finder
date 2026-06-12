@@ -13,13 +13,42 @@ import momentReel from "@/assets/moment-reel.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DaintyHand Kerala — Wedding Gifts, Nikah Invitations & Save The Date Shoots" },
-      { name: "description", content: "Custom hampers Kerala, nikah & wedding invitations Kerala, save the date shoots, proposal setups, birthday surprises and memory reels — handcrafted by Nafisa in Perinthalmanna, Malappuram." },
+      { title: "DaintyHand — Handcrafted Gifts & Wedding Studio, Kerala" },
+      { name: "description", content: "Custom hampers, nikah invitations, save-the-date shoots, proposal setups & memory reels — handcrafted by Nafisa in Perinthalmanna, Kerala." },
       { name: "keywords", content: "Wedding Gifts Kerala, Nikah Invitations Kerala, Save The Date Shoots Kerala, Custom Hampers Kerala, Proposal Setup Kerala, Birthday Surprise Kerala, Wedding Invitations Malappuram, Perinthalmanna gifting studio" },
-      { property: "og:title", content: "DaintyHand Kerala — Handcrafted gifts, invitations & celebration moments" },
-      { property: "og:description", content: "Wedding gifts, nikah invitations, save the date shoots and surprise setups handcrafted across Kerala." },
+      { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio, Kerala" },
+      { property: "og:description", content: "Wedding gifts, nikah invitations, save-the-date shoots & surprise setups handcrafted across Kerala." },
+      { property: "og:url", content: "https://dainty-insight-finder.lovable.app/" },
       { property: "og:image", content: hampersImg },
       { name: "twitter:image", content: hampersImg },
+    ],
+    links: [
+      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          name: "DaintyHand",
+          description: "Handcrafted gifts, wedding essentials and celebration studio in Kerala.",
+          image: "https://dainty-insight-finder.lovable.app/og-image.jpg",
+          url: "https://dainty-insight-finder.lovable.app/",
+          telephone: "+91-9999999999",
+          email: "hello@daintyhand.in",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Perinthalmanna",
+            addressRegion: "Kerala",
+            addressCountry: "IN",
+          },
+          areaServed: "Kerala, India",
+          openingHours: "Mo-Sa 10:00-19:00",
+          sameAs: ["https://www.instagram.com/dainty.handd/"],
+          founder: { "@type": "Person", name: "Nafisa" },
+        }),
+      },
     ],
   }),
   component: Index,
@@ -43,7 +72,7 @@ function Index() {
             {site.location}
           </span>
           <h1 className="font-display text-[2.75rem] sm:text-6xl md:text-8xl leading-[0.95] md:leading-[0.9] tracking-tighter mb-6 md:mb-8 animate-reveal text-balance" style={{ animationDelay: "100ms" }}>
-            {site.heroLine1} <span className="italic font-normal text-primary">{site.heroLine2}</span>
+            Handcrafted gifts &amp; <span className="italic font-normal text-primary">wedding studio in Kerala.</span>
           </h1>
           <p className="max-w-md mx-auto text-muted text-sm leading-relaxed mb-8 md:mb-10 animate-reveal text-pretty" style={{ animationDelay: "200ms" }}>
             Custom hampers, bouquets, invitations, wedding gifts & celebration services — handcrafted in Kerala. Creating meaningful gifts, memorable celebrations and lasting impressions.
@@ -93,6 +122,10 @@ function Index() {
 
       {/* Categories grid (8) */}
       <section className="max-w-7xl mx-auto px-5 md:px-6 pb-16 md:pb-24">
+        <div className="text-center mb-8 md:mb-12">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">What We Create</span>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 italic text-balance">Eight ways to celebrate.</h2>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border overflow-hidden rounded-sm">
           {categories.map((cat, i) => (
             <Link
@@ -371,7 +404,7 @@ function Index() {
               />
             </div>
             <div>
-              <h4 className="font-display text-2xl md:text-3xl mb-4 italic">From {site.founder}'s hands</h4>
+              <h2 className="font-display text-2xl md:text-3xl mb-4 italic">From {site.founder}'s hands</h2>
               <p className="text-sm text-muted leading-relaxed text-pretty">
                 Based in Perinthalmanna, I founded {site.name} on the belief that a gift is more than an object — it's a memory. From hampers and invitations to engagement setups and save-the-date shoots, every creation is assembled around your story.
               </p>

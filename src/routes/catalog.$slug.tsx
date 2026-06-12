@@ -14,14 +14,42 @@ export const Route = createFileRoute("/catalog/$slug")({
     if (!product) {
       return { meta: [{ title: "Not found — DaintyHand" }] };
     }
+    const url = `https://dainty-insight-finder.lovable.app/catalog/${product.slug}`;
     return {
       meta: [
         { title: `${product.name} — DaintyHand` },
         { name: "description", content: product.blurb },
         { property: "og:title", content: `${product.name} — DaintyHand` },
         { property: "og:description", content: product.blurb },
+        { property: "og:url", content: url },
         { property: "og:image", content: product.image },
         { name: "twitter:image", content: product.image },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.name,
+            description: product.description ?? product.blurb,
+            image: product.image,
+            url,
+            brand: { "@type": "Brand", name: "DaintyHand" },
+            ...(product.priceFrom
+              ? {
+                  offers: {
+                    "@type": "Offer",
+                    priceCurrency: "INR",
+                    price: String(product.priceFrom).replace(/[^0-9.]/g, ""),
+                    availability: "https://schema.org/InStock",
+                    url,
+                  },
+                }
+              : {}),
+          }),
+        },
       ],
     };
   },

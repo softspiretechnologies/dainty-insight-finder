@@ -10,6 +10,9 @@ export const Route = createFileRoute("/contact")({
       { property: "og:title", content: "Contact — DaintyHand" },
       { property: "og:description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
     ],
+    links: [
+      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/contact" },
+    ],
   }),
   component: ContactPage,
 });

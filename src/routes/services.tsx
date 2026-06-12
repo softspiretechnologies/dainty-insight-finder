@@ -11,12 +11,38 @@ import birthdaySetupImg from "@/assets/moment-birthday.jpg";
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Celebration Services Kerala — Save The Date, Proposals, Birthday Surprises | DaintyHand" },
-      { name: "description", content: "Save the date shoots Kerala, proposal setups, birthday surprise planning, couple shoots and memory reels — planned and styled by DaintyHand across Kerala." },
+      { title: "Celebration Services — DaintyHand | Shoots & Event Styling" },
+      { name: "description", content: "Save-the-date shoots, proposal setups, birthday surprises, couple shoots and memory reels — styled by DaintyHand across Kerala." },
       { name: "keywords", content: "Save The Date Shoots Kerala, Proposal Setup Kerala, Birthday Surprise Kerala, Couple Shoot Kerala, Memory Reels Kerala, Wedding Studio Malappuram, Perinthalmanna celebrations" },
       { property: "og:title", content: "Celebration Services Kerala — DaintyHand" },
       { property: "og:description", content: "Save the date shoots, proposals, surprises, couple shoots and memory reels across Kerala." },
+      { property: "og:url", content: "https://dainty-insight-finder.lovable.app/services" },
       { property: "og:image", content: shootImg },
+    ],
+    links: [
+      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/services" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            "Save The Date Shoots",
+            "Birthday Surprise Planning",
+            "Proposal Setups",
+            "Couple Shoots",
+            "Memory Reels",
+            "Event Styling",
+          ].map((name) => ({
+            "@type": "Service",
+            name,
+            provider: { "@type": "LocalBusiness", name: "DaintyHand" },
+            areaServed: "Kerala, India",
+            serviceType: name,
+          })),
+        }),
+      },
     ],
   }),
   component: ServicesPage,

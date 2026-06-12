@@ -26,6 +26,9 @@ export const Route = createFileRoute("/custom")({
       { property: "og:title", content: "Custom Order — DaintyHand" },
       { property: "og:description", content: "Tell us what you have in mind — we'll continue the conversation on WhatsApp." },
     ],
+    links: [
+      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/custom" },
+    ],
   }),
   component: CustomPage,
 });
