@@ -12,10 +12,10 @@ export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
       { title: "Celebration Services — DaintyHand | Shoots & Event Styling" },
-      { name: "description", content: "Save-the-date shoots, proposal setups, birthday surprises, couple shoots and memory reels — styled by DaintyHand across Kerala." },
-      { name: "keywords", content: "Save The Date Shoots Kerala, Proposal Setup Kerala, Birthday Surprise Kerala, Couple Shoot Kerala, Memory Reels Kerala, Wedding Studio Malappuram, Perinthalmanna celebrations" },
-      { property: "og:title", content: "Celebration Services Kerala — DaintyHand" },
-      { property: "og:description", content: "Save the date shoots, proposals, surprises, couple shoots and memory reels across Kerala." },
+      { name: "description", content: "Save-the-date shoots, proposal setups, birthday surprises, couple shoots and memory reels — styled by DaintyHand across India & worldwide." },
+      { name: "keywords", content: "Save The Date Shoots, Proposal Setup, Birthday Surprise, Couple Shoot, Memory Reels, Wedding Studio Malappuram, Perinthalmanna celebrations, Event Styling India" },
+      { property: "og:title", content: "Celebration Services — DaintyHand" },
+      { property: "og:description", content: "Save the date shoots, proposals, surprises, couple shoots and memory reels across India & worldwide." },
       { property: "og:url", content: "https://dainty-insight-finder.lovable.app/services" },
       { property: "og:image", content: shootImg },
     ],
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/services")({
             "@type": "Service",
             name,
             provider: { "@type": "LocalBusiness", name: "DaintyHand" },
-            areaServed: "Kerala, India",
+            areaServed: "India & Worldwide",
             serviceType: name,
           })),
         }),
@@ -53,7 +53,7 @@ const services = [
     title: "Save The Date Shoots",
     image: savedateImg,
     blurb:
-      "A 1–2 hour styled couple shoot, edited as a save-the-date film with matching cards. Locations across Kerala — Perinthalmanna, Kozhikode, Kochi and beyond.",
+      "A 1–2 hour styled couple shoot, edited as a save-the-date film with matching cards. Locations across India — Perinthalmanna, Kozhikode, Kochi, Bengaluru, Dubai and beyond.",
     bullets: ["Styled couple shoot", "Edited reel + stills", "Save-the-date card design", "Packages from ₹12,000"],
   },
   {

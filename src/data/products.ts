@@ -259,7 +259,7 @@ export const products: Product[] = [
     category: "celebrations",
     blurb: "A short couple shoot styled and edited as your save-the-date.",
     description:
-      "A 1–2 hour styled couple shoot in Perinthalmanna or chosen location, edited as a save-the-date film and matching still cards.",
+      "A 1–2 hour styled couple shoot at your chosen location, edited as a save-the-date film and matching still cards.",
     details: ["1–2 hour styled shoot", "Edited 30–45s film", "10 edited stills", "Save-the-date card design"],
     image: invitationsImg,
     priceFrom: "₹12,000",
