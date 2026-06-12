@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
           "@context": "https://schema.org",
           "@type": "LocalBusiness",
           name: "DaintyHand",
-          description: "Handcrafted gifts, wedding essentials and celebration studio in Kerala.",
+          description: "Handcrafted gifts, wedding essentials and celebration studio based in Kerala — shipping across India & worldwide.",
           image: "https://dainty-insight-finder.lovable.app/og-image.jpg",
           url: "https://dainty-insight-finder.lovable.app/",
           telephone: "+91-9999999999",
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/")({
             addressRegion: "Kerala",
             addressCountry: "IN",
           },
-          areaServed: "Kerala, India",
+          areaServed: "India & Worldwide",
           openingHours: "Mo-Sa 10:00-19:00",
           sameAs: ["https://www.instagram.com/dainty.handd/"],
           founder: { "@type": "Person", name: "Nafisa" },
@@ -72,10 +72,10 @@ function Index() {
             {site.location}
           </span>
           <h1 className="font-display text-[2.75rem] sm:text-6xl md:text-8xl leading-[0.95] md:leading-[0.9] tracking-tighter mb-6 md:mb-8 animate-reveal text-balance" style={{ animationDelay: "100ms" }}>
-            Handcrafted gifts &amp; <span className="italic font-normal text-primary">wedding studio in Kerala.</span>
+            Handcrafted gifts &amp; <span className="italic font-normal text-primary">wedding studio.</span>
           </h1>
           <p className="max-w-md mx-auto text-muted text-sm leading-relaxed mb-8 md:mb-10 animate-reveal text-pretty" style={{ animationDelay: "200ms" }}>
-            Custom hampers, bouquets, invitations, wedding gifts & celebration services — handcrafted in Kerala. Creating meaningful gifts, memorable celebrations and lasting impressions.
+            Custom hampers, bouquets, invitations, wedding gifts & celebration services — handcrafted with care. Creating meaningful gifts, memorable celebrations and lasting impressions. We ship across India & worldwide.
           </p>
           <div className="animate-reveal flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center max-w-sm sm:max-w-none mx-auto" style={{ animationDelay: "300ms" }}>
             <a
@@ -108,7 +108,7 @@ function Index() {
           More than gifts. <span className="italic text-primary">We create memories.</span>
         </h2>
         <p className="text-sm md:text-base text-muted leading-relaxed text-pretty max-w-2xl mx-auto mb-8">
-          From <em className="italic">wedding gifts Kerala</em>, <em className="italic">nikah invitations</em> and <em className="italic">custom hampers</em> to <em className="italic">save the date shoots</em> and surprise celebrations — DaintyHand turns meaningful moments into unforgettable memories across Kerala.
+          From <em className="italic">wedding gifts</em>, <em className="italic">nikah invitations</em> and <em className="italic">custom hampers</em> to <em className="italic">save the date shoots</em> and surprise celebrations — DaintyHand turns meaningful moments into unforgettable memories across India & beyond.
         </p>
         <a
           href={whatsappLink(`Hi ${site.founder}, I'd love to know more about ${site.name}.`)}
@@ -169,7 +169,7 @@ function Index() {
           <div className="text-center mb-10 md:mb-14">
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Beyond Gifting</span>
             <h2 className="font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-4 italic text-balance">Moments We Captured.</h2>
-            <p className="text-sm text-muted mt-4 md:mt-6 max-w-xl mx-auto">From the first yes to the surprise reveal — celebration services planned, styled and filmed across Kerala.</p>
+            <p className="text-sm text-muted mt-4 md:mt-6 max-w-xl mx-auto">From the first yes to the surprise reveal — celebration services planned, styled and filmed across India & beyond.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-5">
             {moments.map((m, i) => (
@@ -202,7 +202,7 @@ function Index() {
               { t: "Share Your Idea", d: "Message us on WhatsApp with the occasion, vibe and budget." },
               { t: "We Design", d: "We send mood, materials and a custom quote — usually within 24 hours." },
               { t: "Approve & Confirm", d: "Approve the design, confirm with advance and we begin handcrafting." },
-              { t: "Delivery", d: "Hand-delivered in Perinthalmanna or shipped across Kerala on date." },
+              { t: "Delivery", d: "Hand-delivered in Perinthalmanna or shipped anywhere in India & worldwide on date." },
             ].map((s, i) => (
               <div key={s.t} className="bg-background p-6 md:p-8">
                 <span className="font-mono text-[10px] text-primary block mb-3 md:mb-4">Step 0{i + 1}</span>
@@ -227,14 +227,14 @@ function Index() {
       {/* Credibility */}
       <section className="py-16 md:py-24 px-5 md:px-6 bg-foreground text-background">
         <div className="max-w-6xl mx-auto text-center">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/60">Trusted Across Kerala</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/60">Trusted by Customers</span>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 mb-10 md:mb-14 italic">Numbers that speak quietly.</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-background/10">
             {[
               { n: "1,100+", l: "Instagram Posts" },
               { n: "3,000+", l: "Followers" },
               { n: "Hundreds", l: "Custom Creations" },
-              { n: "All Kerala", l: "Customers Served" },
+              { n: "India & Abroad", l: "Customers Served" },
             ].map((s) => (
               <div key={s.l} className="bg-foreground p-5 sm:p-8 md:p-10">
                 <div className="font-display text-3xl sm:text-4xl md:text-6xl text-primary italic">{s.n}</div>
@@ -266,7 +266,7 @@ function Index() {
               { t: "Fully personalised", d: "Every creation is designed around your story." },
               { t: "Wedding specialists", d: "Trusted for engagements, nikahs and celebrations." },
               { t: "Memory makers", d: "We create experiences — not just gifts." },
-              { t: "Kerala based", d: "Serving customers across Kerala from Perinthalmanna." },
+              { t: "Global Delivery", d: "Handcrafted in Kerala, delivered to your doorstep anywhere in India or abroad." },
             ].map((f, i) => (
               <div key={f.t} className="bg-background p-6 md:p-8">
                 <span className="font-mono text-[9px] text-muted block mb-4">0{i + 1}</span>
