@@ -5,7 +5,7 @@ import { site, whatsappLink } from "@/lib/site";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact DaintyHand — WhatsApp, Instagram & Studio, Kerala" },
+      { title: "Contact DaintyHand — WhatsApp, Instagram & Studio" },
       { name: "description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
       { property: "og:title", content: "Contact — DaintyHand" },
       { property: "og:description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },

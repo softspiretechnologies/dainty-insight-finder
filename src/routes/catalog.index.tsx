@@ -8,7 +8,7 @@ export const Route = createFileRoute("/catalog/")({
   head: () => ({
     meta: [
       { title: "Past Creations — DaintyHand | Custom Gifts & Hampers" },
-      { name: "description", content: "Browse past creations: hampers, bouquets, invitations, frames and calligraphy — fully customisable, handcrafted in Kerala." },
+      { name: "description", content: "Browse past creations: hampers, bouquets, invitations, frames and calligraphy — fully customisable, handcrafted with care and shipped across India & worldwide." },
       { property: "og:title", content: "Past Creations — DaintyHand" },
       { property: "og:description", content: "Browse past creations — every piece is fully customisable to your occasion." },
       { property: "og:url", content: "https://dainty-insight-finder.lovable.app/catalog" },
