@@ -4,8 +4,9 @@ import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { categories as categoriesTable } from "@/db/schema";
+import { imageUploadPayloadSchema } from "@/lib/admin-upload-payload";
 import { getAdminSession } from "@/lib/auth.server";
-import { deleteUploadedImage, saveUploadedImage } from "@/lib/uploads.server";
+import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
 
 const categoryIds = [
   "hampers",
@@ -29,6 +30,8 @@ const categoryInputSchema = z.object({
   label: z.string().min(1).max(128),
   blurb: z.string().min(1),
   sortOrder: z.coerce.number().int().min(0),
+  existingImagePath: z.string().optional(),
+  image: imageUploadPayloadSchema.optional(),
 });
 
 export const listAdminCategories = createServerFn({ method: "GET" }).handler(async () => {
@@ -37,51 +40,37 @@ export const listAdminCategories = createServerFn({ method: "GET" }).handler(asy
   return db.select().from(categoriesTable).orderBy(categoriesTable.sortOrder);
 });
 
-const formDataSchema = z.custom<FormData>((value) => value instanceof FormData, {
-  message: "Expected FormData",
-});
-
 export const saveAdminCategory = createServerFn({ method: "POST" })
-  .validator(formDataSchema)
-  .handler(async ({ data: formData }) => {
-  requireAdmin();
+  .validator(categoryInputSchema)
+  .handler(async ({ data }) => {
+    requireAdmin();
 
-  const parsed = categoryInputSchema.parse({
-    id: String(formData.get("id") ?? ""),
-    label: String(formData.get("label") ?? ""),
-    blurb: String(formData.get("blurb") ?? ""),
-    sortOrder: formData.get("sortOrder") ?? 0,
-  });
-
-  const file = formData.get("image");
-  const existingImagePath = String(formData.get("existingImagePath") ?? "") || undefined;
-
-  let imagePath = existingImagePath ?? "";
-  if (file instanceof File && file.size > 0) {
-    imagePath = await saveUploadedImage(file, "categories");
-    if (existingImagePath) {
-      await deleteUploadedImage(existingImagePath);
+    let imagePath = data.existingImagePath ?? "";
+    if (data.image) {
+      imagePath = await saveUploadedImageFromPayload(data.image, "categories");
+      if (data.existingImagePath) {
+        await deleteUploadedImage(data.existingImagePath);
+      }
     }
-  }
 
-  if (!imagePath) {
-    throw new Error("Category image is required");
-  }
+    if (!imagePath) {
+      throw new Error("Category image is required");
+    }
 
-  const db = getDb();
-  const values = {
-    label: parsed.label,
-    blurb: parsed.blurb,
-    imagePath,
-    sortOrder: parsed.sortOrder,
-  };
+    const db = getDb();
+    const values = {
+      label: data.label,
+      blurb: data.blurb,
+      imagePath,
+      sortOrder: data.sortOrder,
+    };
 
-  const existing = await db.select().from(categoriesTable).where(eq(categoriesTable.id, parsed.id)).limit(1);
-  if (existing[0]) {
-    await db.update(categoriesTable).set(values).where(eq(categoriesTable.id, parsed.id));
-  } else {
-    await db.insert(categoriesTable).values({ id: parsed.id, ...values });
-  }
+    const existing = await db.select().from(categoriesTable).where(eq(categoriesTable.id, data.id)).limit(1);
+    if (existing[0]) {
+      await db.update(categoriesTable).set(values).where(eq(categoriesTable.id, data.id));
+    } else {
+      await db.insert(categoriesTable).values({ id: data.id, ...values });
+    }
 
-  return { id: parsed.id };
-});
+    return { id: data.id };
+  });

@@ -4,8 +4,9 @@ import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { products as productsTable } from "@/db/schema";
+import { imageUploadPayloadSchema } from "@/lib/admin-upload-payload";
 import { getAdminSession } from "@/lib/auth.server";
-import { deleteUploadedImage, saveUploadedImage } from "@/lib/uploads.server";
+import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
 import type { CategoryId } from "@/types/catalog";
 
 const categoryIds = [
@@ -33,6 +34,7 @@ function parseDetails(raw: string) {
 }
 
 const productInputSchema = z.object({
+  id: z.union([z.literal("new"), z.number().int().positive()]),
   slug: z.string().min(1).max(128),
   name: z.string().min(1).max(256),
   categoryId: z.enum(categoryIds),
@@ -40,6 +42,8 @@ const productInputSchema = z.object({
   description: z.string().min(1),
   details: z.string().min(1),
   priceFrom: z.string().optional(),
+  existingImagePath: z.string().optional(),
+  image: imageUploadPayloadSchema.optional(),
 });
 
 export const listAdminProducts = createServerFn({ method: "GET" }).handler(async () => {
@@ -57,69 +61,52 @@ export const getAdminProduct = createServerFn({ method: "GET" })
     return rows[0] ?? null;
   });
 
-const formDataSchema = z.custom<FormData>((value) => value instanceof FormData, {
-  message: "Expected FormData",
-});
-
 export const saveAdminProduct = createServerFn({ method: "POST" })
-  .validator(formDataSchema)
-  .handler(async ({ data: formData }) => {
-  requireAdmin();
+  .validator(productInputSchema)
+  .handler(async ({ data }) => {
+    requireAdmin();
 
-  const idRaw = formData.get("id");
-  const id = idRaw && idRaw !== "new" ? Number(idRaw) : undefined;
+    const id = data.id === "new" ? undefined : data.id;
 
-  const parsed = productInputSchema.parse({
-    slug: String(formData.get("slug") ?? ""),
-    name: String(formData.get("name") ?? ""),
-    categoryId: String(formData.get("categoryId") ?? ""),
-    blurb: String(formData.get("blurb") ?? ""),
-    description: String(formData.get("description") ?? ""),
-    details: String(formData.get("details") ?? ""),
-    priceFrom: String(formData.get("priceFrom") ?? "") || undefined,
-  });
-
-  const file = formData.get("image");
-  const existingImagePath = String(formData.get("existingImagePath") ?? "") || undefined;
-
-  let imagePath = existingImagePath ?? "";
-  if (file instanceof File && file.size > 0) {
-    imagePath = await saveUploadedImage(file, "products");
-    if (existingImagePath) {
-      await deleteUploadedImage(existingImagePath);
+    let imagePath = data.existingImagePath ?? "";
+    if (data.image) {
+      imagePath = await saveUploadedImageFromPayload(data.image, "products");
+      if (data.existingImagePath) {
+        await deleteUploadedImage(data.existingImagePath);
+      }
     }
-  }
 
-  if (!imagePath) {
-    throw new Error("Product image is required");
-  }
+    if (!imagePath) {
+      throw new Error("Product image is required");
+    }
 
-  const db = getDb();
-  const values = {
-    slug: parsed.slug,
-    name: parsed.name,
-    categoryId: parsed.categoryId as CategoryId,
-    blurb: parsed.blurb,
-    description: parsed.description,
-    details: parseDetails(parsed.details),
-    imagePath,
-    priceFrom: parsed.priceFrom ?? null,
-  };
+    const db = getDb();
+    const values = {
+      slug: data.slug,
+      name: data.name,
+      categoryId: data.categoryId as CategoryId,
+      blurb: data.blurb,
+      description: data.description,
+      details: parseDetails(data.details),
+      imagePath,
+      priceFrom: data.priceFrom ?? null,
+    };
 
-  if (id) {
-    const existing = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
-    if (!existing[0]) throw new Error("Product not found");
-    await db.update(productsTable).set(values).where(eq(productsTable.id, id));
-    return { id };
-  }
+    if (id) {
+      const existing = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
+      if (!existing[0]) throw new Error("Product not found");
+      await db.update(productsTable).set(values).where(eq(productsTable.id, id));
+      return { id };
+    }
 
-  const result = await db.insert(productsTable).values(values);
-  const insertId = Number((result as { insertId?: number }[])[0]?.insertId);
-  if (insertId) return { id: insertId };
+    const result = await db.insert(productsTable).values(values);
+    const header = Array.isArray(result) ? result[0] : result;
+    const insertId = Number((header as { insertId?: number }).insertId);
+    if (insertId) return { id: insertId };
 
-  const rows = await db.select().from(productsTable).where(eq(productsTable.slug, parsed.slug)).limit(1);
-  return { id: rows[0]!.id };
-});
+    const rows = await db.select().from(productsTable).where(eq(productsTable.slug, data.slug)).limit(1);
+    return { id: rows[0]!.id };
+  });
 
 export const deleteAdminProduct = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int().positive() }))

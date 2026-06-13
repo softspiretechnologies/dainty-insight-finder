@@ -1,31 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { imageUploadPayloadSchema } from "@/lib/admin-upload-payload";
 import { getAdminSession } from "@/lib/auth.server";
-import { saveUploadedImage } from "@/lib/uploads.server";
-
-const formDataSchema = z.custom<FormData>((value) => value instanceof FormData, {
-  message: "Expected FormData",
-});
+import { saveUploadedImageFromPayload } from "@/lib/uploads.server";
 
 export const uploadImage = createServerFn({ method: "POST" })
-  .validator(formDataSchema)
-  .handler(async ({ data: formData }) => {
+  .validator(
+    z.object({
+      subdir: z.enum(["products", "categories"]),
+      image: imageUploadPayloadSchema,
+    }),
+  )
+  .handler(async ({ data }) => {
     const session = getAdminSession();
     if (!session) {
       throw new Error("Unauthorized");
     }
 
-    const file = formData.get("file");
-    const subdir = formData.get("subdir");
-
-    if (!(file instanceof File)) {
-      throw new Error("No file provided");
-    }
-    if (subdir !== "products" && subdir !== "categories") {
-      throw new Error("Invalid upload target");
-    }
-
-    const imagePath = await saveUploadedImage(file, subdir);
+    const imagePath = await saveUploadedImageFromPayload(data.image, data.subdir);
     return { imagePath };
   });

@@ -38,6 +38,31 @@ function extensionForMime(mime: string) {
   return "";
 }
 
+export async function saveUploadedImageFromPayload(
+  payload: { name: string; type: string; data: string },
+  subdir: "products" | "categories",
+) {
+  if (!ALLOWED_TYPES.has(payload.type)) {
+    throw new Error("Only JPEG, PNG and WebP images are allowed");
+  }
+
+  const buffer = Buffer.from(payload.data, "base64");
+  if (buffer.length > MAX_BYTES) {
+    throw new Error("Image must be 5 MB or smaller");
+  }
+
+  const ext = extensionForMime(payload.type) || path.extname(payload.name) || ".jpg";
+  const base = sanitizeFilename(path.basename(payload.name, path.extname(payload.name))) || "image";
+  const filename = `${base}-${Date.now()}${ext}`;
+  const dir = path.join(uploadsRoot(), subdir);
+  await mkdir(dir, { recursive: true });
+
+  const fullPath = path.join(dir, filename);
+  await writeFile(fullPath, buffer);
+
+  return `/uploads/${subdir}/${filename}`;
+}
+
 export async function saveUploadedImage(file: File, subdir: "products" | "categories") {
   if (!ALLOWED_TYPES.has(file.type)) {
     throw new Error("Only JPEG, PNG and WebP images are allowed");

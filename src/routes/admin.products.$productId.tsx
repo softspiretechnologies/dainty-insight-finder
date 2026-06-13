@@ -7,6 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getAdminProduct, saveAdminProduct } from "@/lib/api/admin/products";
 import { listAdminCategories } from "@/lib/api/admin/categories";
+import { fileToUploadPayload } from "@/lib/admin-upload-payload";
+import type { CategoryId } from "@/types/catalog";
+
+function normalizeDetails(details: unknown): string[] {
+  if (Array.isArray(details)) return details.map(String);
+  if (typeof details === "string") {
+    try {
+      const parsed = JSON.parse(details) as unknown;
+      if (Array.isArray(parsed)) return parsed.map(String);
+    } catch {
+      return details ? [details] : [];
+    }
+  }
+  return [];
+}
 
 export const Route = createFileRoute("/admin/products/$productId")({
   loader: async ({ params }) => {
@@ -32,7 +47,7 @@ function AdminProductEditPage() {
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? "hampers");
   const [blurb, setBlurb] = useState(product?.blurb ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
-  const [details, setDetails] = useState((product?.details ?? []).join("\n"));
+  const [details, setDetails] = useState(normalizeDetails(product?.details).join("\n"));
   const [priceFrom, setPriceFrom] = useState(product?.priceFrom ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,20 +58,21 @@ function AdminProductEditPage() {
     setLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.set("id", isNew ? "new" : String(product!.id));
-    formData.set("name", name);
-    formData.set("slug", slug);
-    formData.set("categoryId", categoryId);
-    formData.set("blurb", blurb);
-    formData.set("description", description);
-    formData.set("details", details);
-    formData.set("priceFrom", priceFrom);
-    if (product?.imagePath) formData.set("existingImagePath", product.imagePath);
-    if (imageFile) formData.set("image", imageFile);
-
     try {
-      await saveAdminProduct({ data: formData });
+      await saveAdminProduct({
+        data: {
+          id: isNew ? "new" : product!.id,
+          name,
+          slug,
+          categoryId: categoryId as CategoryId,
+          blurb,
+          description,
+          details,
+          priceFrom: priceFrom || undefined,
+          existingImagePath: product?.imagePath,
+          image: imageFile ? await fileToUploadPayload(imageFile) : undefined,
+        },
+      });
       await router.navigate({ to: "/admin/products" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save product");

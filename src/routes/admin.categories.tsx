@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { listAdminCategories, saveAdminCategory } from "@/lib/api/admin/categories";
 import { cn } from "@/lib/utils";
 import type { CategoryId } from "@/types/catalog";
@@ -158,16 +159,17 @@ function CategoryForm({
     setError(null);
     setSuccess(false);
 
-    const formData = new FormData();
-    formData.set("id", category.id);
-    formData.set("label", label);
-    formData.set("blurb", blurb);
-    formData.set("sortOrder", sortOrder);
-    formData.set("existingImagePath", category.imagePath);
-    if (imageFile) formData.set("image", imageFile);
-
     try {
-      await saveAdminCategory({ data: formData });
+      await saveAdminCategory({
+        data: {
+          id: category.id as CategoryId,
+          label,
+          blurb,
+          sortOrder: Number(sortOrder),
+          existingImagePath: category.imagePath,
+          image: imageFile ? await fileToUploadPayload(imageFile) : undefined,
+        },
+      });
       setImageFile(null);
       setSuccess(true);
       onSaved();
