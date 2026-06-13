@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
+import { OptimizedImage, catalogGridSizes } from "@/components/ui/optimized-image";
 import { categories as staticCategories, type Category } from "@/data/products";
 import { getCatalogProducts } from "@/lib/api/catalog";
 import { site, siteUrl } from "@/lib/site";
@@ -97,16 +98,17 @@ function CatalogPage() {
 
       <section className="px-5 md:px-6 py-10 md:py-16">
         <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-8 gap-y-10 md:gap-y-16">
-          {visible.map((p) => (
+          {visible.map((p, index) => (
             <article key={p.slug} className="group flex flex-col">
               <Link to="/catalog/$slug" params={{ slug: p.slug }} className="block">
                 <div className="aspect-[4/5] overflow-hidden bg-surface mb-3 md:mb-5">
-                  <img
+                  <OptimizedImage
                     src={p.image}
                     alt={p.name}
                     width={512}
                     height={640}
-                    loading="lazy"
+                    sizes={catalogGridSizes}
+                    priority={index === 0 && safePage === 1}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>

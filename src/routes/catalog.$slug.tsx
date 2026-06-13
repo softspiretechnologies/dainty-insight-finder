@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
+import { OptimizedImage, catalogGridSizes, productHeroSizes } from "@/components/ui/optimized-image";
 import { getProductBySlugData } from "@/lib/api/catalog";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { site, siteUrl } from "@/lib/site";
@@ -100,11 +101,13 @@ function ProductPage() {
 
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-16 items-start">
             <div className="aspect-4/5 overflow-hidden bg-surface">
-              <img
+              <OptimizedImage
                 src={product.image}
                 alt={product.name}
                 width={1024}
                 height={1280}
+                sizes={productHeroSizes}
+                priority
                 className="w-full h-full object-cover"
               />
             </div>

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
+import { OptimizedImage, catalogGridSizes } from "@/components/ui/optimized-image";
 import { galleryImages } from "@/data/products";
 import { site, siteUrl, formatTelephone } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
@@ -164,12 +165,13 @@ function Index() {
                   ({String(i + 1).padStart(2, "0")})
                 </span>
                 <div className="aspect-4/5 overflow-hidden rounded-sm mb-3 md:mb-4">
-                  <img
+                  <OptimizedImage
                     src={cat.image}
                     alt={cat.label}
                     width={512}
                     height={640}
-                    loading="lazy"
+                    sizes={catalogGridSizes}
+                    priority={i === 0}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>
@@ -225,10 +227,10 @@ function Index() {
                     : "aspect-3/4"
                 }`}
               >
-                <img
+                <OptimizedImage
                   src={m.image}
                   alt={m.title}
-                  loading="lazy"
+                  sizes={i === 0 ? "(max-width: 768px) 100vw, 40vw" : "(max-width: 768px) 50vw, 20vw"}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <figcaption className="absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/5 to-transparent flex flex-col justify-end p-3 md:p-5">
@@ -420,12 +422,12 @@ function Index() {
 function GalleryImg({ img, aspect }: { img: (typeof galleryImages)[number]; aspect: string }) {
   return (
     <div className={`w-full ${aspect} overflow-hidden rounded-sm`}>
-      <img
+      <OptimizedImage
         src={img.src}
         alt={img.alt}
         width={img.w}
         height={img.h}
-        loading="lazy"
+        sizes="(max-width: 768px) 50vw, 25vw"
         className="w-full h-full object-cover"
       />
     </div>

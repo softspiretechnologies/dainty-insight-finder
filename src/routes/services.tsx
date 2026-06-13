@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
-import shootImg from "@/assets/service-invitations.jpg";
 import proposalImg from "@/assets/moment-proposal.jpg";
 import coupleImg from "@/assets/moment-couple.jpg";
 import savedateImg from "@/assets/moment-savethedate.jpg";
@@ -109,7 +109,13 @@ function ServicesPage() {
           {services.map((s, i) => (
             <article key={s.title} className={`grid md:grid-cols-2 gap-6 md:gap-12 items-center ${i % 2 ? "md:[direction:rtl]" : ""}`}>
               <div className="aspect-4/3 overflow-hidden bg-surface md:[direction:ltr]">
-                <img src={s.image} alt={s.title} loading="lazy" className="w-full h-full object-cover" />
+                <OptimizedImage
+                  src={s.image}
+                  alt={s.title}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority={i === 0}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="md:[direction:ltr]">
                 <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">0{i + 1}</span>

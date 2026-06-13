@@ -11,6 +11,12 @@ export default defineConfig({
   // Without this, build skips Nitro outside Lovable and dist/server/server.js won't listen on a port.
   nitro: {
     preset: "node-server",
+    routeRules: {
+      "/uploads/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/assets/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/favicon.svg": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/og-image.jpg": { headers: { "cache-control": "public, max-age=604800" } },
+    },
     // Hostinger requires a non-hidden output dir (`.output` is not detected).
     output: {
       dir: "dist",

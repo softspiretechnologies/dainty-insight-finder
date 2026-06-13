@@ -1,4 +1,4 @@
-import { copyFile, mkdir } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 import bcrypt from "bcryptjs";
@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { categories, products, siteSettings, adminUsers } from "../src/db/schema";
 import { seedCategories, seedProducts } from "../src/data/catalog-seed";
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
+import { optimizeSeedImage } from "../src/lib/image-optimize.server";
 import { site } from "../src/lib/site";
 import { allUploadTargets } from "./lib/uploads-path";
 
@@ -20,7 +21,7 @@ async function copyAssetToUploads(assetFile: string, subdir: string, destName: s
   for (const uploadsRoot of UPLOAD_TARGETS) {
     const destDir = path.join(uploadsRoot, subdir);
     await mkdir(destDir, { recursive: true });
-    await copyFile(src, path.join(destDir, destName));
+    await optimizeSeedImage(src, path.join(destDir, destName));
   }
 
   return relativePath;
