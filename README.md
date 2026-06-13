@@ -45,6 +45,8 @@ ADMIN_PASSWORD=choose-a-strong-password
 
 Without `DATABASE_URL`, the site falls back to static data in `src/data/products.ts` and admin login will not work.
 
+**Local vs production:** Use a local MySQL database in `.env` for development. Set production `DATABASE_URL` only in Hostinger hPanel — never in your local `.env`.
+
 ## Database setup
 
 ```bash
@@ -92,7 +94,7 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 
 1. Create a MySQL database and user in hPanel → **Databases**
 2. Add environment variables: `DATABASE_URL`, `ADMIN_SESSION_SECRET`, `VITE_SITE_URL`, plus `ADMIN_EMAIL` / `ADMIN_PASSWORD` for seeding
-3. Run `npm run db:migrate` and `npm run db:seed` once (SSH terminal or locally against the remote DB)
+3. Run `npm run db:migrate` and `npm run db:seed` once in the Hostinger SSH terminal (production only — do not point local `.env` at the live database)
 4. Deploy / redeploy the app
 
 ### hPanel environment variables (production)
@@ -134,18 +136,16 @@ Admin uploads are saved **outside** `dist/` so redeploys do not wipe them:
 5. Confirm WhatsApp in **Admin → Settings** matches Nafisa's number
 6. Upload a test product image in admin, redeploy again, confirm the image still loads
 
-**Migrate/seed from your Mac** (not on the server — the deployed `nodejs` folder has no source):
+**Migrate/seed on production** (SSH into Hostinger, then from the deployed app directory):
 
 ```bash
-# Terminal 1: SSH tunnel (keep open)
-ssh -p 65002 -L 3307:127.0.0.1:3306 u249731825@93.127.208.157
-
-# Terminal 2: from project root
-DATABASE_URL=mysql://USER:PASSWORD@127.0.0.1:3307/DATABASE npm run db:migrate
+npm run db:migrate
 npm run db:seed
 ```
 
 Re-running `db:seed` preserves the WhatsApp number already saved in admin settings.
+
+Local development uses its own MySQL database via `.env` — keep `DATABASE_URL` pointed at `localhost`, not the production server.
 
 ## Admin portal
 

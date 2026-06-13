@@ -1,8 +1,16 @@
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { getServerConfig } from "@/lib/config.server";
+
+function getAppRoot() {
+  const cwd = process.cwd();
+  if (existsSync(path.join(cwd, "dist", "public"))) return cwd;
+  if (existsSync(path.join(cwd, "..", "public"))) return path.resolve(cwd, "..");
+  if (existsSync(path.join(cwd, "..", "..", "dist", "public"))) return path.resolve(cwd, "..", "..");
+  return cwd;
+}
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -71,6 +79,16 @@ function validateImageBuffer(buffer: Buffer, mime: string) {
   throw new Error("File content does not match the declared image type");
 }
 
+async function mirrorUploadToPublicBundle(fullPath: string, subdir: "products" | "categories", filename: string) {
+  const mirrorDir = path.join(getAppRoot(), "dist", "public", "uploads", subdir);
+  if (!existsSync(path.dirname(mirrorDir))) return;
+
+  await mkdir(mirrorDir, { recursive: true });
+  const mirrorPath = path.join(mirrorDir, filename);
+  const mirrorBuffer = await readFile(fullPath);
+  await writeFile(mirrorPath, mirrorBuffer);
+}
+
 export async function saveUploadedImageFromPayload(
   payload: { name: string; type: string; data: string },
   subdir: "products" | "categories",
@@ -93,6 +111,12 @@ export async function saveUploadedImageFromPayload(
 
   const fullPath = path.join(dir, filename);
   await writeFile(fullPath, buffer);
+
+  try {
+    await mirrorUploadToPublicBundle(fullPath, subdir, filename);
+  } catch {
+    // Non-fatal: persistent copy is the source of truth.
+  }
 
   return `/uploads/${subdir}/${filename}`;
 }
