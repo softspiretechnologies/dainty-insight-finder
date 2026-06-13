@@ -39,8 +39,29 @@ Opens the Vite dev server (default port `8080`).
 
 ```bash
 npm run build
+npm run start     # run production server (Nitro node-server)
 npm run preview   # preview production build locally
 ```
+
+## Deploy on Hostinger (Node.js)
+
+The production build uses **Nitro `node-server`** and outputs to `.output/`.
+
+| Hostinger setting | Value |
+| --- | --- |
+| Framework preset | **React Router** |
+| Build command | `npm run build` |
+| Output directory | `.output` |
+| Entry file | `server/index.mjs` |
+| Node version | 22.x |
+
+Environment variable:
+
+```env
+VITE_SITE_URL=https://your-domain.com
+```
+
+After pushing these code changes, click **Save and redeploy** in Hostinger.
 
 ## Other commands
 
@@ -81,7 +102,6 @@ See `PROJECT_CONTEXT.md` for a full architecture overview.
 | `/catalog/:slug` | Product detail |
 | `/services` | Celebration services |
 | `/custom` | Custom order form → WhatsApp |
-| `/about` | Founder story |
-| `/contact` | Contact & map |
+| `/contact` | Contact & delivery info |
 | `/sitemap.xml` | Dynamic sitemap |
 | `/robots.txt` | Dynamic robots.txt |

@@ -252,3 +252,4 @@ getServerConfig()                // Server-only env reads (per-request)
 14. **FloatingWhatsApp is a chat bot**, not a simple link button. It has a guided conversation tree (screens: home, browse, custom, howItWorks, delivery). Add new screens there for new topics. Screen resets to "home" only when the user explicitly closes (×), not when minimized.
 15. **og:image for all pages** uses `public/og-image.jpg` (a copy of `service-hampers.jpg`). For per-product og:image, use the same fallback since bundled asset paths aren't valid public URLs for social crawlers.
 16. **Form errors** use `text-destructive` (not `text-red-600`) to stay theme-consistent.
+17. **Hostinger / Node deployment:** `vite.config.ts` sets `nitro: { preset: "node-server" }`. Build outputs to `.output/server/index.mjs`. Run with `npm run start`. On Hostinger use React Router preset, output `.output`, entry `server/index.mjs`.
