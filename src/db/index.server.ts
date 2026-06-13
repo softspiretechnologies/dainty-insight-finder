@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 
 import * as schema from "./schema";
+import { maskDatabaseUrl, prodLog, formatProdError } from "@/lib/production-log.server";
 
 let pool: mysql.Pool | undefined;
 
@@ -22,7 +23,11 @@ export function getDb() {
   const url = normalizeDatabaseUrl(raw);
 
   if (!pool) {
+    prodLog("LOG", "Creating MySQL pool", { host: maskDatabaseUrl(url) });
     pool = mysql.createPool(url);
+    pool.on("error", (error) => {
+      prodLog("ERROR", "MySQL pool error", { error: formatProdError(error) });
+    });
   }
 
   return drizzle(pool, { schema, mode: "default" });
