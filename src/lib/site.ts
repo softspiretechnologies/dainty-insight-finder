@@ -28,8 +28,8 @@ export function siteUrl(path = "/") {
   return `${site.baseUrl}${normalized}`;
 }
 
-export function whatsappLink(message?: string) {
-  const base = `https://wa.me/${WHATSAPP_NUMBER}`;
+export function whatsappLink(message?: string, number = WHATSAPP_NUMBER) {
+  const base = `https://wa.me/${number}`;
   if (!message) return base;
   return `${base}?text=${encodeURIComponent(message)}`;
 }

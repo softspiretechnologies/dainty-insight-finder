@@ -19,8 +19,8 @@ import process from "node:process";
 export function getServerConfig() {
   return {
     nodeEnv: process.env.NODE_ENV,
-    // Add server-only values here, e.g.:
-    //   databaseUrl: process.env.DATABASE_URL,
-    //   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    databaseUrl: process.env.DATABASE_URL?.trim() || undefined,
+    adminSessionSecret: process.env.ADMIN_SESSION_SECRET?.trim() || undefined,
+    uploadsDir: process.env.UPLOADS_DIR?.trim() || undefined,
   };
 }

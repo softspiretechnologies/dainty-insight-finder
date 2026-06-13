@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { categories, galleryImages } from "@/data/products";
+import { galleryImages } from "@/data/products";
+import { getHomePageData } from "@/lib/api/catalog";
 import { site, siteUrl, whatsappLink } from "@/lib/site";
 import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
 import momentBirthday from "@/assets/moment-birthday.jpg";
@@ -9,6 +10,7 @@ import momentCouple from "@/assets/moment-couple.jpg";
 import momentReel from "@/assets/moment-reel.jpg";
 
 export const Route = createFileRoute("/")({
+  loader: () => getHomePageData(),
   head: () => ({
     meta: [
       { title: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
@@ -65,6 +67,8 @@ const features = [
 ];
 
 function Index() {
+  const { categories } = Route.useLoaderData();
+
   return (
     <PageShell>
 

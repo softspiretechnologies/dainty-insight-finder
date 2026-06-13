@@ -15,6 +15,13 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.env
+.env.*
+!.env.example
+
+# Uploaded admin images (keep directory via .gitkeep)
+public/uploads/*
+!public/uploads/.gitkeep
 
 # Wrangler / Cloudflare
 .wrangler/

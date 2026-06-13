@@ -3,12 +3,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
-import { categories, products, type Category } from "@/data/products";
+import { categories as staticCategories, type Category } from "@/data/products";
+import { getCatalogPageData } from "@/lib/api/catalog";
 import { site, siteUrl, whatsappLink } from "@/lib/site";
 
 const PAGE_SIZE = 12;
 
-const categoryIds = categories.map((c) => c.id) as [Category, ...Category[]];
+const categoryIds = staticCategories.map((c) => c.id) as [Category, ...Category[]];
 
 const catalogSearchSchema = z.object({
   category: z.enum(categoryIds).optional(),
@@ -17,6 +18,7 @@ const catalogSearchSchema = z.object({
 
 export const Route = createFileRoute("/catalog/")({
   validateSearch: catalogSearchSchema,
+  loader: () => getCatalogPageData(),
   head: () => ({
     meta: [
       { title: "Past Creations — DaintyHand | Custom Gifts & Hampers" },
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/catalog/")({
 type Filter = Category | "all";
 
 function CatalogPage() {
+  const { categories, products } = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 

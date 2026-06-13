@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, MessageCircle, ChevronRight, ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { site, whatsappLink } from "@/lib/site";
-import { categories } from "@/data/products";
+import type { CatalogCategory, SiteSettingsData } from "@/types/catalog";
 
 /* ─── conversation tree ─────────────────────────────────────── */
 
@@ -67,7 +67,16 @@ const deliveryZones = [
 
 /* ─── component ─────────────────────────────────────────────── */
 
-export function FloatingWhatsApp() {
+export function FloatingWhatsApp({
+  categories,
+  siteSettings,
+}: {
+  categories: CatalogCategory[];
+  siteSettings: SiteSettingsData;
+}) {
+  const founder = siteSettings.founder || site.founder;
+  const waLink = (message?: string) =>
+    whatsappLink(message, siteSettings.whatsappNumber || site.whatsappNumber);
   const [open, setOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>("home");
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -125,7 +134,7 @@ export function FloatingWhatsApp() {
                 )}
                 {i > 0 && <div className="size-6 shrink-0" />}
                 <div className="bg-background border border-border rounded-2xl rounded-bl-sm px-3 py-2 text-[12px] leading-relaxed max-w-[85%]">
-                  {m.text.replace("${site.founder}", site.founder)}
+                  {m.text.replace("${site.founder}", founder)}
                 </div>
               </div>
             ))}
@@ -164,7 +173,7 @@ export function FloatingWhatsApp() {
                   </div>
                 ))}
                 <a
-                  href={whatsappLink(`Hi ${site.founder}, I'd like to start an order.`)}
+                  href={waLink(`Hi ${founder}, I'd like to start an order.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors"
@@ -183,7 +192,7 @@ export function FloatingWhatsApp() {
                   </div>
                 ))}
                 <a
-                  href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about delivery to my location.`)}
+                  href={waLink(`Hi ${founder}, I'd like to enquire about delivery to my location.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors mt-2"
@@ -203,7 +212,7 @@ export function FloatingWhatsApp() {
                   Fill custom order form →
                 </Link>
                 <a
-                  href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
+                  href={waLink(`Hi ${founder}, I'd like to start a custom order.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full border border-foreground rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-surface transition-colors"
@@ -236,7 +245,7 @@ export function FloatingWhatsApp() {
                   </button>
                 ))}
                 <a
-                  href={whatsappLink(`Hi ${site.founder}, I'd like to enquire.`)}
+                  href={waLink(`Hi ${founder}, I'd like to enquire.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between gap-1 bg-foreground text-background border border-foreground rounded-xl px-3 py-2 text-[11px] font-semibold hover:bg-primary transition-colors"
@@ -262,7 +271,7 @@ export function FloatingWhatsApp() {
       <button
         onClick={() => setOpen((o) => !o)}
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
-        aria-label={open ? "Close chat" : `Chat with ${site.founder} on WhatsApp`}
+        aria-label={open ? "Close chat" : `Chat with ${founder} on WhatsApp`}
         className="fixed right-4 md:right-8 md:bottom-8! z-50 grid place-items-center size-12 bg-foreground text-background rounded-full shadow-lg hover:bg-primary hover:scale-[1.02] transition-all"
       >
         {open

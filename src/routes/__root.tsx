@@ -11,7 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getRootPageData } from "../lib/api/catalog";
 import { siteUrl } from "../lib/site";
+import type { CatalogCategory, SiteSettingsData } from "../types/catalog";
 
 function NotFoundComponent() {
   return (
@@ -73,7 +75,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+  categories: CatalogCategory[];
+  siteSettings: SiteSettingsData;
+}>()({
+  beforeLoad: async () => getRootPageData(),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
