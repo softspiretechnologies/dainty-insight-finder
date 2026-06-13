@@ -129,16 +129,16 @@ export function AdminShell({
         className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}
       >
-        <div className="grid grid-cols-3 px-1 pt-1">
+        <div className="flex overflow-x-auto overscroll-x-contain px-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeOptions={item.exact ? { exact: true } : undefined}
-              className="flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-[10px] text-muted transition-colors [&.active]:text-foreground"
+              className="flex min-w-[4.5rem] shrink-0 flex-col items-center justify-center gap-0.5 px-2 py-2 text-[10px] text-muted transition-colors [&.active]:text-foreground"
             >
               <item.icon className="w-5 h-5" />
-              <span className="truncate max-w-full">{item.shortLabel}</span>
+              <span className="whitespace-nowrap">{item.shortLabel}</span>
             </Link>
           ))}
         </div>
