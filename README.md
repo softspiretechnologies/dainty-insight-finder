@@ -45,13 +45,13 @@ npm run preview   # preview production build locally
 
 ## Deploy on Hostinger (Node.js)
 
-The production build uses **Nitro `node-server`** and outputs to `.output/`.
+The production build uses **Nitro `node-server`** and outputs to `dist/`.
 
 | Hostinger setting | Value |
 | --- | --- |
 | Framework preset | **React Router** |
 | Build command | `npm run build` |
-| Output directory | `.output` |
+| Output directory | `dist` |
 | Entry file | `server/index.mjs` |
 | Node version | 22.x |
 

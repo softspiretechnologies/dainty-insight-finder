@@ -9,7 +9,15 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   // Force Nitro node-server preset for Hostinger (and other Node hosts).
   // Without this, build skips Nitro outside Lovable and dist/server/server.js won't listen on a port.
-  nitro: { preset: "node-server" },
+  nitro: {
+    preset: "node-server",
+    // Hostinger requires a non-hidden output dir (`.output` is not detected).
+    output: {
+      dir: "dist",
+      serverDir: "dist/server",
+      publicDir: "dist/public",
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     server: { entry: "server" },
