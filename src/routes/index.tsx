@@ -23,9 +23,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: siteUrl("/og-image.jpg") },
     ],
-    links: [
-      { rel: "canonical", href: siteUrl("/") },
-    ],
+    links: [{ rel: "canonical", href: siteUrl("/") }],
     scripts: [
       {
         type: "application/ld+json",
@@ -38,12 +36,7 @@ export const Route = createFileRoute("/")({
           url: siteUrl("/"),
           telephone: "+91-9999999999",
           email: "hello@daintyhand.in",
-          address: {
-            "@type": "PostalAddress",
-            addressLocality: "Perinthalmanna",
-            addressRegion: "Kerala",
-            addressCountry: "IN",
-          },
+          address: { "@type": "PostalAddress", addressLocality: "Perinthalmanna", addressRegion: "Kerala", addressCountry: "IN" },
           areaServed: "India & Worldwide",
           openingHours: "Mo-Sa 10:00-19:00",
           sameAs: ["https://www.instagram.com/dainty.handd/"],
@@ -63,197 +56,131 @@ const moments = [
   { title: "Memory Reels", image: momentReel, blurb: "Cinematic 30–60s reels from your photos & clips." },
 ];
 
+const features = [
+  { t: "Handcrafted with care", d: "Every ribbon, flower and detail arranged by hand." },
+  { t: "Fully personalised", d: "Every creation designed around your story." },
+  { t: "Wedding specialists", d: "Trusted for engagements, nikahs and celebrations." },
+  { t: "Memory makers", d: "We create experiences — not just gifts." },
+  { t: "Global delivery", d: "Handcrafted in Kerala, delivered anywhere in India or abroad." },
+];
+
 function Index() {
   return (
     <PageShell>
-      {/* Hero */}
-      <header className="relative pt-12 pb-20 md:pt-20 md:pb-32 overflow-hidden px-5 md:px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <span className="inline-block font-mono text-[10px] uppercase tracking-[0.3em] mb-5 md:mb-6 animate-reveal">
+
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <header className="relative pt-16 pb-24 md:pt-24 md:pb-40 overflow-hidden px-5 md:px-6 border-b border-border">
+        <div className="max-w-5xl mx-auto text-center">
+
+          {/* eyebrow + location */}
+          <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-muted animate-reveal block mb-6 md:mb-8">
             {site.location}
           </span>
-          <h1 className="font-display text-[2.75rem] sm:text-6xl md:text-8xl leading-[0.95] md:leading-[0.9] tracking-tighter mb-6 md:mb-8 animate-reveal text-balance" style={{ animationDelay: "100ms" }}>
-            Handcrafted gifts &amp; <span className="italic font-normal text-primary">wedding studio.</span>
+
+          {/* headline */}
+          <h1
+            className="font-display text-[3rem] sm:text-7xl md:text-[7rem] leading-[0.88] tracking-tighter mb-8 md:mb-12 animate-reveal"
+            style={{ animationDelay: "80ms" }}
+          >
+            Handcrafted<br />
+            gifts &amp;<br />
+            <span className="italic font-normal text-primary">wedding studio.</span>
           </h1>
-          <p className="max-w-sm mx-auto text-muted text-sm leading-relaxed mb-8 md:mb-10 animate-reveal text-pretty" style={{ animationDelay: "200ms" }}>
-            Handcrafted in Perinthalmanna. Shipped across India & worldwide.
+
+          {/* subtext */}
+          <p
+            className="text-sm text-muted leading-relaxed max-w-xs mx-auto text-pretty mb-8 md:mb-12 animate-reveal"
+            style={{ animationDelay: "160ms" }}
+          >
+            Handcrafted in Perinthalmanna.<br />
+            Shipped across India &amp; worldwide.
           </p>
-          <div className="animate-reveal flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center max-w-sm sm:max-w-none mx-auto" style={{ animationDelay: "300ms" }}>
+
+          {/* CTAs */}
+          <div
+            className="flex flex-col sm:flex-row gap-3 justify-center animate-reveal"
+            style={{ animationDelay: "240ms" }}
+          >
             <a
               href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-4 bg-foreground text-background px-6 sm:px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
+              className="inline-flex items-center justify-center gap-4 bg-foreground text-background px-7 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
             >
               Enquire on WhatsApp
               <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
             </a>
             <Link
               to="/catalog"
-              className="inline-flex items-center justify-center gap-4 border border-foreground/30 px-6 sm:px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:border-foreground hover:bg-surface transition-all"
+              className="inline-flex items-center justify-center gap-3 border border-foreground/30 px-7 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:border-foreground hover:bg-surface transition-all"
             >
-              View Our Creations
+              View Creations
             </Link>
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 w-full h-px bg-border flex justify-center items-center overflow-hidden">
+        {/* decorative ribbon line */}
+        <div className="absolute bottom-0 left-0 w-full h-px bg-border flex items-center overflow-hidden">
           <div className="w-48 h-px bg-primary animate-ribbon" style={{ animationDelay: "800ms" }} />
         </div>
       </header>
 
-      {/* Categories grid (8) */}
-      <section className="max-w-7xl mx-auto px-5 md:px-6 pb-16 md:pb-24">
-        <div className="text-center mb-8 md:mb-12">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">What We Create</span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 italic text-balance">Eight ways to celebrate.</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border overflow-hidden rounded-sm">
-          {categories.map((cat, i) => (
-            <Link
-              key={cat.id}
-              to="/catalog"
-              search={{ category: cat.id }}
-              className="bg-background p-4 md:p-8 group hover:bg-surface transition-colors flex flex-col"
-            >
-              <span className="font-mono text-[9px] text-muted mb-3 md:mb-6 block">
-                ({String(i + 1).padStart(2, "0")})
-              </span>
-              <div className="aspect-[4/5] overflow-hidden rounded-sm mb-3 md:mb-5">
-                <img
-                  src={cat.image}
-                  alt={cat.label}
-                  width={512}
-                  height={640}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </div>
-              <h3 className="font-display text-lg md:text-2xl mb-2 md:mb-3 italic">{cat.label}</h3>
-              <p className="text-[11px] md:text-xs text-muted leading-relaxed">{cat.blurb}</p>
-            </Link>
-          ))}
-        </div>
-        <div className="text-center mt-8 md:mt-10">
-          <a
-            href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-4 bg-foreground text-background px-7 py-3.5 rounded-full text-[11px] font-semibold uppercase tracking-widest hover:bg-primary transition-all"
-          >
-            Enquire on WhatsApp
-          </a>
-        </div>
-      </section>
-
-      {/* Moments We Captured */}
-      <section className="py-16 md:py-24 px-5 md:px-6 bg-surface/60 border-y border-border">
+      {/* ── Categories grid ──────────────────────────────────── */}
+      <section className="px-5 md:px-6 py-16 md:py-24">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-10 md:mb-14">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Beyond Gifting</span>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-4 italic text-balance">Moments We Captured.</h2>
-            <p className="text-sm text-muted mt-4 md:mt-6 max-w-xl mx-auto">From the first yes to the surprise reveal — celebration services planned, styled and filmed across India & beyond.</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-5">
-            {moments.map((m, i) => (
-              <figure key={m.title} className={`group relative overflow-hidden ${i === 0 ? "col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto" : "aspect-[3/4]"}`}>
-                <img src={m.image} alt={m.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <figcaption className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/10 to-transparent flex flex-col justify-end p-3 md:p-5">
-                  <h3 className="font-display italic text-background text-base sm:text-lg md:text-2xl leading-tight">{m.title}</h3>
-                  <p className="text-background/80 text-[11px] mt-1.5 hidden md:block">{m.blurb}</p>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-          <div className="text-center mt-8 md:mt-12">
-            <Link to="/services" className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary">
-              Explore celebration services →
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 md:mb-14">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">What We Create</span>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic text-balance">
+                Eight ways to celebrate.
+              </h2>
+            </div>
+            <Link
+              to="/catalog"
+              className="shrink-0 text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary transition-colors self-start sm:self-auto"
+            >
+              View all creations →
             </Link>
           </div>
-        </div>
-      </section>
 
-      {/* How It Works */}
-      <section className="py-16 md:py-24 px-5 md:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 md:mb-16">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">How It Works</span>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 italic">A simple, considered process.</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
-            {[
-              { t: "Share Your Idea", d: "Message us on WhatsApp with the occasion, vibe and budget." },
-              { t: "We Design", d: "We send mood, materials and a custom quote — usually within 24 hours." },
-              { t: "Approve & Confirm", d: "Approve the design, confirm with advance and we begin handcrafting." },
-              { t: "Delivery", d: "Hand-delivered in Perinthalmanna or shipped anywhere in India & worldwide on date." },
-            ].map((s, i) => (
-              <div key={s.t} className="bg-background p-6 md:p-8">
-                <span className="font-mono text-[10px] text-primary block mb-3 md:mb-4">Step 0{i + 1}</span>
-                <h3 className="font-display italic text-xl md:text-2xl mb-2 md:mb-3">{s.t}</h3>
-                <p className="text-xs text-muted leading-relaxed">{s.d}</p>
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border overflow-hidden rounded-sm">
+            {categories.map((cat, i) => (
+              <Link
+                key={cat.id}
+                to="/catalog"
+                search={{ category: cat.id }}
+                className="bg-background p-4 md:p-7 group hover:bg-surface transition-colors flex flex-col"
+              >
+                <span className="font-mono text-[9px] text-muted mb-3 md:mb-5 block">
+                  ({String(i + 1).padStart(2, "0")})
+                </span>
+                <div className="aspect-4/5 overflow-hidden rounded-sm mb-3 md:mb-4">
+                  <img
+                    src={cat.image}
+                    alt={cat.label}
+                    width={512}
+                    height={640}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </div>
+                <h3 className="font-display text-base md:text-xl mb-1.5 md:mb-2 italic">{cat.label}</h3>
+                <p className="text-[11px] text-muted leading-relaxed hidden md:block">{cat.blurb}</p>
+              </Link>
             ))}
           </div>
-          <div className="text-center mt-8 md:mt-12">
-            <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all"
-            >
-              Start your order on WhatsApp
-            </a>
-          </div>
         </div>
       </section>
 
-      {/* Credibility */}
-      <section className="py-16 md:py-24 px-5 md:px-6 bg-foreground text-background">
-        <div className="max-w-6xl mx-auto text-center">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/60">Trusted by Customers</span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 mb-10 md:mb-14 italic">Numbers that speak quietly.</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-background/10">
-            {[
-              { n: "500+", l: "Happy Customers" },
-              { n: "4 yrs", l: "Of Handcrafting" },
-              { n: "Hundreds", l: "Custom Creations" },
-              { n: "Worldwide", l: "Orders Delivered" },
-            ].map((s) => (
-              <div key={s.l} className="bg-foreground p-5 sm:p-8 md:p-10">
-                <div className="font-display text-3xl sm:text-4xl md:text-5xl text-primary italic leading-tight">{s.n}</div>
-                <div className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-background/60 mt-2 md:mt-3">{s.l}</div>
-              </div>
-            ))}
-          </div>
-          <a
-            href={site.instagramUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block mt-12 text-[10px] uppercase tracking-[0.2em] border-b border-background/30 pb-1 hover:border-background"
-          >
-            Follow {site.instagramHandle} on Instagram
-          </a>
-        </div>
-      </section>
-
-      {/* Why choose DaintyHand */}
-      <section className="py-16 md:py-24 px-5 md:px-6 bg-surface/60 border-y border-border">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 md:mb-16">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Why DaintyHand</span>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 italic">A different kind of studio.</h2>
-          </div>
+      {/* ── Why DaintyHand (horizontal scroll on mobile) ─────── */}
+      <section className="border-t border-border bg-surface/40">
+        <div className="max-w-7xl mx-auto px-5 md:px-6 py-12 md:py-20">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted block mb-8 md:mb-10">Why DaintyHand</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px bg-border border border-border rounded-sm overflow-hidden">
-            {[
-              { t: "Handcrafted with care", d: "Every ribbon, flower and detail is arranged by hand." },
-              { t: "Fully personalised", d: "Every creation is designed around your story." },
-              { t: "Wedding specialists", d: "Trusted for engagements, nikahs and celebrations." },
-              { t: "Memory makers", d: "We create experiences — not just gifts." },
-              { t: "Global Delivery", d: "Handcrafted in Kerala, delivered to your doorstep anywhere in India or abroad." },
-            ].map((f, i) => (
+            {features.map((f, i) => (
               <div key={f.t} className="bg-background p-6 md:p-8">
-                <span className="font-mono text-[9px] text-muted block mb-4">0{i + 1}</span>
-                <h3 className="font-display text-lg italic mb-3">{f.t}</h3>
+                <span className="font-mono text-[9px] text-primary block mb-4">0{i + 1}</span>
+                <h3 className="font-display text-lg italic mb-2 leading-tight">{f.t}</h3>
                 <p className="text-xs text-muted leading-relaxed">{f.d}</p>
               </div>
             ))}
@@ -261,13 +188,115 @@ function Index() {
         </div>
       </section>
 
-      {/* Gallery */}
+      {/* ── Moments gallery ──────────────────────────────────── */}
+      <section className="py-16 md:py-24 px-5 md:px-6 border-t border-border">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 md:mb-14">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Beyond Gifting</span>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic text-balance">
+                Moments we captured.
+              </h2>
+            </div>
+            <Link
+              to="/services"
+              className="shrink-0 text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary transition-colors self-start sm:self-auto"
+            >
+              Explore services →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+            {moments.map((m, i) => (
+              <figure
+                key={m.title}
+                className={`group relative overflow-hidden rounded-sm ${
+                  i === 0
+                    ? "col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto"
+                    : "aspect-3/4"
+                }`}
+              >
+                <img
+                  src={m.image}
+                  alt={m.title}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <figcaption className="absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/5 to-transparent flex flex-col justify-end p-3 md:p-5">
+                  <h3 className="font-display italic text-background text-sm sm:text-base md:text-xl leading-tight">{m.title}</h3>
+                  <p className="text-background/70 text-[11px] mt-1 hidden md:block">{m.blurb}</p>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ─────────────────────────────────────── */}
+      <section className="py-16 md:py-24 px-5 md:px-6 bg-foreground text-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-3">How It Works</span>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl italic leading-tight">
+                A simple,<br className="hidden md:block" /> considered process.
+              </h2>
+            </div>
+            <a
+              href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 inline-flex items-center gap-4 bg-primary text-background px-7 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 self-start md:self-auto"
+            >
+              Start now
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-px bg-background/10">
+            {[
+              { t: "Share your idea", d: "Message on WhatsApp with the occasion, vibe and budget." },
+              { t: "We design", d: "We send mood boards, materials and a custom quote within 24 hours." },
+              { t: "Approve & confirm", d: "Approve the design, confirm with advance, we begin handcrafting." },
+              { t: "Delivery", d: "Hand-delivered locally or shipped anywhere in India & worldwide." },
+            ].map((s, i) => (
+              <div key={s.t} className="bg-foreground p-7 md:p-10 border-border">
+                <span className="font-mono text-[10px] text-primary block mb-5">Step 0{i + 1}</span>
+                <h3 className="font-display italic text-xl md:text-2xl mb-3 leading-tight">{s.t}</h3>
+                <p className="text-xs text-background/60 leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Credibility stats ────────────────────────────────── */}
+      <section className="py-16 md:py-24 px-5 md:px-6 border-t border-border">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
+            {[
+              { n: "500+", l: "Happy Customers" },
+              { n: "4 yrs", l: "Of Handcrafting" },
+              { n: "1,000+", l: "Pieces Created" },
+              { n: "Worldwide", l: "Orders Delivered" },
+            ].map((s) => (
+              <div key={s.l} className="bg-background px-6 py-8 md:px-10 md:py-12">
+                <div className="font-display text-4xl md:text-5xl text-primary italic leading-none mb-3">{s.n}</div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted">{s.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Gallery ──────────────────────────────────────────── */}
       <section className="py-16 md:py-24 bg-foreground text-background">
         <div className="max-w-7xl mx-auto px-5 md:px-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10 md:mb-16">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/60 block mb-3">Recent Creations</span>
-              <h2 className="font-display text-3xl sm:text-4xl italic text-balance">Hampers, bouquets, shoots & more.</h2>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-3">Recent Creations</span>
+              <h2 className="font-display text-3xl sm:text-4xl italic text-balance">
+                Hampers, bouquets, shoots &amp; more.
+              </h2>
             </div>
             <a
               href={site.instagramUrl}
@@ -278,42 +307,59 @@ function Index() {
               View more on Instagram
             </a>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8">
-            <div className="space-y-3 md:space-y-4">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+            <div className="space-y-3 md:space-y-6">
               <GalleryImg img={galleryImages[0]} aspect="aspect-[4/5]" />
               <GalleryImg img={galleryImages[1]} aspect="aspect-[4/3]" />
             </div>
-            <div className="space-y-3 md:space-y-4 pt-8 md:pt-24">
+            <div className="space-y-3 md:space-y-6 pt-10 md:pt-20">
               <GalleryImg img={galleryImages[2]} aspect="aspect-[2/3]" />
               <GalleryImg img={galleryImages[3]} aspect="aspect-square" />
             </div>
-            <div className="hidden md:block space-y-4">
+            <div className="hidden md:block space-y-6">
               <GalleryImg img={galleryImages[4]} aspect="aspect-[4/3]" />
               <GalleryImg img={galleryImages[5]} aspect="aspect-[4/5]" />
             </div>
           </div>
+
           <div className="mt-8 text-center md:hidden">
-            <a href={site.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-[0.2em] border-b border-background/30 pb-1">View more on Instagram</a>
+            <a href={site.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-[0.2em] border-b border-background/30 pb-1">
+              View more on Instagram
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-16 md:py-24 px-5 md:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 md:mb-16">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Testimonials</span>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 italic">Loved by our customers.</h2>
+      {/* ── Testimonials ─────────────────────────────────────── */}
+      <section className="py-16 md:py-24 px-5 md:px-6 border-t border-border">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 md:mb-16">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Testimonials</span>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic">
+                Loved by our customers.
+              </h2>
+            </div>
+            <a
+              href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary transition-colors self-start sm:self-auto"
+            >
+              Become our next story →
+            </a>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
             {[
               { q: "DaintyHand created the most beautiful engagement hamper exactly how we imagined.", n: "Aisha & Rayan", l: "Dubai, UAE", s: "Engagement Hamper" },
               { q: "Everything was customised perfectly and delivered on time.", n: "Fathima", l: "Bengaluru", s: "Wedding Invitations" },
               { q: "Our save-the-date shoot came out beautifully — every frame felt like us.", n: "Hana & Adil", l: "Kochi", s: "Save The Date Shoot" },
               { q: "The birthday surprise setup exceeded expectations. Everyone was speechless.", n: "Saleem", l: "Perinthalmanna", s: "Birthday Surprise" },
             ].map((t) => (
-              <figure key={t.n} className="border border-border rounded-sm p-6 bg-background flex flex-col">
-                <div className="text-primary tracking-widest text-sm mb-4" aria-label="5 out of 5 stars">★★★★★</div>
+              <figure key={t.n} className="bg-background p-6 md:p-8 flex flex-col">
+                <div className="text-primary tracking-widest text-xs mb-5" aria-label="5 out of 5 stars">★★★★★</div>
                 <blockquote className="font-display italic text-base leading-relaxed mb-6 flex-1">
                   "{t.q}"
                 </blockquote>
@@ -324,19 +370,35 @@ function Index() {
               </figure>
             ))}
           </div>
-          <div className="text-center mt-12">
-            <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
-            >
-              Become our next happy story →
-            </a>
-          </div>
         </div>
       </section>
 
+      {/* ── Closing CTA ──────────────────────────────────────── */}
+      <section className="py-20 md:py-32 px-5 md:px-6 bg-foreground text-background">
+        <div className="max-w-5xl mx-auto">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-5">Ready to begin?</span>
+          <h2 className="font-display text-[2.5rem] sm:text-6xl md:text-7xl italic leading-[0.9] tracking-tighter mb-10 md:mb-14 text-balance">
+            Every gift starts with <span className="text-primary">your story.</span>
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a
+              href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-4 bg-primary text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 group"
+            >
+              Start on WhatsApp
+              <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
+            </a>
+            <Link
+              to="/catalog"
+              className="inline-flex items-center justify-center gap-4 border border-background/30 px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:border-background transition-all"
+            >
+              Browse Creations
+            </Link>
+          </div>
+        </div>
+      </section>
 
     </PageShell>
   );
@@ -344,7 +406,7 @@ function Index() {
 
 function GalleryImg({ img, aspect }: { img: (typeof galleryImages)[number]; aspect: string }) {
   return (
-    <div className={`w-full ${aspect} overflow-hidden`}>
+    <div className={`w-full ${aspect} overflow-hidden rounded-sm`}>
       <img
         src={img.src}
         alt={img.alt}

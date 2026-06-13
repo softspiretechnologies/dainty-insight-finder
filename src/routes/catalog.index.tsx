@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, products, type Category } from "@/data/products";
@@ -112,19 +113,10 @@ function CatalogPage() {
                   <h3 className="font-display text-base sm:text-xl italic leading-tight mt-1.5 hover:text-primary transition-colors">{p.name}</h3>
                 </Link>
                 <p className="text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">{p.blurb}</p>
-                <div className="flex items-center justify-between gap-2 mt-3">
+                <div className="mt-3">
                   <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary border border-primary/40 rounded-full px-2 py-0.5">
                     Customisable
                   </span>
-                  <a
-                    href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about "${p.name}".`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Enquire about ${p.name} on WhatsApp`}
-                    className="shrink-0 grid place-items-center w-9 h-9 rounded-full border border-foreground text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors"
-                  >
-                    <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
-                  </a>
                 </div>
               </div>
             </article>
