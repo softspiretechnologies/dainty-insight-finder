@@ -7,7 +7,28 @@ import {
   products as staticProducts,
 } from "@/data/products";
 import { site } from "@/lib/site";
+import { formatProdError, prodLog } from "@/lib/production-log.server";
 import type { CatalogCategory, CatalogProduct, CategoryId, SiteSettingsData } from "@/types/catalog";
+
+const staticSiteSettings = (): SiteSettingsData => ({
+  whatsappNumber: site.whatsappNumber,
+  email: site.email,
+  instagramUrl: site.instagramUrl,
+  instagramHandle: site.instagramHandle,
+  founder: site.founder,
+  location: site.location,
+});
+
+async function withDbFallback<T>(label: string, query: () => Promise<T>, fallback: () => T): Promise<T> {
+  try {
+    return await query();
+  } catch (error) {
+    prodLog("ERROR", `DB query failed — using static fallback (${label})`, {
+      error: formatProdError(error),
+    });
+    return fallback();
+  }
+}
 
 function mapCategory(row: typeof categoriesTable.$inferSelect): CatalogCategory {
   return {
@@ -37,9 +58,15 @@ export async function getCategories(): Promise<CatalogCategory[]> {
     return staticCategories.map((c) => ({ ...c }));
   }
 
-  const db = getDb();
-  const rows = await db.select().from(categoriesTable).orderBy(asc(categoriesTable.sortOrder));
-  return rows.map(mapCategory);
+  return withDbFallback(
+    "getCategories",
+    async () => {
+      const db = getDb();
+      const rows = await db.select().from(categoriesTable).orderBy(asc(categoriesTable.sortOrder));
+      return rows.map(mapCategory);
+    },
+    () => staticCategories.map((c) => ({ ...c })),
+  );
 }
 
 export async function getProducts(): Promise<CatalogProduct[]> {
@@ -47,9 +74,15 @@ export async function getProducts(): Promise<CatalogProduct[]> {
     return staticProducts.map((p) => ({ ...p }));
   }
 
-  const db = getDb();
-  const rows = await db.select().from(productsTable).orderBy(asc(productsTable.name));
-  return rows.map(mapProduct);
+  return withDbFallback(
+    "getProducts",
+    async () => {
+      const db = getDb();
+      const rows = await db.select().from(productsTable).orderBy(asc(productsTable.name));
+      return rows.map(mapProduct);
+    },
+    () => staticProducts.map((p) => ({ ...p })),
+  );
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | undefined> {
@@ -57,45 +90,41 @@ export async function getProductBySlug(slug: string): Promise<CatalogProduct | u
     return staticProducts.find((p) => p.slug === slug);
   }
 
-  const db = getDb();
-  const rows = await db.select().from(productsTable).where(eq(productsTable.slug, slug)).limit(1);
-  return rows[0] ? mapProduct(rows[0]) : undefined;
+  return withDbFallback(
+    `getProductBySlug:${slug}`,
+    async () => {
+      const db = getDb();
+      const rows = await db.select().from(productsTable).where(eq(productsTable.slug, slug)).limit(1);
+      return rows[0] ? mapProduct(rows[0]) : undefined;
+    },
+    () => staticProducts.find((p) => p.slug === slug),
+  );
 }
 
 export async function getSiteSettings(): Promise<SiteSettingsData> {
   if (!isDatabaseConfigured()) {
-    return {
-      whatsappNumber: site.whatsappNumber,
-      email: site.email,
-      instagramUrl: site.instagramUrl,
-      instagramHandle: site.instagramHandle,
-      founder: site.founder,
-      location: site.location,
-    };
+    return staticSiteSettings();
   }
 
-  const db = getDb();
-  const rows = await db.select().from(siteSettings).limit(1);
-  const row = rows[0];
-  if (!row) {
-    return {
-      whatsappNumber: site.whatsappNumber,
-      email: site.email,
-      instagramUrl: site.instagramUrl,
-      instagramHandle: site.instagramHandle,
-      founder: site.founder,
-      location: site.location,
-    };
-  }
+  return withDbFallback(
+    "getSiteSettings",
+    async () => {
+      const db = getDb();
+      const rows = await db.select().from(siteSettings).limit(1);
+      const row = rows[0];
+      if (!row) return staticSiteSettings();
 
-  return {
-    whatsappNumber: row.whatsappNumber,
-    email: row.email,
-    instagramUrl: row.instagramUrl,
-    instagramHandle: row.instagramHandle,
-    founder: row.founder,
-    location: row.location,
-  };
+      return {
+        whatsappNumber: row.whatsappNumber,
+        email: row.email,
+        instagramUrl: row.instagramUrl,
+        instagramHandle: row.instagramHandle,
+        founder: row.founder,
+        location: row.location,
+      };
+    },
+    staticSiteSettings,
+  );
 }
 
 export async function getProductCount(): Promise<number> {
@@ -103,7 +132,13 @@ export async function getProductCount(): Promise<number> {
     return staticProducts.length;
   }
 
-  const db = getDb();
-  const rows = await db.select().from(productsTable);
-  return rows.length;
+  return withDbFallback(
+    "getProductCount",
+    async () => {
+      const db = getDb();
+      const rows = await db.select().from(productsTable);
+      return rows.length;
+    },
+    () => staticProducts.length,
+  );
 }
