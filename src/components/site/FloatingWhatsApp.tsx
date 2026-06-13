@@ -34,7 +34,7 @@ const screens: Record<Screen, { messages: BotMessage[]; back?: Screen }> = {
   custom: {
     messages: [
       { text: "Every piece is made to order, fully customised around your occasion.", isBot: true },
-      { text: "Share your idea on WhatsApp — ${site.founder} will reply with mood boards, materials & a quote within 24 hours.", isBot: true },
+      { text: `Share your idea on WhatsApp — ${site.founder} will reply with mood boards, materials & a quote within 24 hours.`, isBot: true },
     ],
     back: "home",
   },
@@ -104,7 +104,7 @@ export function FloatingWhatsApp() {
               </div>
             </div>
             <button
-              onClick={() => { setOpen(false); setScreen("home"); }}
+              onClick={() => { setOpen(false); setScreen("home"); /* reset only on explicit close */ }}
               className="text-background/60 hover:text-background transition-colors"
               aria-label="Close chat"
             >
@@ -260,7 +260,7 @@ export function FloatingWhatsApp() {
 
       {/* Floating toggle button */}
       <button
-        onClick={() => { setOpen((o) => !o); setScreen("home"); }}
+        onClick={() => setOpen((o) => !o)}
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
         aria-label={open ? "Close chat" : `Chat with ${site.founder} on WhatsApp`}
         className="fixed right-4 md:right-8 md:bottom-8! z-50 grid place-items-center size-12 bg-foreground text-background rounded-full shadow-lg hover:bg-primary hover:scale-[1.02] transition-all"

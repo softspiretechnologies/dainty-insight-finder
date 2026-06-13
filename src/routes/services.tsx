@@ -17,7 +17,7 @@ export const Route = createFileRoute("/services")({
       { property: "og:title", content: "Celebration Services — DaintyHand" },
       { property: "og:description", content: "Save the date shoots, proposals, surprises, couple shoots and memory reels across India & worldwide." },
       { property: "og:url", content: siteUrl("/services") },
-      { property: "og:image", content: shootImg },
+      { property: "og:image", content: siteUrl("/og-image.jpg") },
     ],
     links: [
       { rel: "canonical", href: siteUrl("/services") },
@@ -105,7 +105,7 @@ function ServicesPage() {
         <div className="max-w-6xl mx-auto space-y-14 md:space-y-24">
           {services.map((s, i) => (
             <article key={s.title} className={`grid md:grid-cols-2 gap-6 md:gap-12 items-center ${i % 2 ? "md:[direction:rtl]" : ""}`}>
-              <div className="aspect-[4/3] overflow-hidden bg-surface md:[direction:ltr]">
+              <div className="aspect-4/3 overflow-hidden bg-surface md:[direction:ltr]">
                 <img src={s.image} alt={s.title} loading="lazy" className="w-full h-full object-cover" />
               </div>
               <div className="md:[direction:ltr]">

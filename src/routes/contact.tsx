@@ -9,6 +9,7 @@ export const Route = createFileRoute("/contact")({
       { name: "description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
       { property: "og:title", content: "Contact — DaintyHand" },
       { property: "og:description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
+      { property: "og:image", content: siteUrl("/og-image.jpg") },
     ],
     links: [
       { rel: "canonical", href: siteUrl("/contact") },

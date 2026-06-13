@@ -65,6 +65,7 @@ export const Route = createFileRoute("/custom")({
       { name: "description", content: "Start a custom hamper, bouquet, invitation, engagement gift, save-the-date shoot or birthday surprise with Nafisa on WhatsApp." },
       { property: "og:title", content: "Custom Order — DaintyHand" },
       { property: "og:description", content: "Tell us what you have in mind — we'll continue the conversation on WhatsApp." },
+      { property: "og:image", content: siteUrl("/og-image.jpg") },
     ],
     links: [
       { rel: "canonical", href: siteUrl("/custom") },
@@ -253,7 +254,7 @@ function Field({
         {label}
       </span>
       {children}
-      {error ? <p className="text-[11px] text-red-600 mt-1">{error}</p> : null}
+      {error ? <p className="text-[11px] text-destructive mt-1">{error}</p> : null}
     </label>
   );
 }

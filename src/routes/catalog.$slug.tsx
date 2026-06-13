@@ -22,8 +22,8 @@ export const Route = createFileRoute("/catalog/$slug")({
         { property: "og:title", content: `${product.name} — DaintyHand` },
         { property: "og:description", content: product.blurb },
         { property: "og:url", content: url },
-        { property: "og:image", content: product.image },
-        { name: "twitter:image", content: product.image },
+        { property: "og:image", content: siteUrl("/og-image.jpg") },
+        { name: "twitter:image", content: siteUrl("/og-image.jpg") },
       ],
       links: [{ rel: "canonical", href: url }],
       scripts: [
@@ -94,7 +94,7 @@ function ProductPage() {
           </Link>
 
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-16 items-start">
-            <div className="aspect-[4/5] overflow-hidden bg-surface">
+            <div className="aspect-4/5 overflow-hidden bg-surface">
               <img
                 src={product.image}
                 alt={product.name}
