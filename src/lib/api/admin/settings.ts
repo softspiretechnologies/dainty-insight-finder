@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { siteSettings } from "@/db/schema";
+import { settingsSchema } from "@/lib/admin-schemas";
 import { getAdminSession } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 
@@ -12,15 +12,6 @@ function requireAdmin() {
   if (!session) throw new Error("Unauthorized");
   return session;
 }
-
-const settingsSchema = z.object({
-  whatsappNumber: z.string().min(8).max(32),
-  email: z.string().email(),
-  instagramUrl: z.string().url(),
-  instagramHandle: z.string().min(1).max(64),
-  founder: z.string().min(1).max(128),
-  location: z.string().min(1).max(256),
-});
 
 export const getAdminSettings = createServerFn({ method: "GET" }).handler(async () => {
   requireAdmin();
@@ -36,10 +27,19 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
     const db = getDb();
     const rows = await db.select().from(siteSettings).limit(1);
 
+    const values = {
+      whatsappNumber: data.whatsappNumber.replace(/\D/g, ""),
+      email: data.email.trim().toLowerCase(),
+      instagramUrl: data.instagramUrl.trim(),
+      instagramHandle: data.instagramHandle.trim(),
+      founder: data.founder.trim(),
+      location: data.location.trim(),
+    };
+
     if (rows[0]) {
-      await db.update(siteSettings).set(data).where(eq(siteSettings.id, rows[0].id));
+      await db.update(siteSettings).set(values).where(eq(siteSettings.id, rows[0].id));
     } else {
-      await db.insert(siteSettings).values({ id: 1, ...data });
+      await db.insert(siteSettings).values({ id: 1, ...values });
     }
 
     clearDataCache();

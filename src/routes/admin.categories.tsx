@@ -8,10 +8,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { AdminField, FormErrorBanner, FormSuccessBanner, invalidBoxClass } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { adminCategoryFormSchema } from "@/lib/admin-schemas";
+import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { listAdminCategories, saveAdminCategory } from "@/lib/api/admin/categories";
 import { cn } from "@/lib/utils";
@@ -123,7 +125,8 @@ function CategoryForm({
   const [sortOrder, setSortOrder] = useState(String(category.sortOrder));
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [success, setSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -145,8 +148,18 @@ function CategoryForm({
     setSortOrder(String(category.sortOrder));
     setImageFile(null);
     setSuccess(false);
-    setError(null);
+    setFormError(null);
+    setFieldErrors({});
   }, [category.id, category.label, category.blurb, category.sortOrder, category.imagePath]);
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const isDirty = useMemo(
     () =>
@@ -159,17 +172,29 @@ function CategoryForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setFormError(null);
     setSuccess(false);
+
+    const validation = validateForm(adminCategoryFormSchema, {
+      label,
+      blurb,
+      sortOrder,
+    });
+
+    if (!validation.ok) {
+      setFieldErrors(validation.errors);
+      scrollToFirstField(validation.errors);
+      return;
+    }
+
+    setFieldErrors({});
+    setLoading(true);
 
     try {
       await saveAdminCategory({
         data: {
           id: category.id as CategoryId,
-          label,
-          blurb,
-          sortOrder: Number(sortOrder),
+          ...validation.data,
           existingImagePath: category.imagePath,
           image: imageFile ? await fileToUploadPayload(imageFile) : undefined,
         },
@@ -178,19 +203,21 @@ function CategoryForm({
       setSuccess(true);
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save category");
+      setFormError(err instanceof Error ? err.message : "Failed to save category");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {/* Image block */}
       <div className="space-y-3">
-        <Label>Category image</Label>
+        <p className="text-sm font-medium leading-none">
+          Category image<span className="text-destructive ml-0.5">*</span>
+        </p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
-          <div className="w-full sm:w-40 aspect-[4/5] overflow-hidden rounded-lg border border-border bg-surface shrink-0">
+          <div className={cn("w-full sm:w-40 aspect-4/5 overflow-hidden rounded-lg border bg-surface shrink-0", invalidBoxClass(fieldErrors.image))}>
             {previewSrc ? (
               <img src={previewSrc} alt={`${label} preview`} className="w-full h-full object-cover" />
             ) : (
@@ -206,6 +233,7 @@ function CategoryForm({
               onChange={(e) => {
                 setImageFile(e.target.files?.[0] ?? null);
                 setSuccess(false);
+                clearFieldError("image");
               }}
             />
             <Button type="button" variant="outline" className="w-full sm:w-auto h-11" asChild>
@@ -223,38 +251,40 @@ function CategoryForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${category.id}-label`}>Display label</Label>
+      <AdminField label="Display label" htmlFor={`${category.id}-label`} required error={fieldErrors.label}>
         <Input
           id={`${category.id}-label`}
           value={label}
           onChange={(e) => {
             setLabel(e.target.value);
             setSuccess(false);
+            clearFieldError("label");
           }}
-          required
-          className="h-11"
+          className={`h-11 ${invalidInputClass(fieldErrors.label)}`}
         />
-      </div>
+      </AdminField>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${category.id}-blurb`}>Short blurb</Label>
+      <AdminField
+        label="Short blurb"
+        htmlFor={`${category.id}-blurb`}
+        required
+        error={fieldErrors.blurb}
+        hint="Shown on the homepage category grid and catalog chips."
+      >
         <Textarea
           id={`${category.id}-blurb`}
           value={blurb}
           onChange={(e) => {
             setBlurb(e.target.value);
             setSuccess(false);
+            clearFieldError("blurb");
           }}
           rows={3}
-          required
-          className="resize-none"
+          className={cn("resize-none", invalidInputClass(fieldErrors.blurb))}
         />
-        <p className="text-xs text-muted">Shown on the homepage category grid and catalog chips.</p>
-      </div>
+      </AdminField>
 
-      <div className="space-y-2 max-w-[8rem]">
-        <Label htmlFor={`${category.id}-sort`}>Sort order</Label>
+      <AdminField label="Sort order" htmlFor={`${category.id}-sort`} required error={fieldErrors.sortOrder}>
         <Input
           id={`${category.id}-sort`}
           type="number"
@@ -263,18 +293,13 @@ function CategoryForm({
           onChange={(e) => {
             setSortOrder(e.target.value);
             setSuccess(false);
+            clearFieldError("sortOrder");
           }}
-          required
-          className="h-11"
+          className={`h-11 max-w-[8rem] ${invalidInputClass(fieldErrors.sortOrder)}`}
         />
-      </div>
+      </AdminField>
 
-      {error ? (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
-          <span className="mt-0.5 shrink-0">!</span>
-          {error}
-        </div>
-      ) : null}
+      {formError ? <FormErrorBanner message={formError} /> : null}
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1">
         <Button

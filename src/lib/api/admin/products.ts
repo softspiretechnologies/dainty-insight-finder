@@ -4,23 +4,13 @@ import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { products as productsTable } from "@/db/schema";
+import { isValidUploadPath } from "@/lib/admin-upload-path";
+import { productInputSchema } from "@/lib/admin-schemas";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
-import { imageUploadPayloadSchema } from "@/lib/admin-upload-payload";
 import { getAdminSession } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
 import type { CategoryId } from "@/types/catalog";
-
-const categoryIds = [
-  "hampers",
-  "bouquets",
-  "invitations",
-  "engagement",
-  "frames",
-  "albums",
-  "calligraphy",
-  "celebrations",
-] as const;
 
 function requireAdmin() {
   const session = getAdminSession();
@@ -35,18 +25,9 @@ function parseDetails(raw: string) {
     .filter(Boolean);
 }
 
-const productInputSchema = z.object({
-  id: z.union([z.literal("new"), z.number().int().positive()]),
-  slug: z.string().min(1).max(128),
-  name: z.string().min(1).max(256),
-  categoryId: z.enum(categoryIds),
-  blurb: z.string().min(1),
-  description: z.string().min(1),
-  details: z.string().min(1),
-  priceFrom: z.string().optional(),
-  existingImagePath: z.string().optional(),
-  image: imageUploadPayloadSchema.optional(),
-});
+function isDuplicateKeyError(error: unknown) {
+  return error instanceof Error && /duplicate|unique/i.test(error.message);
+}
 
 export const listAdminProducts = createServerFn({ method: "GET" }).handler(async () => {
   requireAdmin();
@@ -70,10 +51,17 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
 
     const id = data.id === "new" ? undefined : data.id;
 
-    let imagePath = data.existingImagePath ?? "";
+    let imagePath = "";
+    if (data.existingImagePath) {
+      if (!isValidUploadPath(data.existingImagePath, "products")) {
+        throw new Error("Invalid existing image path");
+      }
+      imagePath = data.existingImagePath;
+    }
+
     if (data.image) {
       imagePath = await saveUploadedImageFromPayload(data.image, "products");
-      if (data.existingImagePath) {
+      if (data.existingImagePath && data.existingImagePath !== imagePath) {
         await deleteUploadedImage(data.existingImagePath);
       }
     }
@@ -91,25 +79,32 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
       description: data.description,
       details: parseDetails(data.details),
       imagePath,
-      priceFrom: data.priceFrom ?? null,
+      priceFrom: data.priceFrom?.trim() || null,
     };
 
-    if (id) {
-      const existing = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
-      if (!existing[0]) throw new Error("Product not found");
-      await db.update(productsTable).set(values).where(eq(productsTable.id, id));
+    try {
+      if (id) {
+        const existing = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
+        if (!existing[0]) throw new Error("Product not found");
+        await db.update(productsTable).set(values).where(eq(productsTable.id, id));
+        clearDataCache();
+        return { id };
+      }
+
+      const result = await db.insert(productsTable).values(values);
+      const header = Array.isArray(result) ? result[0] : result;
+      const insertId = Number((header as { insertId?: number }).insertId);
       clearDataCache();
-      return { id };
+      if (insertId) return { id: insertId };
+
+      const rows = await db.select().from(productsTable).where(eq(productsTable.slug, data.slug)).limit(1);
+      return { id: rows[0]!.id };
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        throw new Error("A product with this slug already exists. Change the product name.");
+      }
+      throw error;
     }
-
-    const result = await db.insert(productsTable).values(values);
-    const header = Array.isArray(result) ? result[0] : result;
-    const insertId = Number((header as { insertId?: number }).insertId);
-    clearDataCache();
-    if (insertId) return { id: insertId };
-
-    const rows = await db.select().from(productsTable).where(eq(productsTable.slug, data.slug)).limit(1);
-    return { id: rows[0]!.id };
   });
 
 export const deleteAdminProduct = createServerFn({ method: "POST" })

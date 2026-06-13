@@ -1,10 +1,12 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
-import { Lock, AlertCircle } from "lucide-react";
+import { Lock } from "lucide-react";
 
+import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { loginSchema } from "@/lib/admin-schemas";
+import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
 import { loginAdmin } from "@/lib/api/admin/auth";
 
 export const Route = createFileRoute("/admin/login")({
@@ -15,23 +17,42 @@ function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    const validation = validateForm(loginSchema, { email, password });
+    if (!validation.ok) {
+      setFieldErrors(validation.errors);
+      scrollToFirstField(validation.errors);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
-    setError(null);
 
     try {
-      const result = await loginAdmin({ data: { email, password } });
+      const result = await loginAdmin({ data: validation.data });
       if (!result.ok) {
-        setError(result.error);
+        setFormError(result.error);
         return;
       }
       await router.navigate({ to: "/admin" });
     } catch {
-      setError("Login failed. Check database configuration.");
+      setFormError("Login failed. Check database configuration.");
     } finally {
       setLoading(false);
     }
@@ -40,7 +61,6 @@ function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm space-y-6">
-        {/* Branding */}
         <div className="text-center">
           <div className="w-12 h-12 rounded-2xl bg-foreground flex items-center justify-center mx-auto mb-5">
             <Lock className="w-5 h-5 text-background" />
@@ -49,45 +69,38 @@ function AdminLoginPage() {
           <h1 className="font-display text-3xl italic mt-1.5">Admin portal</h1>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="border border-border rounded-2xl p-6 sm:p-7 bg-surface/30 space-y-4"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+        <form onSubmit={handleSubmit} noValidate className="border border-border rounded-2xl p-6 sm:p-7 bg-surface/30 space-y-4">
+          <AdminField label="Email address" htmlFor="email" required error={fieldErrors.email}>
             <Input
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError("email");
+              }}
               placeholder="admin@daintyhand.in"
-              required
               autoComplete="email"
               autoFocus
-              className="h-11"
+              className={`h-11 ${invalidInputClass(fieldErrors.email)}`}
             />
-          </div>
+          </AdminField>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+          <AdminField label="Password" htmlFor="password" required error={fieldErrors.password}>
             <Input
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearFieldError("password");
+              }}
               autoComplete="current-password"
-              className="h-11"
+              className={`h-11 ${invalidInputClass(fieldErrors.password)}`}
             />
-          </div>
+          </AdminField>
 
-          {error && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              {error}
-            </div>
-          )}
+          {formError ? <FormErrorBanner message={formError} /> : null}
 
           <Button type="submit" className="w-full h-11" disabled={loading}>
             {loading ? (

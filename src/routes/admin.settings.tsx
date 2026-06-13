@@ -1,10 +1,12 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
-import { MessageCircle, Mail, Instagram, User, MapPin, Check, AlertCircle } from "lucide-react";
+import { MessageCircle, Mail, Instagram, User, MapPin, Check } from "lucide-react";
 
+import { AdminField, FormErrorBanner, FormSuccessBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { adminSettingsFormSchema } from "@/lib/admin-schemas";
+import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
 import { getAdminSettings, saveAdminSettings } from "@/lib/api/admin/settings";
 
 export const Route = createFileRoute("/admin/settings")({
@@ -43,30 +45,41 @@ function AdminSettingsPage() {
   const [founder, setFounder] = useState(settings?.founder ?? "");
   const [location, setLocation] = useState(settings?.location ?? "");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [success, setSuccess] = useState(false);
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setFormError(null);
     setSuccess(false);
 
+    const payload = { whatsappNumber, email, instagramUrl, instagramHandle, founder, location };
+    const validation = validateForm(adminSettingsFormSchema, payload);
+    if (!validation.ok) {
+      setFieldErrors(validation.errors);
+      scrollToFirstField(validation.errors);
+      return;
+    }
+
+    setFieldErrors({});
+    setLoading(true);
+
     try {
-      await saveAdminSettings({
-        data: {
-          whatsappNumber,
-          email,
-          instagramUrl,
-          instagramHandle,
-          founder,
-          location,
-        },
-      });
+      await saveAdminSettings({ data: validation.data });
       await router.invalidate();
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save settings");
+      setFormError(err instanceof Error ? err.message : "Failed to save settings");
     } finally {
       setLoading(false);
     }
@@ -74,125 +87,128 @@ function AdminSettingsPage() {
 
   return (
     <div className="max-w-xl space-y-6 md:space-y-8">
-      {/* Header */}
       <div>
         <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Site settings</h1>
         <p className="text-sm text-muted mt-1.5">Contact details used across all public pages.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-
-        {/* Contact channels */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
         <div className="border border-border rounded-xl p-4 sm:p-5 space-y-5 bg-surface/20">
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Contact channels</p>
 
           <FieldGroup icon={MessageCircle}>
-            <div className="space-y-2">
-              <Label htmlFor="whatsappNumber">WhatsApp number</Label>
+            <AdminField
+              label="WhatsApp number"
+              htmlFor="whatsappNumber"
+              required
+              error={fieldErrors.whatsappNumber}
+              hint="Country code + number, digits only (e.g. 919876543210)."
+            >
               <Input
                 id="whatsappNumber"
                 value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
+                onChange={(e) => {
+                  setWhatsappNumber(e.target.value);
+                  clearFieldError("whatsappNumber");
+                }}
                 placeholder="919999999999"
-                required
-                className="h-11 font-mono"
+                inputMode="numeric"
+                className={`h-11 font-mono ${invalidInputClass(fieldErrors.whatsappNumber)}`}
               />
-              <p className="text-xs text-muted">Country code + number, digits only (e.g. 919876543210).</p>
-            </div>
+            </AdminField>
           </FieldGroup>
 
           <FieldGroup icon={Mail}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <AdminField label="Email" htmlFor="email" required error={fieldErrors.email}>
               <Input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  clearFieldError("email");
+                }}
                 placeholder="hello@daintyhand.in"
-                required
-                className="h-11"
+                className={`h-11 ${invalidInputClass(fieldErrors.email)}`}
               />
-            </div>
+            </AdminField>
           </FieldGroup>
 
           <FieldGroup icon={Instagram}>
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-end">
-              <div className="space-y-2">
-                <Label htmlFor="instagramUrl">Instagram URL</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+              <AdminField label="Instagram URL" htmlFor="instagramUrl" required error={fieldErrors.instagramUrl}>
                 <Input
                   id="instagramUrl"
                   type="url"
                   value={instagramUrl}
-                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  onChange={(e) => {
+                    setInstagramUrl(e.target.value);
+                    clearFieldError("instagramUrl");
+                  }}
                   placeholder="https://www.instagram.com/dainty.handd/"
-                  required
-                  className="h-11"
+                  className={`h-11 ${invalidInputClass(fieldErrors.instagramUrl)}`}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="instagramHandle">Handle</Label>
+              </AdminField>
+              <AdminField label="Handle" htmlFor="instagramHandle" required error={fieldErrors.instagramHandle}>
                 <Input
                   id="instagramHandle"
                   value={instagramHandle}
-                  onChange={(e) => setInstagramHandle(e.target.value)}
+                  onChange={(e) => {
+                    setInstagramHandle(e.target.value);
+                    clearFieldError("instagramHandle");
+                  }}
                   placeholder="@dainty.handd"
-                  required
-                  className="h-11 w-full sm:w-36"
+                  className={`h-11 w-full sm:w-36 ${invalidInputClass(fieldErrors.instagramHandle)}`}
                 />
-              </div>
+              </AdminField>
             </div>
           </FieldGroup>
         </div>
 
-        {/* Studio info */}
         <div className="border border-border rounded-xl p-4 sm:p-5 space-y-5 bg-surface/20">
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Studio info</p>
 
           <FieldGroup icon={User}>
-            <div className="space-y-2">
-              <Label htmlFor="founder">Founder name</Label>
+            <AdminField
+              label="Founder name"
+              htmlFor="founder"
+              required
+              error={fieldErrors.founder}
+              hint="Used in WhatsApp greetings and site copy."
+            >
               <Input
                 id="founder"
                 value={founder}
-                onChange={(e) => setFounder(e.target.value)}
+                onChange={(e) => {
+                  setFounder(e.target.value);
+                  clearFieldError("founder");
+                }}
                 placeholder="Nafisa"
-                required
-                className="h-11"
+                className={`h-11 ${invalidInputClass(fieldErrors.founder)}`}
               />
-              <p className="text-xs text-muted">Used in WhatsApp greetings and site copy.</p>
-            </div>
+            </AdminField>
           </FieldGroup>
 
           <FieldGroup icon={MapPin}>
-            <div className="space-y-2">
-              <Label htmlFor="location">Studio location</Label>
+            <AdminField label="Studio location" htmlFor="location" required error={fieldErrors.location}>
               <Input
                 id="location"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  clearFieldError("location");
+                }}
                 placeholder="Perinthalmanna, Malappuram, Kerala"
-                required
-                className="h-11"
+                className={`h-11 ${invalidInputClass(fieldErrors.location)}`}
               />
-            </div>
+            </AdminField>
           </FieldGroup>
         </div>
 
-        {/* Error / success */}
-        {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            {error}
-          </div>
-        )}
-
-        {success && !error && (
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            <Check className="w-4 h-4 shrink-0" />
-            Settings saved — changes are live across the site.
-          </div>
-        )}
+        {formError ? <FormErrorBanner message={formError} /> : null}
+        {success && !formError ? (
+          <FormSuccessBanner message="Settings saved — changes are live across the site." />
+        ) : null}
 
         <Button type="submit" disabled={loading} className="w-full sm:w-auto h-11 min-w-[160px]">
           {loading ? (

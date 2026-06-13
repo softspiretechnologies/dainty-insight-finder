@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { getAdminSession } from "@/lib/auth.server";
 import {
   getCategories,
   getProductBySlug,
@@ -8,6 +9,12 @@ import {
   getProducts,
   getSiteSettings,
 } from "@/lib/data.server";
+
+function requireAdmin() {
+  const session = getAdminSession();
+  if (!session) throw new Error("Unauthorized");
+  return session;
+}
 
 export const getRootPageData = createServerFn({ method: "GET" }).handler(async () => {
   const [categories, siteSettings] = await Promise.all([getCategories(), getSiteSettings()]);
@@ -22,6 +29,9 @@ export const getProductBySlugData = createServerFn({ method: "GET" })
 
 export const getSitemapProducts = createServerFn({ method: "GET" }).handler(async () => getProducts());
 
-export const getAdminDashboardData = createServerFn({ method: "GET" }).handler(async () => ({
-  productCount: await getProductCount(),
-}));
+export const getAdminDashboardData = createServerFn({ method: "GET" }).handler(async () => {
+  requireAdmin();
+  return {
+    productCount: await getProductCount(),
+  };
+});

@@ -1,12 +1,7 @@
-import { z } from "zod";
+import type { ImageUploadPayload } from "@/lib/admin-schemas";
 
-export const imageUploadPayloadSchema = z.object({
-  name: z.string().min(1),
-  type: z.enum(["image/jpeg", "image/png", "image/webp"]),
-  data: z.string().min(1),
-});
-
-export type ImageUploadPayload = z.infer<typeof imageUploadPayloadSchema>;
+export type { ImageUploadPayload } from "@/lib/admin-schemas";
+export { imageUploadPayloadSchema } from "@/lib/admin-schemas";
 
 export async function fileToUploadPayload(file: File): Promise<ImageUploadPayload> {
   const type = file.type;

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FormErrorBanner } from "@/components/admin/AdminField";
 import { deleteAdminProduct, listAdminProducts } from "@/lib/api/admin/products";
 
 export const Route = createFileRoute("/admin/products/")({
@@ -18,6 +19,7 @@ function AdminProductsPage() {
   const { products } = Route.useLoaderData();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -34,9 +36,12 @@ function AdminProductsPage() {
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
     setDeletingId(id);
+    setDeleteError(null);
     try {
       await deleteAdminProduct({ data: { id } });
       await router.invalidate();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete product");
     } finally {
       setDeletingId(null);
     }
@@ -59,6 +64,8 @@ function AdminProductsPage() {
       </div>
 
       {/* Search */}
+      {deleteError ? <FormErrorBanner message={deleteError} /> : null}
+
       {products.length > 0 && (
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />

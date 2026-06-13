@@ -57,6 +57,20 @@ export function resolveUploadFile(relativePath: string) {
   return null;
 }
 
+function validateImageBuffer(buffer: Buffer, mime: string) {
+  if (mime === "image/jpeg" && buffer[0] === 0xff && buffer[1] === 0xd8) return;
+  if (mime === "image/png" && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return;
+  if (
+    mime === "image/webp" &&
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return;
+  }
+  throw new Error("File content does not match the declared image type");
+}
+
 export async function saveUploadedImageFromPayload(
   payload: { name: string; type: string; data: string },
   subdir: "products" | "categories",
@@ -69,6 +83,7 @@ export async function saveUploadedImageFromPayload(
   if (buffer.length > MAX_BYTES) {
     throw new Error("Image must be 5 MB or smaller");
   }
+  validateImageBuffer(buffer, payload.type);
 
   const ext = extensionForMime(payload.type) || path.extname(payload.name) || ".jpg";
   const base = sanitizeFilename(path.basename(payload.name, path.extname(payload.name))) || "image";
