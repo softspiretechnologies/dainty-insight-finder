@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, products, type Category } from "@/data/products";
 import { site, whatsappLink } from "@/lib/site";
