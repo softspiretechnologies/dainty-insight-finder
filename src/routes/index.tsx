@@ -279,9 +279,13 @@ function Index() {
               { n: "1,000+", l: "Pieces Created" },
               { n: "Worldwide", l: "Orders Delivered" },
             ].map((s) => (
-              <div key={s.l} className="bg-background px-6 py-8 md:px-10 md:py-12">
-                <div className="font-display text-4xl md:text-5xl text-primary italic leading-none mb-3">{s.n}</div>
-                <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted">{s.l}</div>
+              <div key={s.l} className="bg-background min-w-0 px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-12">
+                <div className="font-display text-2xl sm:text-3xl md:text-5xl text-primary italic leading-none mb-2 md:mb-3 wrap-break-word">
+                  {s.n}
+                </div>
+                <div className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-muted leading-snug">
+                  {s.l}
+                </div>
               </div>
             ))}
           </div>
