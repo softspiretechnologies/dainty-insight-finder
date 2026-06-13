@@ -111,11 +111,6 @@ function ProductPage() {
               <h1 className="font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-3 mb-5 md:mb-6 leading-[0.95] text-balance">
                 {product.name}
               </h1>
-              {product.priceFrom ? (
-                <p className="font-mono text-[11px] uppercase tracking-widest text-primary mb-6 md:mb-8">
-                  Starting from {product.priceFrom}
-                </p>
-              ) : null}
               <p className="text-sm text-muted leading-relaxed mb-8 md:mb-10 text-pretty">
                 {product.description}
               </p>
