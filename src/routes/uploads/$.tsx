@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { getUploadsRoot } from "@/lib/uploads.server";
+import { resolveUploadFile } from "@/lib/uploads.server";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -24,10 +24,8 @@ export const Route = createFileRoute("/uploads/$")({
           return new Response("Not found", { status: 404 });
         }
 
-        const root = getUploadsRoot();
-        const filePath = path.join(root, relative);
-        const resolvedRoot = path.resolve(root);
-        if (!path.resolve(filePath).startsWith(resolvedRoot + path.sep)) {
+        const filePath = resolveUploadFile(relative);
+        if (!filePath) {
           return new Response("Not found", { status: 404 });
         }
 

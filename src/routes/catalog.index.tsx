@@ -5,7 +5,8 @@ import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
 import { categories as staticCategories, type Category } from "@/data/products";
 import { getCatalogProducts } from "@/lib/api/catalog";
-import { site, siteUrl, whatsappLink } from "@/lib/site";
+import { site, siteUrl } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
 
 const PAGE_SIZE = 12;
 
@@ -38,6 +39,7 @@ type Filter = Category | "all";
 
 function CatalogPage() {
   const { categories } = useRouteContext({ from: "__root__" });
+  const { waLink, founder } = useSiteContact();
   const products = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -171,10 +173,10 @@ function CatalogPage() {
         <div className="max-w-3xl mx-auto text-center border-t border-border pt-12 md:pt-16">
           <h2 className="font-display text-2xl md:text-3xl italic mb-4">Don't see what you want?</h2>
           <p className="text-sm text-muted mb-8 leading-relaxed">
-            Almost everything is made-to-order. Tell {site.founder} what you have in mind.
+            Almost everything is made-to-order. Tell {founder} what you have in mind.
           </p>
           <a
-            href={whatsappLink(`Hi ${site.founder}, I'd like a custom piece — `)}
+            href={waLink(`Hi ${founder}, I'd like a custom piece — `)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"

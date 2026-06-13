@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, MessageCircle, ChevronRight, ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { site, whatsappLink } from "@/lib/site";
+import { site, whatsappLink, resolveWhatsAppNumber } from "@/lib/site";
 import type { CatalogCategory, SiteSettingsData } from "@/types/catalog";
 
 /* ─── conversation tree ─────────────────────────────────────── */
@@ -76,7 +76,7 @@ export function FloatingWhatsApp({
 }) {
   const founder = siteSettings.founder || site.founder;
   const waLink = (message?: string) =>
-    whatsappLink(message, siteSettings.whatsappNumber || site.whatsappNumber);
+    whatsappLink(message, resolveWhatsAppNumber(siteSettings.whatsappNumber));
   const [open, setOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>("home");
   const bodyRef = useRef<HTMLDivElement>(null);

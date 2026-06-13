@@ -7,19 +7,27 @@ import { getServerConfig } from "@/lib/config.server";
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 5 * 1024 * 1024;
 
-function uploadsRoot() {
+function uploadsWriteRoot() {
   const { uploadsDir } = getServerConfig();
   if (uploadsDir) return uploadsDir;
+  return path.join(process.cwd(), "..", "uploads");
+}
 
+function uploadsReadRoots() {
   const cwd = process.cwd();
-  const candidates = [
+  const roots = [
+    uploadsWriteRoot(),
     path.join(cwd, "dist", "public", "uploads"),
     path.join(cwd, "public", "uploads"),
   ];
-  for (const dir of candidates) {
-    if (existsSync(dir)) return dir;
-  }
-  return candidates[1];
+
+  const seen = new Set<string>();
+  return roots.filter((dir) => {
+    const resolved = path.resolve(dir);
+    if (seen.has(resolved)) return false;
+    seen.add(resolved);
+    return true;
+  });
 }
 
 function sanitizeFilename(name: string) {
@@ -38,6 +46,17 @@ function extensionForMime(mime: string) {
   return "";
 }
 
+export function resolveUploadFile(relativePath: string) {
+  const relative = relativePath.replace(/^\/+/, "");
+  for (const root of uploadsReadRoots()) {
+    const filePath = path.join(root, relative);
+    const resolvedRoot = path.resolve(root);
+    if (!path.resolve(filePath).startsWith(resolvedRoot + path.sep)) continue;
+    if (existsSync(filePath)) return filePath;
+  }
+  return null;
+}
+
 export async function saveUploadedImageFromPayload(
   payload: { name: string; type: string; data: string },
   subdir: "products" | "categories",
@@ -54,7 +73,7 @@ export async function saveUploadedImageFromPayload(
   const ext = extensionForMime(payload.type) || path.extname(payload.name) || ".jpg";
   const base = sanitizeFilename(path.basename(payload.name, path.extname(payload.name))) || "image";
   const filename = `${base}-${Date.now()}${ext}`;
-  const dir = path.join(uploadsRoot(), subdir);
+  const dir = path.join(uploadsWriteRoot(), subdir);
   await mkdir(dir, { recursive: true });
 
   const fullPath = path.join(dir, filename);
@@ -67,15 +86,16 @@ export async function deleteUploadedImage(imagePath: string | null | undefined) 
   if (!imagePath || !imagePath.startsWith("/uploads/")) return;
 
   const relative = imagePath.replace(/^\/uploads\//, "");
-  const fullPath = path.join(uploadsRoot(), relative);
+  const filePath = resolveUploadFile(relative);
+  if (!filePath) return;
 
   try {
-    await unlink(fullPath);
+    await unlink(filePath);
   } catch {
     // ignore missing files
   }
 }
 
 export function getUploadsRoot() {
-  return uploadsRoot();
+  return uploadsWriteRoot();
 }

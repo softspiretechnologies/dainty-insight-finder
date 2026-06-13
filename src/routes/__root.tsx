@@ -73,7 +73,10 @@ export const Route = createRootRouteWithContext<{
   categories: CatalogCategory[];
   siteSettings: SiteSettingsData;
 }>()({
-  beforeLoad: async () => getRootPageData(),
+  beforeLoad: async () => {
+    const { categories, siteSettings } = await getRootPageData();
+    return { categories, siteSettings };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },

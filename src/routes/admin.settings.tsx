@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/admin/settings")({
 
 function AdminSettingsPage() {
   const { settings } = Route.useLoaderData();
+  const router = useRouter();
 
   const [whatsappNumber, setWhatsappNumber] = useState(settings?.whatsappNumber ?? "");
   const [email, setEmail] = useState(settings?.email ?? "");
@@ -44,6 +45,7 @@ function AdminSettingsPage() {
           location,
         },
       });
+      await router.invalidate();
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save settings");

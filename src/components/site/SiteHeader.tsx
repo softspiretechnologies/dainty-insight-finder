@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { site, whatsappLink } from "@/lib/site";
+import { site } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
@@ -13,6 +14,7 @@ const navItems = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const { waLink, founder } = useSiteContact();
 
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -37,7 +39,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-4">
           <a
-            href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
+            href={waLink(`Hi ${founder}, I'd like to enquire about a custom order.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden md:inline-flex text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary transition-colors"
@@ -70,7 +72,7 @@ export function SiteHeader() {
                   </Link>
                 ))}
                 <a
-                  href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
+                  href={waLink(`Hi ${founder}, I'd like to enquire about a custom order.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm uppercase tracking-[0.2em] font-semibold text-primary hover:text-foreground transition-colors"

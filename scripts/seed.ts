@@ -8,18 +8,22 @@ import { categories, products, siteSettings, adminUsers } from "../src/db/schema
 import { seedCategories, seedProducts } from "../src/data/catalog-seed";
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
 import { site } from "../src/lib/site";
+import { allUploadTargets } from "./lib/uploads-path";
 
-const ROOT = process.cwd();
-const ASSETS_DIR = path.join(ROOT, "src/assets");
-const UPLOADS_DIR = path.join(ROOT, "public/uploads");
+const ASSETS_DIR = path.join(process.cwd(), "src/assets");
+const UPLOAD_TARGETS = allUploadTargets();
 
 async function copyAssetToUploads(assetFile: string, subdir: string, destName: string) {
   const src = path.join(ASSETS_DIR, assetFile);
-  const destDir = path.join(UPLOADS_DIR, subdir);
-  await mkdir(destDir, { recursive: true });
-  const dest = path.join(destDir, destName);
-  await copyFile(src, dest);
-  return `/uploads/${subdir}/${destName}`;
+  const relativePath = `/uploads/${subdir}/${destName}`;
+
+  for (const uploadsRoot of UPLOAD_TARGETS) {
+    const destDir = path.join(uploadsRoot, subdir);
+    await mkdir(destDir, { recursive: true });
+    await copyFile(src, path.join(destDir, destName));
+  }
+
+  return relativePath;
 }
 
 async function main() {
@@ -89,7 +93,7 @@ async function main() {
   console.log("Seeding site settings...");
   const settingsRows = await db.select().from(siteSettings).limit(1);
   const settingsValues = {
-    whatsappNumber: site.whatsappNumber,
+    whatsappNumber: settingsRows[0]?.whatsappNumber || site.whatsappNumber,
     email: site.email,
     instagramUrl: site.instagramUrl,
     instagramHandle: site.instagramHandle,

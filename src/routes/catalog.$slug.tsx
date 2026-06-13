@@ -1,7 +1,9 @@
 import { createFileRoute, Link, notFound, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { getProductBySlugData } from "@/lib/api/catalog";
-import { site, siteUrl, whatsappLink } from "@/lib/site";
+import { normalizeProductDetails } from "@/lib/product-details";
+import { site, siteUrl } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
 
 export const Route = createFileRoute("/catalog/$slug")({
   loader: async ({ params }) => {
@@ -81,7 +83,9 @@ export const Route = createFileRoute("/catalog/$slug")({
 function ProductPage() {
   const { product } = Route.useLoaderData();
   const { categories } = useRouteContext({ from: "__root__" });
+  const { waLink, founder } = useSiteContact();
   const category = categories.find((c) => c.id === product.category);
+  const details = normalizeProductDetails(product.details);
 
   return (
     <PageShell>
@@ -117,7 +121,7 @@ function ProductPage() {
               </p>
 
               <ul className="space-y-3 mb-8 md:mb-12 border-t border-border pt-5 md:pt-6">
-                {(product.details as string[]).map((d: string) => (
+                {details.map((d) => (
                   <li key={d} className="flex gap-3 text-sm">
                     <span className="font-mono text-[10px] text-muted pt-1">·</span>
                     <span>{d}</span>
@@ -140,8 +144,8 @@ function ProductPage() {
               </div>
 
               <a
-                href={whatsappLink(
-                  `Hi ${site.founder}, I'd like to request the "${product.name}". Could we discuss customisation?`,
+                href={waLink(
+                  `Hi ${founder}, I'd like to request the "${product.name}". Could we discuss customisation?`,
                 )}
                 target="_blank"
                 rel="noopener noreferrer"

@@ -7,6 +7,7 @@ import {
   products as staticProducts,
 } from "@/data/products";
 import { getCached } from "@/lib/cache.server";
+import { normalizeProductDetails } from "@/lib/product-details";
 import { site } from "@/lib/site";
 import type { CatalogCategory, CatalogProduct, CategoryId, SiteSettingsData } from "@/types/catalog";
 
@@ -46,7 +47,7 @@ function mapProduct(row: typeof productsTable.$inferSelect): CatalogProduct {
     category: row.categoryId as CategoryId,
     blurb: row.blurb,
     description: row.description,
-    details: row.details,
+    details: normalizeProductDetails(row.details),
     image: row.imagePath,
     priceFrom: row.priceFrom ?? undefined,
   };

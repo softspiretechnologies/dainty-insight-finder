@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { galleryImages } from "@/data/products";
-import { site, siteUrl, whatsappLink } from "@/lib/site";
+import { site, siteUrl, formatTelephone } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
+import { getRootPageData } from "@/lib/api/catalog";
 import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
 import momentBirthday from "@/assets/moment-birthday.jpg";
 import momentProposal from "@/assets/moment-proposal.jpg";
@@ -9,7 +11,11 @@ import momentCouple from "@/assets/moment-couple.jpg";
 import momentReel from "@/assets/moment-reel.jpg";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+  loader: async () => {
+    const { siteSettings } = await getRootPageData();
+    return { siteSettings };
+  },
+  head: ({ loaderData }) => ({
     meta: [
       { title: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
       { name: "description", content: "Custom hampers, nikah invitations, save-the-date shoots, proposal setups & memory reels — handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide." },
@@ -34,13 +40,13 @@ export const Route = createFileRoute("/")({
           description: "Handcrafted gifts, wedding essentials and celebration studio based in Kerala — shipping across India & worldwide.",
           image: siteUrl("/og-image.jpg"),
           url: siteUrl("/"),
-          telephone: "+91-9999999999",
-          email: "hello@daintyhand.in",
+          telephone: formatTelephone(loaderData?.siteSettings.whatsappNumber ?? ""),
+          email: loaderData?.siteSettings.email ?? site.email,
           address: { "@type": "PostalAddress", addressLocality: "Perinthalmanna", addressRegion: "Kerala", addressCountry: "IN" },
           areaServed: "India & Worldwide",
           openingHours: "Mo-Sa 10:00-19:00",
           sameAs: ["https://www.instagram.com/dainty.handd/"],
-          founder: { "@type": "Person", name: "Nafisa" },
+          founder: { "@type": "Person", name: loaderData?.siteSettings.founder ?? site.founder },
         }),
       },
     ],
@@ -66,6 +72,7 @@ const features = [
 
 function Index() {
   const { categories } = useRouteContext({ from: "__root__" });
+  const { waLink, founder } = useSiteContact();
 
   return (
     <PageShell>
@@ -104,7 +111,7 @@ function Index() {
             style={{ animationDelay: "240ms" }}
           >
             <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
+              href={waLink(`Hi ${founder}, I'd like to enquire about a custom order.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-4 bg-foreground text-background px-7 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
@@ -245,7 +252,7 @@ function Index() {
               </h2>
             </div>
             <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
+              href={waLink(`Hi ${founder}, I'd like to start a custom order.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 inline-flex items-center gap-4 bg-primary text-background px-7 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 self-start md:self-auto"
@@ -348,7 +355,7 @@ function Index() {
               </h2>
             </div>
             <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about a custom order.`)}
+              href={waLink(`Hi ${founder}, I'd like to enquire about a custom order.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary transition-colors self-start sm:self-auto"
@@ -388,7 +395,7 @@ function Index() {
           </h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
+              href={waLink(`Hi ${founder}, I'd like to start a custom order.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-4 bg-primary text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 group"

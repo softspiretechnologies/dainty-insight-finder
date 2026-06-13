@@ -8,20 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { getAdminProduct, saveAdminProduct } from "@/lib/api/admin/products";
 import { listAdminCategories } from "@/lib/api/admin/categories";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
+import { normalizeProductDetails } from "@/lib/product-details";
 import type { CategoryId } from "@/types/catalog";
-
-function normalizeDetails(details: unknown): string[] {
-  if (Array.isArray(details)) return details.map(String);
-  if (typeof details === "string") {
-    try {
-      const parsed = JSON.parse(details) as unknown;
-      if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {
-      return details ? [details] : [];
-    }
-  }
-  return [];
-}
 
 export const Route = createFileRoute("/admin/products/$productId")({
   loader: async ({ params }) => {
@@ -47,7 +35,7 @@ function AdminProductEditPage() {
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? "hampers");
   const [blurb, setBlurb] = useState(product?.blurb ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
-  const [details, setDetails] = useState(normalizeDetails(product?.details).join("\n"));
+  const [details, setDetails] = useState(normalizeProductDetails(product?.details).join("\n"));
   const [priceFrom, setPriceFrom] = useState(product?.priceFrom ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);

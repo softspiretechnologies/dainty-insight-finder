@@ -2,26 +2,29 @@ import { copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
+import { allUploadTargets } from "./lib/uploads-path";
 
-const ROOT = process.cwd();
-const ASSETS_DIR = path.join(ROOT, "src/assets");
-const UPLOADS_DIR = path.join(ROOT, "public/uploads");
+const ASSETS_DIR = path.join(process.cwd(), "src/assets");
 
-async function copyAsset(assetFile: string, subdir: string, destName: string) {
+async function copyAsset(targetRoot: string, assetFile: string, subdir: string, destName: string) {
   const src = path.join(ASSETS_DIR, assetFile);
-  const destDir = path.join(UPLOADS_DIR, subdir);
+  const destDir = path.join(targetRoot, subdir);
   await mkdir(destDir, { recursive: true });
   await copyFile(src, path.join(destDir, destName));
 }
 
 async function main() {
-  for (const [id, asset] of Object.entries(categoryImageFiles)) {
-    await copyAsset(asset, "categories", `${id}.jpg`);
+  const targets = allUploadTargets();
+
+  for (const targetRoot of targets) {
+    for (const [id, asset] of Object.entries(categoryImageFiles)) {
+      await copyAsset(targetRoot, asset, "categories", `${id}.jpg`);
+    }
+    for (const [slug, asset] of Object.entries(productImageFiles)) {
+      await copyAsset(targetRoot, asset, "products", `${slug}.jpg`);
+    }
+    console.log(`Prepared uploads at ${targetRoot}`);
   }
-  for (const [slug, asset] of Object.entries(productImageFiles)) {
-    await copyAsset(asset, "products", `${slug}.jpg`);
-  }
-  console.log("Prepared public/uploads from src/assets");
 }
 
 main().catch((error) => {

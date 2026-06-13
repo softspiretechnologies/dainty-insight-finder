@@ -3,7 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
-import { site, siteUrl, whatsappLink } from "@/lib/site";
+import { site, siteUrl } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
 
 const serviceOptions = [
   "Hamper",
@@ -75,6 +76,7 @@ export const Route = createFileRoute("/custom")({
 });
 
 function CustomPage() {
+  const { waLink, founder } = useSiteContact();
   const {
     register,
     handleSubmit,
@@ -96,7 +98,7 @@ function CustomPage() {
 
   function buildMessage(data: CustomOrderForm) {
     const lines = [
-      `Hi ${site.founder}, I'd like to start a custom order.`,
+      `Hi ${founder}, I'd like to start a custom order.`,
       "",
       `Name: ${data.name}`,
       `Phone / WhatsApp: ${data.phone}`,
@@ -112,7 +114,7 @@ function CustomPage() {
   }
 
   function onSubmit(data: CustomOrderForm) {
-    const url = whatsappLink(buildMessage(data));
+    const url = waLink(buildMessage(data));
     window.open(url, "_blank", "noopener,noreferrer");
   }
 

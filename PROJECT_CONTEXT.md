@@ -161,8 +161,8 @@ Uploaded images live on disk at `public/uploads/` (paths like `/uploads/products
 | `VITE_SITE_URL` | Canonical base URL (client + server) |
 | `DATABASE_URL` | MySQL connection string |
 | `ADMIN_SESSION_SECRET` | Signs admin session cookie |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Used once by `db:seed` to create admin user |
-| `UPLOADS_DIR` | Optional override for upload storage path |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Used by `db:seed` to create/update admin user |
+| `UPLOADS_DIR` | Persistent upload path (default on Hostinger: `../uploads` beside `nodejs/`) |
 
 Server config pattern in `src/lib/config.server.ts` reads `process.env` inside functions.
 
@@ -181,7 +181,7 @@ Package manager: **npm** (`package-lock.json`).
 | `npm run format` | Prettier format all files |
 | `npm run db:generate` | Generate Drizzle SQL migrations |
 | `npm run db:migrate` | Apply migrations to MySQL |
-| `npm run db:seed` | Seed DB + copy images to `public/uploads/` |
+| `npm run db:seed` | Seed DB + copy images to `public/uploads/` and persistent uploads dir |
 | `npm run db:studio` | Drizzle Studio (optional) |
 
 > If using npm and you hit peer dependency errors: `npm install --legacy-peer-deps`
@@ -295,10 +295,10 @@ getServerConfig()                // Server-only env reads (per-request)
 8. **SEO is a priority** — preserve `head()` meta, canonical URLs, JSON-LD, and `sitemap[.]xml.ts` when adding routes. Always use `siteUrl()` for absolute URLs in meta — never use local asset import paths directly.
 9. **Deployment target** is Lovable/Cloudflare Workers (assumed from Nitro config). Use `.server.ts` for secrets; never `import.meta.env` for private keys.
 10. **No tests exist** — add a test runner if testing is requested.
-11. **Admin portal exists** at `/admin` — bcrypt auth, MySQL CRUD, file uploads to `public/uploads/`. No customer accounts or checkout.
+11. **Admin portal exists** at `/admin` — bcrypt auth, MySQL CRUD, file uploads to persistent `../uploads` (or `UPLOADS_DIR`). No customer accounts or checkout.
 12. **Canonical base URL** configured via `VITE_SITE_URL` env var in `src/lib/site.ts`. Defaults to `https://dainty-insight-finder.lovable.app`. Update when deploying to a custom domain.
 13. **`/about` page has been deleted** — do not recreate it. "Our Story" is removed from the nav.
 14. **FloatingWhatsApp is a chat bot**, not a simple link button. It has a guided conversation tree (screens: home, browse, custom, howItWorks, delivery). Add new screens there for new topics. Screen resets to "home" only when the user explicitly closes (×), not when minimized.
 15. **og:image for all pages** uses `public/og-image.jpg` (a copy of `service-hampers.jpg`). For per-product og:image, use the same fallback since bundled asset paths aren't valid public URLs for social crawlers.
 16. **Form errors** use `text-destructive` (not `text-red-600`) to stay theme-consistent.
-17. **Hostinger / Node deployment:** `vite.config.ts` sets `nitro: { preset: "node-server", output: { dir: "dist", ... } }`. Build outputs to `dist/server/index.mjs`. Run with `npm run start`. On Hostinger use React Router preset, output `dist`, entry **`dist/server/index.mjs`**. Add `DATABASE_URL`, `ADMIN_SESSION_SECRET`, `VITE_SITE_URL` env vars; run migrate + seed once.
+17. **Hostinger / Node deployment:** Entry file **`dist/server/hostinger-entry.mjs`**. Set `DATABASE_URL`, `ADMIN_SESSION_SECRET`, `VITE_SITE_URL`, and optionally `UPLOADS_DIR`. WhatsApp and contact details live in MySQL `site_settings` (editable in `/admin/settings`). See `README.md` for the full redeploy checklist.

@@ -1,6 +1,9 @@
-import { site, whatsappLink } from "@/lib/site";
+import { site } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
 
 export function SiteFooter() {
+  const { waLink, founder } = useSiteContact();
+
   return (
     <footer className="border-t border-border py-12 md:py-20 px-5 md:px-6">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
@@ -24,7 +27,7 @@ export function SiteFooter() {
             <span className="text-xs">{site.instagramHandle}</span>
           </a>
           <a
-            href={whatsappLink(`Hi ${site.founder}, I'd like to enquire.`)}
+            href={waLink(`Hi ${founder}, I'd like to enquire.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="group"

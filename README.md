@@ -34,12 +34,13 @@ DATABASE_URL=mysql://user:password@localhost:3306/daintyhand
 # Admin session signing (long random string)
 ADMIN_SESSION_SECRET=your-long-random-secret
 
-# Used once by db:seed to create the admin user
+# Used by db:seed to create the admin user
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=choose-a-strong-password
 
-# Optional: override upload directory (default: public/uploads)
-# UPLOADS_DIR=/path/to/uploads
+# Optional: persistent upload directory (recommended on Hostinger)
+# Default on Hostinger: ../uploads next to the nodejs app folder
+# UPLOADS_DIR=/home/u249731825/domains/dainty-hand.softspiretechnologies.com/uploads
 ```
 
 Without `DATABASE_URL`, the site falls back to static data in `src/data/products.ts` and admin login will not work.
@@ -94,7 +95,57 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 3. Run `npm run db:migrate` and `npm run db:seed` once (SSH terminal or locally against the remote DB)
 4. Deploy / redeploy the app
 
-Uploaded product and category images are stored in `public/uploads/` on the server. Ensure this folder is not wiped on redeploy, or set `UPLOADS_DIR` to a persistent path.
+### hPanel environment variables (production)
+
+Set these in **Websites → your site → Environment variables**, then **Save and redeploy**:
+
+```env
+VITE_SITE_URL=https://dainty-hand.softspiretechnologies.com
+HOST=0.0.0.0
+NITRO_HOST=0.0.0.0
+DATABASE_URL=mysql://USER:PASSWORD@127.0.0.1:3306/DATABASE
+ADMIN_SESSION_SECRET=<long random string>
+ADMIN_EMAIL=admin@daintyhand.in
+ADMIN_PASSWORD=<strong password>
+UPLOADS_DIR=/home/u249731825/domains/dainty-hand.softspiretechnologies.com/uploads
+```
+
+Set WhatsApp and other contact details in **Admin → Settings** (`/admin/settings`). The public site reads them from MySQL.
+
+`UPLOADS_DIR` is optional — the app defaults to `../uploads` beside the `nodejs` folder on Hostinger. Setting it explicitly is recommended.
+
+### Persistent uploads
+
+Admin uploads are saved **outside** `dist/` so redeploys do not wipe them:
+
+| Location | Purpose |
+| --- | --- |
+| `public/uploads/` | Bundled seed images at build time |
+| `../uploads/` or `UPLOADS_DIR` | Persistent runtime uploads (survives redeploy) |
+
+`npm run build` copies seed images to both locations. New admin uploads always go to the persistent folder.
+
+### Redeploy checklist
+
+1. Push latest code to the Hostinger Git repo (or upload)
+2. Confirm all env vars above are set in hPanel
+3. Click **Save and redeploy** and wait for the build to finish
+4. Verify: homepage loads, `/catalog` images work, `/admin/login` works
+5. Confirm WhatsApp in **Admin → Settings** matches Nafisa's number
+6. Upload a test product image in admin, redeploy again, confirm the image still loads
+
+**Migrate/seed from your Mac** (not on the server — the deployed `nodejs` folder has no source):
+
+```bash
+# Terminal 1: SSH tunnel (keep open)
+ssh -p 65002 -L 3307:127.0.0.1:3306 u249731825@93.127.208.157
+
+# Terminal 2: from project root
+DATABASE_URL=mysql://USER:PASSWORD@127.0.0.1:3307/DATABASE npm run db:migrate
+npm run db:seed
+```
+
+Re-running `db:seed` preserves the WhatsApp number already saved in admin settings.
 
 ## Admin portal
 
@@ -106,7 +157,7 @@ Uploaded product and category images are stored in `public/uploads/` on the serv
 | `/admin/categories` | Edit category labels, blurbs, images |
 | `/admin/settings` | WhatsApp, email, Instagram, founder, location |
 
-Product and category images use **file upload only** (no URL paste). Images are saved to `public/uploads/` and served as static files.
+Product and category images use **file upload only** (no URL paste). Images are saved to the persistent uploads folder and served at `/uploads/*`.
 
 ## Other commands
 
@@ -119,8 +170,7 @@ npm run format    # Prettier
 
 | What | Where |
 | --- | --- |
-| WhatsApp number, email, brand copy (fallback) | `src/lib/site.ts` |
-| Live site settings | MySQL `site_settings` table (editable in `/admin/settings`) |
+| WhatsApp & contact details | MySQL `site_settings` via `/admin/settings` |
 | Products & categories (fallback) | `src/data/products.ts` |
 | Live catalog | MySQL via `src/lib/data.server.ts` |
 | Site URL (canonical, OG, sitemap) | `VITE_SITE_URL` env var |

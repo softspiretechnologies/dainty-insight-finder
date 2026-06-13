@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { site, siteUrl, whatsappLink } from "@/lib/site";
+import { site, siteUrl } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -19,6 +20,8 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
+  const { waLink, founder } = useSiteContact();
+
   return (
     <PageShell>
       {/* Hero */}
@@ -41,7 +44,7 @@ function ContactPage() {
 
             {/* WhatsApp — primary */}
             <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to enquire.`)}
+              href={waLink(`Hi ${founder}, I'd like to enquire.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="group bg-foreground text-background p-8 md:p-12 flex flex-col justify-between min-h-[200px] md:min-h-[240px]"
@@ -128,7 +131,7 @@ function ContactPage() {
           </div>
           <div className="mt-8">
             <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about delivery to my location.`)}
+              href={waLink(`Hi ${founder}, I'd like to enquire about delivery to my location.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary transition-colors"
@@ -150,7 +153,7 @@ function ContactPage() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
             <a
-              href={whatsappLink(`Hi ${site.founder}, I'd like to start a custom order.`)}
+              href={waLink(`Hi ${founder}, I'd like to start a custom order.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-4 bg-primary text-background px-7 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95"

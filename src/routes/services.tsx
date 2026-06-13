@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { site, siteUrl, whatsappLink } from "@/lib/site";
+import { site, siteUrl } from "@/lib/site";
+import { useSiteContact } from "@/hooks/useSiteContact";
 import shootImg from "@/assets/service-invitations.jpg";
 import proposalImg from "@/assets/moment-proposal.jpg";
 import coupleImg from "@/assets/moment-couple.jpg";
@@ -87,6 +88,8 @@ const services = [
 ];
 
 function ServicesPage() {
+  const { waLink, founder } = useSiteContact();
+
   return (
     <PageShell>
       <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">
@@ -121,7 +124,7 @@ function ServicesPage() {
                   ))}
                 </ul>
                 <a
-                  href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about ${s.title}.`)}
+                  href={waLink(`Hi ${founder}, I'd like to enquire about ${s.title}.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
