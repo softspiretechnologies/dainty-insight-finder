@@ -21,6 +21,7 @@ import { Route as CatalogIndexRouteImport } from './routes/catalog.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UploadsSplatRouteImport } from './routes/uploads/$'
 import { Route as CatalogSlugRouteImport } from './routes/catalog.$slug'
+import { Route as AdminTestimonialsRouteImport } from './routes/admin.testimonials'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminServicesRouteImport } from './routes/admin.services'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -89,6 +90,11 @@ const CatalogSlugRoute = CatalogSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => CatalogRoute,
 } as any)
+const AdminTestimonialsRoute = AdminTestimonialsRouteImport.update({
+  id: '/testimonials',
+  path: '/testimonials',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/services': typeof AdminServicesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/uploads/$': typeof UploadsSplatRoute
   '/admin/': typeof AdminIndexRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/services': typeof AdminServicesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/uploads/$': typeof UploadsSplatRoute
   '/admin': typeof AdminIndexRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/services': typeof AdminServicesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/uploads/$': typeof UploadsSplatRoute
   '/admin/': typeof AdminIndexRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/services'
     | '/admin/settings'
+    | '/admin/testimonials'
     | '/catalog/$slug'
     | '/uploads/$'
     | '/admin/'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/services'
     | '/admin/settings'
+    | '/admin/testimonials'
     | '/catalog/$slug'
     | '/uploads/$'
     | '/admin'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/services'
     | '/admin/settings'
+    | '/admin/testimonials'
     | '/catalog/$slug'
     | '/uploads/$'
     | '/admin/'
@@ -347,6 +359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CatalogSlugRouteImport
       parentRoute: typeof CatalogRoute
     }
+    '/admin/testimonials': {
+      id: '/admin/testimonials'
+      path: '/testimonials'
+      fullPath: '/admin/testimonials'
+      preLoaderRoute: typeof AdminTestimonialsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -419,6 +438,7 @@ interface AdminRouteChildren {
   AdminProductsRoute: typeof AdminProductsRouteWithChildren
   AdminServicesRoute: typeof AdminServicesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminTestimonialsRoute: typeof AdminTestimonialsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -428,6 +448,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminProductsRoute: AdminProductsRouteWithChildren,
   AdminServicesRoute: AdminServicesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminTestimonialsRoute: AdminTestimonialsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

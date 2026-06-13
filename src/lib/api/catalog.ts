@@ -9,6 +9,7 @@ import {
   getProducts,
   getServicesPageData,
   getSiteSettings,
+  getTestimonialsSection,
 } from "@/lib/data.server";
 
 function requireAdmin() {
@@ -39,4 +40,8 @@ export const getAdminDashboardData = createServerFn({ method: "GET" }).handler(a
 
 export const getServicesPageDataFn = createServerFn({ method: "GET" }).handler(async () =>
   getServicesPageData(),
+);
+
+export const getHomeTestimonials = createServerFn({ method: "GET" }).handler(async () =>
+  getTestimonialsSection(),
 );

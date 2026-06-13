@@ -1,17 +1,18 @@
 import { asc, count, eq } from "drizzle-orm";
 
 import { getDb, isDatabaseConfigured } from "@/db/index.server";
-import { categories as categoriesTable, products as productsTable, services as servicesTable, siteSettings } from "@/db/schema";
+import { categories as categoriesTable, products as productsTable, services as servicesTable, siteSettings, testimonials as testimonialsTable } from "@/db/schema";
 import {
   categories as staticCategories,
   products as staticProducts,
 } from "@/data/products";
 import { defaultServicesPageContent, seedServices } from "@/data/services-seed";
+import { defaultTestimonialsHeading, seedTestimonials } from "@/data/testimonials-seed";
 import { getCached } from "@/lib/cache.server";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
 import { site } from "@/lib/site";
-import type { CatalogCategory, CatalogProduct, CatalogService, CategoryId, ServicesPageData, SiteSettingsData } from "@/types/catalog";
+import type { CatalogCategory, CatalogProduct, CatalogService, CategoryId, ServicesPageData, SiteSettingsData, Testimonial, TestimonialsSectionData } from "@/types/catalog";
 
 export { clearDataCache } from "@/lib/cache.server";
 
@@ -215,6 +216,58 @@ export async function getServicesPageData(): Promise<ServicesPageData> {
         };
       },
       staticServicesPageData,
+    ),
+  );
+}
+
+function mapTestimonial(row: typeof testimonialsTable.$inferSelect): Testimonial {
+  return {
+    id: row.id,
+    quote: row.quote,
+    customerName: row.customerName,
+    location: row.location,
+    context: row.context,
+    sortOrder: row.sortOrder,
+  };
+}
+
+function staticTestimonialsSection(): TestimonialsSectionData {
+  return {
+    heading: defaultTestimonialsHeading,
+    items: seedTestimonials.map((item, index) => ({
+      id: index + 1,
+      quote: item.quote,
+      customerName: item.customerName,
+      location: item.location,
+      context: item.context,
+      sortOrder: item.sortOrder,
+    })),
+  };
+}
+
+export async function getTestimonialsSection(): Promise<TestimonialsSectionData> {
+  if (!isDatabaseConfigured()) {
+    return staticTestimonialsSection();
+  }
+
+  return getCached("testimonialsSection", () =>
+    withDbFallback(
+      async () => {
+        const db = getDb();
+        const [settingsRows, rows] = await Promise.all([
+          db.select().from(siteSettings).limit(1),
+          db.select().from(testimonialsTable).orderBy(asc(testimonialsTable.sortOrder)),
+        ]);
+
+        const settings = settingsRows[0];
+        const items = rows.length > 0 ? rows.map(mapTestimonial) : staticTestimonialsSection().items;
+
+        return {
+          heading: settings?.testimonialsHeading || defaultTestimonialsHeading,
+          items,
+        };
+      },
+      staticTestimonialsSection,
     ),
   );
 }

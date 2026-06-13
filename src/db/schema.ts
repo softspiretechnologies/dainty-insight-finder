@@ -40,6 +40,16 @@ export const siteSettings = mysqlTable("site_settings", {
   servicesIntro: text("services_intro").notNull().default(""),
   servicesFooterTitle: varchar("services_footer_title", { length: 256 }).notNull().default(""),
   servicesFooterBlurb: text("services_footer_blurb").notNull().default(""),
+  testimonialsHeading: varchar("testimonials_heading", { length: 256 }).notNull().default(""),
+});
+
+export const testimonials = mysqlTable("testimonials", {
+  id: int("id").primaryKey().autoincrement(),
+  quote: text("quote").notNull(),
+  customerName: varchar("customer_name", { length: 128 }).notNull(),
+  location: varchar("location", { length: 128 }).notNull(),
+  context: varchar("context", { length: 128 }).notNull(),
+  sortOrder: int("sort_order").notNull().default(0),
 });
 
 export const services = mysqlTable("services", {

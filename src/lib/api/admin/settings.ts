@@ -7,6 +7,7 @@ import { settingsSchema } from "@/lib/admin-schemas";
 import { getAdminSession } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 import { defaultServicesPageContent } from "@/data/services-seed";
+import { defaultTestimonialsHeading } from "@/data/testimonials-seed";
 
 function requireAdmin() {
   const session = getAdminSession();
@@ -46,6 +47,7 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
         servicesIntro: defaultServicesPageContent.intro,
         servicesFooterTitle: defaultServicesPageContent.footerTitle,
         servicesFooterBlurb: defaultServicesPageContent.footerBlurb,
+        testimonialsHeading: defaultTestimonialsHeading,
       });
     }
 

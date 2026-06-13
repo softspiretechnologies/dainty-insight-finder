@@ -4,7 +4,7 @@ import { OptimizedImage, catalogGridSizes } from "@/components/ui/optimized-imag
 import { galleryImages } from "@/data/products";
 import { site, siteUrl, formatTelephone } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
-import { getRootPageData } from "@/lib/api/catalog";
+import { getRootPageData, getHomeTestimonials } from "@/lib/api/catalog";
 import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
 import momentBirthday from "@/assets/moment-birthday.jpg";
 import momentProposal from "@/assets/moment-proposal.jpg";
@@ -13,8 +13,8 @@ import momentReel from "@/assets/moment-reel.jpg";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const { siteSettings } = await getRootPageData();
-    return { siteSettings };
+    const [{ siteSettings }, testimonials] = await Promise.all([getRootPageData(), getHomeTestimonials()]);
+    return { siteSettings, testimonials };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -73,6 +73,7 @@ const features = [
 
 function Index() {
   const { categories } = useRouteContext({ from: "__root__" });
+  const { testimonials } = Route.useLoaderData();
   const { waLink, founder } = useSiteContact();
 
   return (
@@ -353,7 +354,7 @@ function Index() {
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Testimonials</span>
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic">
-                Loved by our customers.
+                {testimonials.heading}
               </h2>
             </div>
             <a
@@ -367,20 +368,15 @@ function Index() {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
-            {[
-              { q: "DaintyHand created the most beautiful engagement hamper exactly how we imagined.", n: "Aisha & Rayan", l: "Dubai, UAE", s: "Engagement Hamper" },
-              { q: "Everything was customised perfectly and delivered on time.", n: "Fathima", l: "Bengaluru", s: "Wedding Invitations" },
-              { q: "Our save-the-date shoot came out beautifully — every frame felt like us.", n: "Hana & Adil", l: "Kochi", s: "Save The Date Shoot" },
-              { q: "The birthday surprise setup exceeded expectations. Everyone was speechless.", n: "Saleem", l: "Perinthalmanna", s: "Birthday Surprise" },
-            ].map((t) => (
-              <figure key={t.n} className="bg-background p-6 md:p-8 flex flex-col">
+            {testimonials.items.map((t) => (
+              <figure key={t.id} className="bg-background p-6 md:p-8 flex flex-col">
                 <div className="text-primary tracking-widest text-xs mb-5" aria-label="5 out of 5 stars">★★★★★</div>
                 <blockquote className="font-display italic text-base leading-relaxed mb-6 flex-1">
-                  "{t.q}"
+                  "{t.quote}"
                 </blockquote>
                 <figcaption className="border-t border-border pt-4">
-                  <div className="text-sm font-medium">{t.n}</div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted mt-1">{t.l} · {t.s}</div>
+                  <div className="text-sm font-medium">{t.customerName}</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted mt-1">{t.location} · {t.context}</div>
                 </figcaption>
               </figure>
             ))}

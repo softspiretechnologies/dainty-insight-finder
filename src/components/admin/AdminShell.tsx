@@ -1,5 +1,5 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, LogOut, Menu, Package, Settings, Sparkles, Tags } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, MessageSquareQuote, Package, Settings, Sparkles, Tags } from "lucide-react";
 import { useState } from "react";
 
 import { logoutAdmin } from "@/lib/api/admin/auth";
@@ -12,6 +12,7 @@ const nav = [
   { to: "/admin/products", label: "Products", shortLabel: "Products", icon: Package },
   { to: "/admin/categories", label: "Categories", shortLabel: "Categories", icon: Tags },
   { to: "/admin/services", label: "Services", shortLabel: "Services", icon: Sparkles },
+  { to: "/admin/testimonials", label: "Testimonials", shortLabel: "Reviews", icon: MessageSquareQuote },
   { to: "/admin/settings", label: "Settings", shortLabel: "Settings", icon: Settings },
 ] as const;
 
@@ -128,7 +129,7 @@ export function AdminShell({
         className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}
       >
-        <div className="grid grid-cols-5 px-1 pt-1">
+        <div className="grid grid-cols-3 px-1 pt-1">
           {nav.map((item) => (
             <Link
               key={item.to}

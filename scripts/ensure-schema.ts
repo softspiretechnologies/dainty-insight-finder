@@ -12,6 +12,15 @@ const statements = [
     \`sort_order\` int NOT NULL DEFAULT 0,
     CONSTRAINT \`services_id\` PRIMARY KEY(\`id\`)
   )`,
+  `CREATE TABLE IF NOT EXISTS \`testimonials\` (
+    \`id\` int AUTO_INCREMENT NOT NULL,
+    \`quote\` text NOT NULL,
+    \`customer_name\` varchar(128) NOT NULL,
+    \`location\` varchar(128) NOT NULL,
+    \`context\` varchar(128) NOT NULL,
+    \`sort_order\` int NOT NULL DEFAULT 0,
+    CONSTRAINT \`testimonials_id\` PRIMARY KEY(\`id\`)
+  )`,
 ];
 
 const siteSettingsColumns: Array<{ name: string; ddl: string }> = [
@@ -23,6 +32,10 @@ const siteSettingsColumns: Array<{ name: string; ddl: string }> = [
   {
     name: "services_footer_blurb",
     ddl: "ALTER TABLE `site_settings` ADD `services_footer_blurb` text NOT NULL DEFAULT ('')",
+  },
+  {
+    name: "testimonials_heading",
+    ddl: "ALTER TABLE `site_settings` ADD `testimonials_heading` varchar(256) NOT NULL DEFAULT ('')",
   },
 ];
 

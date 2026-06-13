@@ -61,3 +61,17 @@ export type ServicesPageData = {
   footerBlurb: string;
   services: CatalogService[];
 };
+
+export type Testimonial = {
+  id: number;
+  quote: string;
+  customerName: string;
+  location: string;
+  context: string;
+  sortOrder: number;
+};
+
+export type TestimonialsSectionData = {
+  heading: string;
+  items: Testimonial[];
+};

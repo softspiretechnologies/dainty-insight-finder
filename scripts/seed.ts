@@ -5,11 +5,12 @@ import "./load-env.ts";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
-import { categories, products, services, siteSettings, adminUsers } from "../src/db/schema";
+import { categories, products, services, siteSettings, testimonials, adminUsers } from "../src/db/schema";
 import { seedCategories, seedProducts } from "../src/data/catalog-seed";
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
 import { serviceImageFiles } from "../src/data/service-asset-map";
 import { defaultServicesPageContent, seedServices } from "../src/data/services-seed";
+import { defaultTestimonialsHeading, seedTestimonials } from "../src/data/testimonials-seed";
 import { optimizeSeedImage } from "../src/lib/image-optimize.server";
 import { site } from "../src/lib/site";
 import { allUploadTargets } from "./lib/uploads-path";
@@ -47,7 +48,7 @@ async function main() {
   const { drizzle } = await import("drizzle-orm/mysql2");
   const mysql = await import("mysql2/promise");
   const pool = mysql.default.createPool(databaseUrl);
-  const db = drizzle(pool, { schema: { categories, products, services, siteSettings, adminUsers }, mode: "default" });
+  const db = drizzle(pool, { schema: { categories, products, services, testimonials, siteSettings, adminUsers }, mode: "default" });
 
   console.log("Seeding categories...");
   for (let i = 0; i < seedCategories.length; i++) {
@@ -115,6 +116,20 @@ async function main() {
     }
   }
 
+  console.log("Seeding testimonials...");
+  const existingTestimonials = await db.select().from(testimonials);
+  if (existingTestimonials.length === 0) {
+    for (const item of seedTestimonials) {
+      await db.insert(testimonials).values({
+        quote: item.quote,
+        customerName: item.customerName,
+        location: item.location,
+        context: item.context,
+        sortOrder: item.sortOrder,
+      });
+    }
+  }
+
   console.log("Seeding site settings...");
   const settingsRows = await db.select().from(siteSettings).limit(1);
   const settingsValues = {
@@ -127,6 +142,7 @@ async function main() {
     servicesIntro: settingsRows[0]?.servicesIntro || defaultServicesPageContent.intro,
     servicesFooterTitle: settingsRows[0]?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
     servicesFooterBlurb: settingsRows[0]?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
+    testimonialsHeading: settingsRows[0]?.testimonialsHeading || defaultTestimonialsHeading,
   };
 
   if (settingsRows[0]) {

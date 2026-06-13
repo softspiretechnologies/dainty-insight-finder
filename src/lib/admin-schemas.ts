@@ -124,4 +124,27 @@ export const serviceInputSchema = z.object({
 
 export const servicesPageInputSchema = adminServicesPageFormSchema;
 
+export const adminTestimonialFormSchema = z.object({
+  quote: z.string().trim().min(1, "Quote is required"),
+  customerName: z.string().trim().min(1, "Customer name is required").max(128),
+  location: z.string().trim().min(1, "Location is required").max(128),
+  context: z.string().trim().min(1, "Service or occasion is required").max(128),
+  sortOrder: z.coerce.number().int().min(0, "Sort order must be 0 or greater"),
+});
+
+export const adminTestimonialsSectionFormSchema = z.object({
+  heading: z.string().trim().min(1, "Section heading is required").max(256),
+});
+
+export const testimonialInputSchema = z.object({
+  id: z.union([z.literal("new"), z.number().int().positive()]),
+  quote: z.string().min(1),
+  customerName: z.string().min(1).max(128),
+  location: z.string().min(1).max(128),
+  context: z.string().min(1).max(128),
+  sortOrder: z.coerce.number().int().min(0),
+});
+
+export const testimonialsSectionInputSchema = adminTestimonialsSectionFormSchema;
+
 export const settingsSchema = adminSettingsFormSchema;
