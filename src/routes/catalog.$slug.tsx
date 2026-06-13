@@ -116,7 +116,7 @@ function ProductPage() {
               <h1 className="font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-3 mb-5 md:mb-6 leading-[0.95] text-balance">
                 {product.name}
               </h1>
-              <p className="text-sm text-muted leading-relaxed mb-8 md:mb-10 text-pretty">
+              <p className="text-sm text-muted leading-relaxed mb-8 md:mb-10 text-pretty whitespace-pre-line">
                 {product.description}
               </p>
 

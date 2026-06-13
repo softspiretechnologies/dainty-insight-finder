@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Check, ExternalLink, ImagePlus } from "lucide-react";
+import { Check, ExternalLink, ImagePlus, Tags } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import {
@@ -40,22 +40,26 @@ function AdminCategoriesPage() {
   return (
     <div className="max-w-3xl">
       <div className="mb-6 md:mb-8">
-        <h1 className="font-display text-2xl md:text-4xl italic tracking-tight">Categories</h1>
-        <p className="text-sm text-muted mt-1">
-          {categories.length} categories shown on the homepage and catalog filters.
+        <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Categories</h1>
+        <p className="text-sm text-muted mt-1.5">
+          {categories.length} categories · shown on the homepage grid and catalog filters.
         </p>
       </div>
 
       {/* Quick preview strip */}
       <section className="mb-6 md:mb-8">
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">Homepage preview</p>
-        <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {categories.map((category) => (
-            <div key={category.id} className="shrink-0 w-28">
-              <div className="aspect-[4/5] overflow-hidden rounded-md border border-border bg-surface">
+            <div key={category.id} className="shrink-0 w-24 sm:w-28">
+              <div className="aspect-[4/5] overflow-hidden rounded-lg border border-border bg-surface">
                 {category.imagePath ? (
                   <img src={category.imagePath} alt="" className="w-full h-full object-cover" />
-                ) : null}
+                ) : (
+                  <div className="w-full h-full grid place-items-center text-muted/30">
+                    <Tags className="w-5 h-5" />
+                  </div>
+                )}
               </div>
               <p className="text-[11px] font-medium mt-2 leading-tight line-clamp-2">{category.label}</p>
             </div>
@@ -68,7 +72,7 @@ function AdminCategoriesPage() {
           <AccordionItem
             key={category.id}
             value={category.id}
-            className="border border-border rounded-lg bg-surface/20 overflow-hidden"
+            className="border border-border rounded-xl bg-surface/20 overflow-hidden"
           >
             <AccordionTrigger className="px-4 py-4 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border">
               <CategorySummary category={category} />
@@ -265,15 +269,25 @@ function CategoryForm({
         />
       </div>
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+          <span className="mt-0.5 shrink-0">!</span>
+          {error}
+        </div>
+      ) : null}
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1">
         <Button
           type="submit"
-          className="w-full sm:w-auto h-11"
+          className="w-full sm:w-auto h-11 min-w-[130px]"
           disabled={loading || (!isDirty && !success)}
         >
-          {loading ? "Saving…" : success && !isDirty ? (
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              Saving…
+            </span>
+          ) : success && !isDirty ? (
             <span className="inline-flex items-center gap-2">
               <Check className="w-4 h-4" />
               Saved

@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { products as productsTable } from "@/db/schema";
+import { stripBulletPrefix } from "@/lib/bullet-lines";
 import { imageUploadPayloadSchema } from "@/lib/admin-upload-payload";
 import { getAdminSession } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
@@ -30,7 +31,7 @@ function requireAdmin() {
 function parseDetails(raw: string) {
   return raw
     .split("\n")
-    .map((line) => line.trim())
+    .map(stripBulletPrefix)
     .filter(Boolean);
 }
 
