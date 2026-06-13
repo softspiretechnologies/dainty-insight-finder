@@ -37,17 +37,12 @@ export const Route = createFileRoute("/catalog/$slug")({
             image: product.image,
             url,
             brand: { "@type": "Brand", name: "DaintyHand" },
-            ...(product.priceFrom
-              ? {
-                  offers: {
-                    "@type": "Offer",
-                    priceCurrency: "INR",
-                    price: String(product.priceFrom).replace(/[^0-9.]/g, ""),
-                    availability: "https://schema.org/InStock",
-                    url,
-                  },
-                }
-              : {}),
+            offers: {
+              "@type": "Offer",
+              priceCurrency: "INR",
+              availability: "https://schema.org/InStock",
+              url,
+            },
           }),
         },
       ],
