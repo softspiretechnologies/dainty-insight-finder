@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, products, type Category } from "@/data/products";
 import { site, whatsappLink } from "@/lib/site";
+
+const PAGE_SIZE = 12;
 
 export const Route = createFileRoute("/catalog/")({
   head: () => ({
@@ -25,7 +27,17 @@ type Filter = Category | "all";
 
 function CatalogPage() {
   const [filter, setFilter] = useState<Filter>("all");
-  const visible = filter === "all" ? products : products.filter((p) => p.category === filter);
+  const [page, setPage] = useState(1);
+
+  const filtered = filter === "all" ? products : products.filter((p) => p.category === filter);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const handleFilter = (f: Filter) => {
+    setFilter(f);
+    setPage(1);
+  };
 
   return (
     <PageShell>
@@ -43,9 +55,9 @@ function CatalogPage() {
 
       <section className="px-5 md:px-6 border-y border-border">
         <div className="max-w-7xl mx-auto flex gap-1.5 md:gap-2 py-3 md:py-6 overflow-x-auto md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Chip active={filter === "all"} onClick={() => setFilter("all")}>All</Chip>
+          <Chip active={filter === "all"} onClick={() => handleFilter("all")}>All</Chip>
           {categories.map((c) => (
-            <Chip key={c.id} active={filter === c.id} onClick={() => setFilter(c.id)}>
+            <Chip key={c.id} active={filter === c.id} onClick={() => handleFilter(c.id)}>
               {c.label}
             </Chip>
           ))}
@@ -69,16 +81,9 @@ function CatalogPage() {
                 </div>
               </Link>
               <div className="min-w-0">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted truncate">
-                    {categories.find((c) => c.id === p.category)?.label}
-                  </span>
-                  {p.priceFrom ? (
-                    <span className="font-mono text-[9px] uppercase tracking-widest text-muted shrink-0">
-                      from {p.priceFrom}
-                    </span>
-                  ) : null}
-                </div>
+                <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted truncate block">
+                  {categories.find((c) => c.id === p.category)?.label}
+                </span>
                 <Link to="/catalog/$slug" params={{ slug: p.slug }}>
                   <h3 className="font-display text-base sm:text-xl italic leading-tight mt-1.5 hover:text-primary transition-colors">{p.name}</h3>
                 </Link>
@@ -105,6 +110,41 @@ function CatalogPage() {
         {visible.length === 0 ? (
           <p className="max-w-7xl mx-auto text-sm text-muted mt-12">Nothing in this category yet.</p>
         ) : null}
+
+        {totalPages > 1 && (
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 mt-10 md:mt-14">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="grid place-items-center w-9 h-9 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`grid place-items-center w-9 h-9 rounded-full text-[11px] font-medium transition-colors ${
+                  p === safePage
+                    ? "bg-foreground text-background"
+                    : "border border-border text-muted hover:border-foreground hover:text-foreground"
+                }`}
+                aria-label={`Page ${p}`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="grid place-items-center w-9 h-9 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              aria-label="Next page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="px-5 md:px-6 pb-16 md:pb-24">
