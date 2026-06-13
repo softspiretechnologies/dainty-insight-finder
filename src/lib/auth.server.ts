@@ -88,6 +88,7 @@ export function clearAdminSession() {
 export function getAdminSession(): AdminSession | null {
   const token = getCookie(SESSION_COOKIE);
   if (!token) return null;
+  if (!getServerConfig().adminSessionSecret) return null;
   return decodeSession(token);
 }
 

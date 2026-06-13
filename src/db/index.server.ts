@@ -9,11 +9,17 @@ export function isDatabaseConfigured() {
   return Boolean(process.env.DATABASE_URL?.trim());
 }
 
+function normalizeDatabaseUrl(url: string) {
+  // Hostinger + Node 22: "localhost" can use unix socket / IPv6 and fail silently.
+  return url.replace(/@localhost([:/])/i, "@127.0.0.1$1");
+}
+
 export function getDb() {
-  const url = process.env.DATABASE_URL?.trim();
-  if (!url) {
+  const raw = process.env.DATABASE_URL?.trim();
+  if (!raw) {
     throw new Error("DATABASE_URL is not configured");
   }
+  const url = normalizeDatabaseUrl(raw);
 
   if (!pool) {
     pool = mysql.createPool(url);
