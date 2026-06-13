@@ -41,7 +41,7 @@ function CatalogPage() {
       </section>
 
       <section className="px-5 md:px-6 border-y border-border">
-        <div className="max-w-7xl mx-auto flex gap-2 py-4 md:py-6 overflow-x-auto md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="max-w-7xl mx-auto flex gap-1.5 md:gap-2 py-3 md:py-6 overflow-x-auto md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Chip active={filter === "all"} onClick={() => setFilter("all")}>All</Chip>
           {categories.map((c) => (
             <Chip key={c.id} active={filter === c.id} onClick={() => setFilter(c.id)}>
@@ -136,7 +136,7 @@ function Chip({
   return (
     <button
       onClick={onClick}
-      className={`text-[11px] uppercase tracking-[0.2em] font-medium px-4 py-2 rounded-full border transition-colors ${
+      className={`shrink-0 whitespace-nowrap text-[10px] md:text-[11px] uppercase tracking-[0.18em] md:tracking-[0.2em] font-medium px-3 py-1.5 md:px-4 md:py-2 rounded-full border transition-colors ${
         active
           ? "bg-foreground text-background border-foreground"
           : "bg-background text-muted border-border hover:text-foreground hover:border-foreground"
