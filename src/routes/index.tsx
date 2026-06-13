@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, galleryImages } from "@/data/products";
 import { site, siteUrl, whatsappLink } from "@/lib/site";
-import portraitImg from "@/assets/portrait-nafisa.jpg";
 import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
 import momentBirthday from "@/assets/moment-birthday.jpg";
 import momentProposal from "@/assets/moment-proposal.jpg";
@@ -17,8 +16,11 @@ export const Route = createFileRoute("/")({
       { name: "keywords", content: "Wedding Gifts India, Nikah Invitations, Save The Date Shoots, Custom Hampers India, Proposal Setup, Birthday Surprise, Wedding Invitations, Handcrafted Gifts Worldwide, Perinthalmanna gifting studio" },
       { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
       { property: "og:description", content: "Wedding gifts, nikah invitations, save-the-date shoots & surprise setups handcrafted and shipped across India & worldwide." },
+      { property: "og:type", content: "website" },
       { property: "og:url", content: siteUrl("/") },
       { property: "og:image", content: siteUrl("/og-image.jpg") },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: siteUrl("/og-image.jpg") },
     ],
     links: [
@@ -73,8 +75,8 @@ function Index() {
           <h1 className="font-display text-[2.75rem] sm:text-6xl md:text-8xl leading-[0.95] md:leading-[0.9] tracking-tighter mb-6 md:mb-8 animate-reveal text-balance" style={{ animationDelay: "100ms" }}>
             Handcrafted gifts &amp; <span className="italic font-normal text-primary">wedding studio.</span>
           </h1>
-          <p className="max-w-md mx-auto text-muted text-sm leading-relaxed mb-8 md:mb-10 animate-reveal text-pretty" style={{ animationDelay: "200ms" }}>
-            Custom hampers, bouquets, invitations, wedding gifts & celebration services — handcrafted with care. Creating meaningful gifts, memorable celebrations and lasting impressions. We ship across India & worldwide.
+          <p className="max-w-sm mx-auto text-muted text-sm leading-relaxed mb-8 md:mb-10 animate-reveal text-pretty" style={{ animationDelay: "200ms" }}>
+            Handcrafted in Perinthalmanna. Shipped across India & worldwide.
           </p>
           <div className="animate-reveal flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center max-w-sm sm:max-w-none mx-auto" style={{ animationDelay: "300ms" }}>
             <a
@@ -99,25 +101,6 @@ function Index() {
           <div className="w-48 h-px bg-primary animate-ribbon" style={{ animationDelay: "800ms" }} />
         </div>
       </header>
-
-      {/* More than gifts */}
-      <section className="max-w-4xl mx-auto px-5 md:px-6 py-16 md:py-24 text-center">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">The Studio</span>
-        <h2 className="font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-4 mb-6 md:mb-8 text-balance">
-          More than gifts. <span className="italic text-primary">We create memories.</span>
-        </h2>
-        <p className="text-sm md:text-base text-muted leading-relaxed text-pretty max-w-2xl mx-auto mb-8">
-          From <em className="italic">wedding gifts</em>, <em className="italic">nikah invitations</em> and <em className="italic">custom hampers</em> to <em className="italic">save the date shoots</em> and surprise celebrations — DaintyHand turns meaningful moments into unforgettable memories across India & beyond.
-        </p>
-        <a
-          href={whatsappLink(`Hi ${site.founder}, I'd love to know more about ${site.name}.`)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
-        >
-          Start a conversation on WhatsApp →
-        </a>
-      </section>
 
       {/* Categories grid (8) */}
       <section className="max-w-7xl mx-auto px-5 md:px-6 pb-16 md:pb-24">
@@ -231,13 +214,13 @@ function Index() {
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-4 mb-10 md:mb-14 italic">Numbers that speak quietly.</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-background/10">
             {[
-              { n: "1,100+", l: "Instagram Posts" },
-              { n: "3,000+", l: "Followers" },
+              { n: "500+", l: "Happy Customers" },
+              { n: "4 yrs", l: "Of Handcrafting" },
               { n: "Hundreds", l: "Custom Creations" },
-              { n: "India & Abroad", l: "Customers Served" },
+              { n: "Worldwide", l: "Orders Delivered" },
             ].map((s) => (
               <div key={s.l} className="bg-foreground p-5 sm:p-8 md:p-10">
-                <div className="font-display text-3xl sm:text-4xl md:text-6xl text-primary italic">{s.n}</div>
+                <div className="font-display text-3xl sm:text-4xl md:text-5xl text-primary italic leading-tight">{s.n}</div>
                 <div className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-background/60 mt-2 md:mt-3">{s.l}</div>
               </div>
             ))}
@@ -354,71 +337,7 @@ function Index() {
         </div>
       </section>
 
-      {/* SEO keywords strip */}
-      <section className="py-14 md:py-20 px-5 md:px-6 bg-surface/60 border-y border-border">
-        <div className="max-w-6xl mx-auto text-center">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Serving Everywhere</span>
-          <h2 className="font-display text-2xl sm:text-3xl md:text-5xl tracking-tighter mt-4 mb-8 md:mb-10 italic text-balance">
-            From Perinthalmanna, <span className="text-primary">for the world.</span>
-          </h2>
-          <div className="flex flex-wrap justify-center gap-2 md:gap-3 max-w-4xl mx-auto mb-8 md:mb-10">
-            {[
-              "Wedding Gifts India",
-              "Nikah Invitations",
-              "Save The Date Shoots",
-              "Custom Hampers",
-              "Proposal Setups",
-              "Birthday Surprises",
-              "Engagement Gifts",
-              "Couple Shoots",
-              "Memory Reels",
-              "Handcrafted Gifts Worldwide",
-            ].map((k) => (
-              <span key={k} className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 md:px-4 md:py-2 border border-border rounded-full bg-background text-muted">
-                {k}
-              </span>
-            ))}
-          </div>
-          <a
-            href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about your services.`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-4 bg-foreground text-background px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all"
-          >
-            Enquire on WhatsApp
-          </a>
-        </div>
-      </section>
 
-      {/* About strip */}
-      <section className="py-16 md:py-32 px-5 md:px-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center text-center md:text-left">
-            <div className="shrink-0">
-              <img
-                src={portraitImg}
-                alt={`${site.founder}, founder of ${site.name}`}
-                width={512}
-                height={512}
-                loading="lazy"
-                className="size-36 md:size-48 rounded-full object-cover grayscale"
-              />
-            </div>
-            <div>
-              <h2 className="font-display text-2xl md:text-3xl mb-4 italic">From {site.founder}'s hands</h2>
-              <p className="text-sm text-muted leading-relaxed text-pretty">
-                Based in Perinthalmanna, I founded {site.name} on the belief that a gift is more than an object — it's a memory. From hampers and invitations to engagement setups and save-the-date shoots, every creation is assembled around your story.
-              </p>
-              <Link
-                to="/about"
-                className="inline-block mt-6 text-[10px] uppercase tracking-[0.2em] font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary transition-colors"
-              >
-                Read our story
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
     </PageShell>
   );
 }
