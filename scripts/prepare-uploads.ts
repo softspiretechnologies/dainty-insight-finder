@@ -1,9 +1,8 @@
-import { mkdir } from "node:fs/promises";
+import { copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
 import { serviceImageFiles } from "../src/data/service-asset-map";
-import { optimizeSeedImage } from "../src/lib/image-optimize.server";
 import { allUploadTargets } from "./lib/uploads-path";
 
 const ASSETS_DIR = path.join(process.cwd(), "src/assets");
@@ -12,7 +11,7 @@ async function copyAsset(targetRoot: string, assetFile: string, subdir: string, 
   const src = path.join(ASSETS_DIR, assetFile);
   const destDir = path.join(targetRoot, subdir);
   await mkdir(destDir, { recursive: true });
-  await optimizeSeedImage(src, path.join(destDir, destName));
+  await copyFile(src, path.join(destDir, destName));
 }
 
 async function main() {

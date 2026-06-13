@@ -3,7 +3,6 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { getServerConfig } from "@/lib/config.server";
-import { optimizeUploadBuffer } from "@/lib/image-optimize.server";
 
 function getAppRoot() {
   const cwd = process.cwd();
@@ -15,6 +14,12 @@ function getAppRoot() {
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 5 * 1024 * 1024;
+
+const EXT_BY_MIME: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
 
 function uploadsWriteRoot() {
   const { uploadsDir } = getServerConfig();
@@ -97,14 +102,14 @@ export async function saveUploadedImageFromPayload(
   }
   validateImageBuffer(buffer, payload.type);
 
-  const optimized = await optimizeUploadBuffer(buffer);
+  const ext = EXT_BY_MIME[payload.type] ?? ".jpg";
   const base = sanitizeFilename(path.basename(payload.name, path.extname(payload.name))) || "image";
-  const filename = `${base}-${Date.now()}.webp`;
+  const filename = `${base}-${Date.now()}${ext}`;
   const dir = path.join(uploadsWriteRoot(), subdir);
   await mkdir(dir, { recursive: true });
 
   const fullPath = path.join(dir, filename);
-  await writeFile(fullPath, optimized);
+  await writeFile(fullPath, buffer);
 
   try {
     await mirrorUploadToPublicBundle(fullPath, subdir, filename);
