@@ -67,6 +67,7 @@ process.on("unhandledRejection", (reason) => {
 });
 
 try {
+  await import("./index.mjs");
   prodLog("LOG", "index.mjs imported successfully");
 } catch (error) {
   prodLog("ERROR", "Failed to import index.mjs", {
