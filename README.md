@@ -90,7 +90,7 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 | Framework preset | **React Router** |
 | Build command | `npm run build` |
 | Output directory | `dist` |
-| Entry file | `dist/server/index.mjs` |
+| Entry file | `dist/server/hostinger-entry.mjs` (or `react-router-server.cjs` if Hostinger uses the React Router preset wrapper) |
 | Node version | 22.x |
 
 **First-time deploy steps:**
