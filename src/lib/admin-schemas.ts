@@ -21,7 +21,7 @@ export const imageUploadPayloadSchema = z.object({
 
 export const uploadPathSchema = z
   .string()
-  .regex(/^\/uploads\/(products|categories)\/[a-z0-9._-]+$/i, "Invalid image path");
+  .regex(/^\/uploads\/(products|categories|services)\/[a-z0-9._-]+$/i, "Invalid image path");
 
 export type ImageUploadPayload = z.infer<typeof imageUploadPayloadSchema>;
 
@@ -90,5 +90,38 @@ export const categoryInputSchema = z.object({
   existingImagePath: uploadPathSchema.optional(),
   image: imageUploadPayloadSchema.optional(),
 });
+
+export const serviceIds = [
+  "save-the-date-shoots",
+  "birthday-surprise-planning",
+  "proposal-setups",
+  "couple-shoots",
+  "reels-memory-videos",
+] as const;
+
+export const adminServiceFormSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(256),
+  blurb: z.string().trim().min(1, "Description is required"),
+  bullets: z.string().trim().min(1, "Add at least one bullet point"),
+  sortOrder: z.coerce.number().int().min(0, "Sort order must be 0 or greater"),
+});
+
+export const adminServicesPageFormSchema = z.object({
+  intro: z.string().trim().min(1, "Page intro is required"),
+  footerTitle: z.string().trim().min(1, "Footer heading is required").max(256),
+  footerBlurb: z.string().trim().min(1, "Footer text is required"),
+});
+
+export const serviceInputSchema = z.object({
+  id: z.enum(serviceIds),
+  title: z.string().min(1).max(256),
+  blurb: z.string().min(1),
+  bullets: z.string().min(1),
+  sortOrder: z.coerce.number().int().min(0),
+  existingImagePath: uploadPathSchema.optional(),
+  image: imageUploadPayloadSchema.optional(),
+});
+
+export const servicesPageInputSchema = adminServicesPageFormSchema;
 
 export const settingsSchema = adminSettingsFormSchema;

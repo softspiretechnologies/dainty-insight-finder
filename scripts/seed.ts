@@ -1,12 +1,15 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
+import "./load-env.ts";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
-import { categories, products, siteSettings, adminUsers } from "../src/db/schema";
+import { categories, products, services, siteSettings, adminUsers } from "../src/db/schema";
 import { seedCategories, seedProducts } from "../src/data/catalog-seed";
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
+import { serviceImageFiles } from "../src/data/service-asset-map";
+import { defaultServicesPageContent, seedServices } from "../src/data/services-seed";
 import { optimizeSeedImage } from "../src/lib/image-optimize.server";
 import { site } from "../src/lib/site";
 import { allUploadTargets } from "./lib/uploads-path";
@@ -44,7 +47,7 @@ async function main() {
   const { drizzle } = await import("drizzle-orm/mysql2");
   const mysql = await import("mysql2/promise");
   const pool = mysql.default.createPool(databaseUrl);
-  const db = drizzle(pool, { schema: { categories, products, siteSettings, adminUsers }, mode: "default" });
+  const db = drizzle(pool, { schema: { categories, products, services, siteSettings, adminUsers }, mode: "default" });
 
   console.log("Seeding categories...");
   for (let i = 0; i < seedCategories.length; i++) {
@@ -91,6 +94,27 @@ async function main() {
     }
   }
 
+  console.log("Seeding services...");
+  for (const service of seedServices) {
+    const assetFile = serviceImageFiles[service.id];
+    const imagePath = await copyAssetToUploads(assetFile, "services", `${service.id}.jpg`);
+
+    const existing = await db.select().from(services).where(eq(services.id, service.id)).limit(1);
+    const values = {
+      title: service.title,
+      blurb: service.blurb,
+      bullets: service.bullets,
+      imagePath,
+      sortOrder: service.sortOrder,
+    };
+
+    if (existing[0]) {
+      await db.update(services).set(values).where(eq(services.id, service.id));
+    } else {
+      await db.insert(services).values({ id: service.id, ...values });
+    }
+  }
+
   console.log("Seeding site settings...");
   const settingsRows = await db.select().from(siteSettings).limit(1);
   const settingsValues = {
@@ -100,6 +124,9 @@ async function main() {
     instagramHandle: site.instagramHandle,
     founder: site.founder,
     location: site.location,
+    servicesIntro: settingsRows[0]?.servicesIntro || defaultServicesPageContent.intro,
+    servicesFooterTitle: settingsRows[0]?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+    servicesFooterBlurb: settingsRows[0]?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
   };
 
   if (settingsRows[0]) {

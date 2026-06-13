@@ -34,4 +34,30 @@ export type SiteSettingsData = {
   instagramHandle: string;
   founder: string;
   location: string;
+  servicesIntro: string;
+  servicesFooterTitle: string;
+  servicesFooterBlurb: string;
+};
+
+export type ServiceId =
+  | "save-the-date-shoots"
+  | "birthday-surprise-planning"
+  | "proposal-setups"
+  | "couple-shoots"
+  | "reels-memory-videos";
+
+export type CatalogService = {
+  id: ServiceId;
+  title: string;
+  blurb: string;
+  bullets: string[];
+  image: string;
+  sortOrder: number;
+};
+
+export type ServicesPageData = {
+  intro: string;
+  footerTitle: string;
+  footerBlurb: string;
+  services: CatalogService[];
 };

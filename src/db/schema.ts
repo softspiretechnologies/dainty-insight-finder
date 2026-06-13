@@ -37,6 +37,18 @@ export const siteSettings = mysqlTable("site_settings", {
   instagramHandle: varchar("instagram_handle", { length: 64 }).notNull(),
   founder: varchar("founder", { length: 128 }).notNull(),
   location: varchar("location", { length: 256 }).notNull(),
+  servicesIntro: text("services_intro").notNull().default(""),
+  servicesFooterTitle: varchar("services_footer_title", { length: 256 }).notNull().default(""),
+  servicesFooterBlurb: text("services_footer_blurb").notNull().default(""),
+});
+
+export const services = mysqlTable("services", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  title: varchar("title", { length: 256 }).notNull(),
+  blurb: text("blurb").notNull(),
+  bullets: json("bullets").$type<string[]>().notNull(),
+  imagePath: varchar("image_path", { length: 512 }).notNull().default(""),
+  sortOrder: int("sort_order").notNull().default(0),
 });
 
 export const adminUsers = mysqlTable("admin_users", {

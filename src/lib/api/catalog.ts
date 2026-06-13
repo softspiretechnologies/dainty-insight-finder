@@ -7,6 +7,7 @@ import {
   getProductBySlug,
   getProductCount,
   getProducts,
+  getServicesPageData,
   getSiteSettings,
 } from "@/lib/data.server";
 
@@ -35,3 +36,7 @@ export const getAdminDashboardData = createServerFn({ method: "GET" }).handler(a
     productCount: await getProductCount(),
   };
 });
+
+export const getServicesPageDataFn = createServerFn({ method: "GET" }).handler(async () =>
+  getServicesPageData(),
+);

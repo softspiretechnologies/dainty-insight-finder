@@ -4,7 +4,8 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "tsx scripts/ensure-schema.ts && vite dev",
+    "db:ensure": "tsx scripts/ensure-schema.ts",
     "build": "tsx scripts/prepare-uploads.ts && vite build && node scripts/write-hostinger-entry.mjs",
     "build:dev": "tsx scripts/prepare-uploads.ts && vite build --mode development && node scripts/write-hostinger-entry.mjs",
     "start": "node dist/server/hostinger-entry.mjs",

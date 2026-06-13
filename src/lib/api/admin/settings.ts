@@ -6,6 +6,7 @@ import { siteSettings } from "@/db/schema";
 import { settingsSchema } from "@/lib/admin-schemas";
 import { getAdminSession } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
+import { defaultServicesPageContent } from "@/data/services-seed";
 
 function requireAdmin() {
   const session = getAdminSession();
@@ -39,7 +40,13 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
     if (rows[0]) {
       await db.update(siteSettings).set(values).where(eq(siteSettings.id, rows[0].id));
     } else {
-      await db.insert(siteSettings).values({ id: 1, ...values });
+      await db.insert(siteSettings).values({
+        id: 1,
+        ...values,
+        servicesIntro: defaultServicesPageContent.intro,
+        servicesFooterTitle: defaultServicesPageContent.footerTitle,
+        servicesFooterBlurb: defaultServicesPageContent.footerBlurb,
+      });
     }
 
     clearDataCache();

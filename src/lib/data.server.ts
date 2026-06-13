@@ -1,15 +1,17 @@
 import { asc, count, eq } from "drizzle-orm";
 
 import { getDb, isDatabaseConfigured } from "@/db/index.server";
-import { categories as categoriesTable, products as productsTable, siteSettings } from "@/db/schema";
+import { categories as categoriesTable, products as productsTable, services as servicesTable, siteSettings } from "@/db/schema";
 import {
   categories as staticCategories,
   products as staticProducts,
 } from "@/data/products";
+import { defaultServicesPageContent, seedServices } from "@/data/services-seed";
 import { getCached } from "@/lib/cache.server";
 import { normalizeProductDetails } from "@/lib/product-details";
+import { stripBulletPrefix } from "@/lib/bullet-lines";
 import { site } from "@/lib/site";
-import type { CatalogCategory, CatalogProduct, CategoryId, SiteSettingsData } from "@/types/catalog";
+import type { CatalogCategory, CatalogProduct, CatalogService, CategoryId, ServicesPageData, SiteSettingsData } from "@/types/catalog";
 
 export { clearDataCache } from "@/lib/cache.server";
 
@@ -20,7 +22,33 @@ const staticSiteSettings = (): SiteSettingsData => ({
   instagramHandle: site.instagramHandle,
   founder: site.founder,
   location: site.location,
+  servicesIntro: defaultServicesPageContent.intro,
+  servicesFooterTitle: defaultServicesPageContent.footerTitle,
+  servicesFooterBlurb: defaultServicesPageContent.footerBlurb,
 });
+
+function parseBullets(raw: string) {
+  return raw
+    .split("\n")
+    .map(stripBulletPrefix)
+    .filter(Boolean);
+}
+
+function staticServicesPageData(): ServicesPageData {
+  return {
+    intro: defaultServicesPageContent.intro,
+    footerTitle: defaultServicesPageContent.footerTitle,
+    footerBlurb: defaultServicesPageContent.footerBlurb,
+    services: seedServices.map((service) => ({
+      id: service.id,
+      title: service.title,
+      blurb: service.blurb,
+      bullets: service.bullets,
+      image: `/uploads/services/${service.id}.jpg`,
+      sortOrder: service.sortOrder,
+    })),
+  };
+}
 
 async function withDbFallback<T>(query: () => Promise<T>, fallback: () => T): Promise<T> {
   try {
@@ -124,6 +152,9 @@ export async function getSiteSettings(): Promise<SiteSettingsData> {
           instagramHandle: row.instagramHandle,
           founder: row.founder,
           location: row.location,
+          servicesIntro: row.servicesIntro || defaultServicesPageContent.intro,
+          servicesFooterTitle: row.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+          servicesFooterBlurb: row.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
         };
       },
       staticSiteSettings,
@@ -144,6 +175,46 @@ export async function getProductCount(): Promise<number> {
         return Number(row?.value ?? 0);
       },
       () => staticProducts.length,
+    ),
+  );
+}
+
+function mapService(row: typeof servicesTable.$inferSelect): CatalogService {
+  return {
+    id: row.id as CatalogService["id"],
+    title: row.title,
+    blurb: row.blurb,
+    bullets: normalizeProductDetails(row.bullets),
+    image: row.imagePath,
+    sortOrder: row.sortOrder,
+  };
+}
+
+export async function getServicesPageData(): Promise<ServicesPageData> {
+  if (!isDatabaseConfigured()) {
+    return staticServicesPageData();
+  }
+
+  return getCached("servicesPage", () =>
+    withDbFallback(
+      async () => {
+        const db = getDb();
+        const [settingsRows, serviceRows] = await Promise.all([
+          db.select().from(siteSettings).limit(1),
+          db.select().from(servicesTable).orderBy(asc(servicesTable.sortOrder)),
+        ]);
+
+        const settings = settingsRows[0];
+        const services = serviceRows.length > 0 ? serviceRows.map(mapService) : staticServicesPageData().services;
+
+        return {
+          intro: settings?.servicesIntro || defaultServicesPageContent.intro,
+          footerTitle: settings?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+          footerBlurb: settings?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
+          services,
+        };
+      },
+      staticServicesPageData,
     ),
   );
 }

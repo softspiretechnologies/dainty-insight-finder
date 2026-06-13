@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Package, Tags, Settings, MessageCircle, ArrowRight, TrendingUp } from "lucide-react";
+import { Package, Tags, Settings, MessageCircle, ArrowRight, TrendingUp, Sparkles } from "lucide-react";
 
 import { getAdminDashboardData } from "@/lib/api/catalog";
 
@@ -25,6 +25,13 @@ function AdminDashboard() {
       label: "Categories",
       desc: "Update labels, blurbs and images",
       accent: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
+    {
+      to: "/admin/services",
+      icon: Sparkles,
+      label: "Services",
+      desc: "Edit the celebration services page",
+      accent: "bg-violet-50 text-violet-700 border-violet-200",
     },
     {
       to: "/admin/settings",
@@ -68,7 +75,7 @@ function AdminDashboard() {
       {/* Quick actions */}
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">Quick actions</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {quickLinks.map((item) => (
             <Link
               key={item.to}

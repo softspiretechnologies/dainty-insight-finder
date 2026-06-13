@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
+import { serviceImageFiles } from "../src/data/service-asset-map";
 import { optimizeSeedImage } from "../src/lib/image-optimize.server";
 import { allUploadTargets } from "./lib/uploads-path";
 
@@ -23,6 +24,9 @@ async function main() {
     }
     for (const [slug, asset] of Object.entries(productImageFiles)) {
       await copyAsset(targetRoot, asset, "products", `${slug}.jpg`);
+    }
+    for (const [id, asset] of Object.entries(serviceImageFiles)) {
+      await copyAsset(targetRoot, asset, "services", `${id}.jpg`);
     }
     console.log(`Prepared uploads at ${targetRoot}`);
   }

@@ -73,7 +73,7 @@ function validateImageBuffer(buffer: Buffer, mime: string) {
   throw new Error("File content does not match the declared image type");
 }
 
-async function mirrorUploadToPublicBundle(fullPath: string, subdir: "products" | "categories", filename: string) {
+async function mirrorUploadToPublicBundle(fullPath: string, subdir: "products" | "categories" | "services", filename: string) {
   const mirrorDir = path.join(getAppRoot(), "dist", "public", "uploads", subdir);
   if (!existsSync(path.dirname(mirrorDir))) return;
 
@@ -85,7 +85,7 @@ async function mirrorUploadToPublicBundle(fullPath: string, subdir: "products" |
 
 export async function saveUploadedImageFromPayload(
   payload: { name: string; type: string; data: string },
-  subdir: "products" | "categories",
+  subdir: "products" | "categories" | "services",
 ) {
   if (!ALLOWED_TYPES.has(payload.type)) {
     throw new Error("Only JPEG, PNG and WebP images are allowed");
