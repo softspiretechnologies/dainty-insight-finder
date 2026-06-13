@@ -9,20 +9,6 @@ const source = `// Auto-generated — do not edit. Rebuilt by npm run build.
 // Hostinger LiteSpeed binds stdin to the app socket; lazy SSR imports that
 // touch node:process can throw "open EEXIST" without this shim.
 
-function prodLog(level, message, extra) {
-  const line = { timestamp: new Date().toISOString(), level, message };
-  if (extra) line.extra = extra;
-  const text = JSON.stringify(line);
-  if (level === "ERROR") console.error(text);
-  else console.log(text);
-}
-
-prodLog("LOG", "hostinger-entry.mjs loaded", {
-  entry: "dist/server/hostinger-entry.mjs",
-  nodeVersion: process.version,
-  cwd: process.cwd(),
-});
-
 const fakeStdin = {
   readable: false,
   isTTY: false,
@@ -40,42 +26,16 @@ const fakeStdin = {
   destroy() { return this; },
 };
 
-let stdinShimOk = false;
 try {
   Object.defineProperty(process, "stdin", {
     get: () => fakeStdin,
     configurable: true,
   });
-  stdinShimOk = true;
-  prodLog("LOG", "stdin shim applied");
-} catch (error) {
-  prodLog("ERROR", "stdin shim FAILED", {
-    error: { message: error?.message, stack: error?.stack },
-  });
+} catch {
+  // Hostinger may already have stdin bound; continue and let index.mjs load.
 }
 
-process.on("uncaughtException", (error) => {
-  prodLog("ERROR", "uncaughtException (hostinger-entry)", {
-    error: { name: error?.name, message: error?.message, stack: error?.stack, code: error?.code },
-  });
-});
-
-process.on("unhandledRejection", (reason) => {
-  prodLog("ERROR", "unhandledRejection (hostinger-entry)", {
-    error: { message: String(reason) },
-  });
-});
-
-try {
-  await import("./index.mjs");
-  prodLog("LOG", "index.mjs imported successfully");
-} catch (error) {
-  prodLog("ERROR", "Failed to import index.mjs", {
-    error: { name: error?.name, message: error?.message, stack: error?.stack, code: error?.code },
-  });
-  throw error;
-}
+await import("./index.mjs");
 `;
 
 await writeFile(out, source, "utf8");
-console.log("Wrote dist/server/hostinger-entry.mjs");

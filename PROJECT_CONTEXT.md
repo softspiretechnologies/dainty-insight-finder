@@ -16,27 +16,26 @@ dainty-insight-finder/
 │   ├── components/
 │   │   ├── site/            # App-specific layout (header, footer, shell, WhatsApp bot)
 │   │   ├── admin/           # Admin portal layout (AdminShell)
-│   │   └── ui/              # shadcn/ui primitives (Radix + Tailwind)
+│   │   └── ui/              # shadcn/ui primitives used by admin (7 components)
 │   ├── data/
 │   │   └── products.ts      # Static catalog fallback (when DATABASE_URL unset)
 │   ├── db/
 │   │   ├── schema.ts        # Drizzle MySQL tables
 │   │   └── index.server.ts  # Connection pool
-│   ├── hooks/
-│   │   └── use-mobile.tsx   # Responsive breakpoint hook
 │   ├── lib/
 │   │   ├── site.ts          # Brand/contact config + whatsappLink() + siteUrl()
 │   │   ├── config.server.ts # Server-only env helpers
 │   │   ├── utils.ts         # cn() Tailwind class merger
+│   │   ├── cache.server.ts  # In-memory TTL cache for catalog reads
 │   │   ├── data.server.ts   # getCategories/getProducts/getSiteSettings (+ fallback)
 │   │   ├── auth.server.ts   # Admin session cookie + bcrypt
 │   │   ├── uploads.server.ts # Image upload validation + disk storage
 │   │   ├── api/
 │   │   │   ├── catalog.ts   # Public catalog server functions (loaders)
-│   │   │   └── admin/       # Admin auth, CRUD, upload server functions
-│   │   └── error-*.ts       # SSR error capture & reporting
+│   │   │   └── admin/       # Admin auth, CRUD server functions
+│   │   └── error-page.ts    # SSR error HTML fallback
 │   ├── routes/              # File-based TanStack Start routes
-│   ├── router.tsx           # Router factory with QueryClient
+│   ├── router.tsx           # Router factory
 │   ├── server.ts            # Custom SSR entry (error wrapper)
 │   ├── start.ts             # TanStack Start middleware config
 │   ├── routeTree.gen.ts     # Auto-generated route tree (do not edit)
@@ -47,7 +46,7 @@ dainty-insight-finder/
 ├── vite.config.ts           # Lovable TanStack config wrapper
 ├── components.json          # shadcn/ui config
 ├── package.json
-├── bun.lock / bunfig.toml   # Bun package manager
+├── package-lock.json
 └── tsconfig.json            # Path alias: @/* → src/*
 ```
 
@@ -151,12 +150,9 @@ Uploaded images live on disk at `public/uploads/` (paths like `/uploads/products
 | --- | --- |
 | `src/lib/api/catalog.ts` | Public data loaders (categories, products, site settings) |
 | `src/lib/api/admin/auth.ts` | Login, logout, session check |
-| `src/lib/api/admin/products.ts` | Admin product CRUD (FormData + file upload) |
-| `src/lib/api/admin/categories.ts` | Admin category save (FormData + file upload) |
+| `src/lib/api/admin/products.ts` | Admin product CRUD (JSON + base64 image upload) |
+| `src/lib/api/admin/categories.ts` | Admin category save (JSON + base64 image upload) |
 | `src/lib/api/admin/settings.ts` | Site settings CRUD |
-| `src/lib/api/admin/upload.ts` | Standalone image upload helper |
-
-`src/lib/api/example.functions.ts` contains a demo `getGreeting` — unused.
 
 ## Environment variables
 
@@ -172,17 +168,17 @@ Server config pattern in `src/lib/config.server.ts` reads `process.env` inside f
 
 # Development Commands
 
-Package manager: **Bun** (lockfile present; npm/yarn also work via `package.json` scripts).
+Package manager: **npm** (`package-lock.json`).
 
 | Command | Purpose |
 | --- | --- |
-| `bun install` | Install dependencies |
-| `bun run dev` | Start Vite dev server |
-| `bun run build` | Production build (Vite + Nitro) |
-| `bun run build:dev` | Development-mode build |
-| `bun run preview` | Preview production build locally |
-| `bun run lint` | ESLint check |
-| `bun run format` | Prettier format all files |
+| `npm install` | Install dependencies |
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Production build (Vite + Nitro) |
+| `npm run build:dev` | Development-mode build |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | ESLint check |
+| `npm run format` | Prettier format all files |
 | `npm run db:generate` | Generate Drizzle SQL migrations |
 | `npm run db:migrate` | Apply migrations to MySQL |
 | `npm run db:seed` | Seed DB + copy images to `public/uploads/` |
@@ -198,7 +194,7 @@ Package manager: **Bun** (lockfile present; npm/yarn also work via `package.json
 | --- | --- |
 | `package.json` | Dependencies, scripts, project metadata |
 | `vite.config.ts` | TanStack Start server entry override (`src/server.ts`) |
-| `src/routes/__root.tsx` | HTML shell, global meta/OG, QueryClient provider, themed 404/error UI |
+| `src/routes/__root.tsx` | HTML shell, global meta/OG, root catalog context, themed 404/error UI |
 | `src/routes/index.tsx` | Homepage (hero, categories, why, moments, how-it-works, stats, gallery, testimonials, closing CTA) |
 | `src/routes/catalog.index.tsx` | Catalog listing with URL search param filters & pagination |
 | `src/routes/catalog.$slug.tsx` | Product detail with loader + JSON-LD |
@@ -209,8 +205,10 @@ Package manager: **Bun** (lockfile present; npm/yarn also work via `package.json
 | `src/routes/robots[.]txt.ts` | Dynamic robots.txt server handler |
 | `src/routes/admin.tsx` | Admin layout + auth guard |
 | `src/routes/admin.login.tsx` | Admin login form |
-| `src/routes/admin.products.tsx` | Product list |
-| `src/routes/admin.products.$productId.tsx` | Product add/edit with file upload |
+| `src/routes/admin.products.tsx` | Products layout (`<Outlet />`) |
+| `src/routes/admin.products.index.tsx` | Product list |
+| `src/routes/admin.products.$productId.tsx` | Product add/edit with image upload |
+| `src/routes/uploads/$.tsx` | Serves uploaded images from disk |
 | `src/routes/admin.categories.tsx` | Category editor with file upload |
 | `src/routes/admin.settings.tsx` | Site settings editor |
 | `src/data/products.ts` | Static catalog fallback — prefer admin/MySQL in production |

@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
@@ -104,12 +104,4 @@ export async function verifyAdminCredentials(email: string, password: string): P
   if (!valid) return null;
 
   return { userId: user.id, email: user.email, name: user.name };
-}
-
-export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 12);
-}
-
-export function generateSessionSecret() {
-  return randomBytes(32).toString("hex");
 }

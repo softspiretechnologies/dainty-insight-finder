@@ -14,24 +14,11 @@ export const getRootPageData = createServerFn({ method: "GET" }).handler(async (
   return { categories, siteSettings };
 });
 
-export const getCatalogPageData = createServerFn({ method: "GET" }).handler(async () => {
-  const [categories, products] = await Promise.all([getCategories(), getProducts()]);
-  return { categories, products };
-});
+export const getCatalogProducts = createServerFn({ method: "GET" }).handler(async () => getProducts());
 
-export const getProductPageData = createServerFn({ method: "GET" })
+export const getProductBySlugData = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string() }))
-  .handler(async ({ data }) => {
-    const [product, categories] = await Promise.all([
-      getProductBySlug(data.slug),
-      getCategories(),
-    ]);
-    return { product, categories };
-  });
-
-export const getHomePageData = createServerFn({ method: "GET" }).handler(async () => ({
-  categories: await getCategories(),
-}));
+  .handler(async ({ data }) => getProductBySlug(data.slug));
 
 export const getSitemapProducts = createServerFn({ method: "GET" }).handler(async () => getProducts());
 

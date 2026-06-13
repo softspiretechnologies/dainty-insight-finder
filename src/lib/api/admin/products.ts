@@ -6,6 +6,7 @@ import { getDb } from "@/db/index.server";
 import { products as productsTable } from "@/db/schema";
 import { imageUploadPayloadSchema } from "@/lib/admin-upload-payload";
 import { getAdminSession } from "@/lib/auth.server";
+import { clearDataCache } from "@/lib/data.server";
 import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
 import type { CategoryId } from "@/types/catalog";
 
@@ -96,12 +97,14 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
       const existing = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
       if (!existing[0]) throw new Error("Product not found");
       await db.update(productsTable).set(values).where(eq(productsTable.id, id));
+      clearDataCache();
       return { id };
     }
 
     const result = await db.insert(productsTable).values(values);
     const header = Array.isArray(result) ? result[0] : result;
     const insertId = Number((header as { insertId?: number }).insertId);
+    clearDataCache();
     if (insertId) return { id: insertId };
 
     const rows = await db.select().from(productsTable).where(eq(productsTable.slug, data.slug)).limit(1);
@@ -119,5 +122,6 @@ export const deleteAdminProduct = createServerFn({ method: "POST" })
 
     await db.delete(productsTable).where(eq(productsTable.id, data.id));
     await deleteUploadedImage(product.imagePath);
+    clearDataCache();
     return { ok: true as const };
   });

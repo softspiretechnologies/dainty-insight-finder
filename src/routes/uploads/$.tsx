@@ -36,7 +36,7 @@ export const Route = createFileRoute("/uploads/$")({
           return new Response(body, {
             headers: {
               "Content-Type": contentTypeFor(filePath),
-              "Cache-Control": "public, max-age=86400",
+              "Cache-Control": "public, max-age=31536000, immutable",
             },
           });
         } catch {

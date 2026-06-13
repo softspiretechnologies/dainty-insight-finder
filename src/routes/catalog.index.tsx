@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
 import { categories as staticCategories, type Category } from "@/data/products";
-import { getCatalogPageData } from "@/lib/api/catalog";
+import { getCatalogProducts } from "@/lib/api/catalog";
 import { site, siteUrl, whatsappLink } from "@/lib/site";
 
 const PAGE_SIZE = 12;
@@ -18,7 +18,7 @@ const catalogSearchSchema = z.object({
 
 export const Route = createFileRoute("/catalog/")({
   validateSearch: catalogSearchSchema,
-  loader: () => getCatalogPageData(),
+  loader: () => getCatalogProducts(),
   head: () => ({
     meta: [
       { title: "Past Creations — DaintyHand | Custom Gifts & Hampers" },
@@ -37,7 +37,8 @@ export const Route = createFileRoute("/catalog/")({
 type Filter = Category | "all";
 
 function CatalogPage() {
-  const { categories, products } = Route.useLoaderData();
+  const { categories } = useRouteContext({ from: "__root__" });
+  const products = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 

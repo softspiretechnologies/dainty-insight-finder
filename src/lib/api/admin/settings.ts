@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getDb } from "@/db/index.server";
 import { siteSettings } from "@/db/schema";
 import { getAdminSession } from "@/lib/auth.server";
+import { clearDataCache } from "@/lib/data.server";
 
 function requireAdmin() {
   const session = getAdminSession();
@@ -41,5 +42,6 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
       await db.insert(siteSettings).values({ id: 1, ...data });
     }
 
+    clearDataCache();
     return { ok: true as const };
   });

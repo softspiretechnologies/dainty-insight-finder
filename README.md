@@ -6,8 +6,8 @@ The public site reads catalog data from **MySQL** (with a static fallback when `
 
 ## Prerequisites
 
-- Node.js 22+ (or [Bun](https://bun.sh))
-- npm, pnpm, or Bun
+- Node.js 22+
+- npm
 - MySQL 8+ (Hostinger database in production)
 
 ## Install
@@ -20,12 +20,6 @@ If `npm install` fails with a `nitro` peer dependency conflict, use:
 
 ```bash
 npm install --legacy-peer-deps
-```
-
-Alternatively, with Bun:
-
-```bash
-bun install
 ```
 
 ## Environment variables
@@ -90,7 +84,7 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 | Framework preset | **React Router** |
 | Build command | `npm run build` |
 | Output directory | `dist` |
-| Entry file | `dist/server/hostinger-entry.mjs` (or `react-router-server.cjs` if Hostinger uses the React Router preset wrapper) |
+| Entry file | `dist/server/hostinger-entry.mjs` |
 | Node version | 22.x |
 
 **First-time deploy steps:**

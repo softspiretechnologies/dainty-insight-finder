@@ -1,13 +1,13 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { getProductPageData } from "@/lib/api/catalog";
+import { getProductBySlugData } from "@/lib/api/catalog";
 import { site, siteUrl, whatsappLink } from "@/lib/site";
 
 export const Route = createFileRoute("/catalog/$slug")({
   loader: async ({ params }) => {
-    const { product, categories } = await getProductPageData({ data: { slug: params.slug } });
+    const product = await getProductBySlugData({ data: { slug: params.slug } });
     if (!product) throw notFound();
-    return { product, categories };
+    return { product };
   },
   head: ({ loaderData }) => {
     const product = loaderData?.product;
@@ -79,7 +79,8 @@ export const Route = createFileRoute("/catalog/$slug")({
 });
 
 function ProductPage() {
-  const { product, categories } = Route.useLoaderData();
+  const { product } = Route.useLoaderData();
+  const { categories } = useRouteContext({ from: "__root__" });
   const category = categories.find((c) => c.id === product.category);
 
   return (

@@ -6,6 +6,7 @@ import { getDb } from "@/db/index.server";
 import { categories as categoriesTable } from "@/db/schema";
 import { imageUploadPayloadSchema } from "@/lib/admin-upload-payload";
 import { getAdminSession } from "@/lib/auth.server";
+import { clearDataCache } from "@/lib/data.server";
 import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
 
 const categoryIds = [
@@ -72,5 +73,6 @@ export const saveAdminCategory = createServerFn({ method: "POST" })
       await db.insert(categoriesTable).values({ id: data.id, ...values });
     }
 
+    clearDataCache();
     return { id: data.id };
   });
