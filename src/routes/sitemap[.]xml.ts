@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { products } from "@/data/products";
-
-const BASE_URL = "https://dainty-insight-finder.lovable.app";
+import { site } from "@/lib/site";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
@@ -17,7 +16,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
           ...all.map(
             (path) =>
-              `  <url>\n    <loc>${BASE_URL}${path}</loc>\n    <changefreq>weekly</changefreq>\n  </url>`,
+              `  <url>\n    <loc>${site.baseUrl}${path}</loc>\n    <changefreq>weekly</changefreq>\n  </url>`,
           ),
           `</urlset>`,
         ].join("\n");

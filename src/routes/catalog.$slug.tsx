@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, products } from "@/data/products";
-import { site, whatsappLink } from "@/lib/site";
+import { site, siteUrl, whatsappLink } from "@/lib/site";
 
 export const Route = createFileRoute("/catalog/$slug")({
   loader: ({ params }) => {
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/catalog/$slug")({
     if (!product) {
       return { meta: [{ title: "Not found — DaintyHand" }] };
     }
-    const url = `https://dainty-insight-finder.lovable.app/catalog/${product.slug}`;
+    const url = siteUrl(`/catalog/${product.slug}`);
     return {
       meta: [
         { title: `${product.name} — DaintyHand` },

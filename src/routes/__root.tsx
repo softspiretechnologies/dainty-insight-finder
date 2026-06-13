@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { siteUrl } from "../lib/site";
 
 function NotFoundComponent() {
   return (
@@ -87,10 +88,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@dainty.handd" },
       { name: "twitter:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
       { name: "twitter:description", content: "Custom hampers, bouquets, invitations and celebration services handcrafted with care and shipped across India & worldwide." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/834d92aa-d9fe-45c9-a222-83a011a781ad/id-preview-6402b5c5--aeccbcc9-8353-4330-ad68-780f08039adb.lovable.app-1780921668749.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/834d92aa-d9fe-45c9-a222-83a011a781ad/id-preview-6402b5c5--aeccbcc9-8353-4330-ad68-780f08039adb.lovable.app-1780921668749.png" },
+      { property: "og:image", content: siteUrl("/og-image.jpg") },
+      { name: "twitter:image", content: siteUrl("/og-image.jpg") },
     ],
     links: [
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       {
         rel: "stylesheet",
         href: appCss,

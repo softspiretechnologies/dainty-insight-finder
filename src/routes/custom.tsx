@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
-import { site, whatsappLink } from "@/lib/site";
+import { site, siteUrl, whatsappLink } from "@/lib/site";
 
 const serviceOptions = [
   "Hamper",
@@ -16,7 +18,45 @@ const serviceOptions = [
   "Event Styling",
   "Memory Video",
   "Other",
-];
+] as const;
+
+const customOrderSchema = z.object({
+  name: z.string().trim().min(2, "Please enter your full name"),
+  phone: z
+    .string()
+    .trim()
+    .min(10, "Enter a valid phone or WhatsApp number")
+    .regex(/^\+?[\d\s-]{10,}$/, "Enter a valid phone or WhatsApp number"),
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email address")
+    .or(z.literal(""))
+    .optional(),
+  service: z.enum(serviceOptions),
+  eventType: z.string().trim().optional(),
+  date: z
+    .string()
+    .optional()
+    .refine(
+      (value) => {
+        if (!value) return true;
+        const selected = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return selected >= today;
+      },
+      { message: "Event date must be today or in the future" },
+    ),
+  budget: z.string().trim().optional(),
+  location: z.string().trim().min(2, "Enter a delivery city or area"),
+  notes: z
+    .string()
+    .trim()
+    .min(10, "Add a short description so we can understand your brief"),
+});
+
+type CustomOrderForm = z.infer<typeof customOrderSchema>;
 
 export const Route = createFileRoute("/custom")({
   head: () => ({
@@ -27,45 +67,56 @@ export const Route = createFileRoute("/custom")({
       { property: "og:description", content: "Tell us what you have in mind — we'll continue the conversation on WhatsApp." },
     ],
     links: [
-      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/custom" },
+      { rel: "canonical", href: siteUrl("/custom") },
     ],
   }),
   component: CustomPage,
 });
 
 function CustomPage() {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [eventType, setEventType] = useState("");
-  const [service, setService] = useState<string>("Hamper");
-  const [date, setDate] = useState("");
-  const [budget, setBudget] = useState("");
-  const [location, setLocation] = useState("");
-  const [notes, setNotes] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CustomOrderForm>({
+    resolver: zodResolver(customOrderSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      service: "Hamper",
+      eventType: "",
+      date: "",
+      budget: "",
+      location: "",
+      notes: "",
+    },
+  });
 
-  function buildMessage() {
+  function buildMessage(data: CustomOrderForm) {
     const lines = [
       `Hi ${site.founder}, I'd like to start a custom order.`,
       "",
-      `Name: ${name || "—"}`,
-      `Phone / WhatsApp: ${phone || "—"}`,
-      `Email: ${email || "—"}`,
-      `Service: ${service}`,
-      `Event type: ${eventType || "—"}`,
-      `Event date: ${date || "—"}`,
-      `Delivery location: ${location || "—"}`,
-      `Budget: ${budget || "—"}`,
-      `Description: ${notes || "—"}`,
+      `Name: ${data.name}`,
+      `Phone / WhatsApp: ${data.phone}`,
+      `Email: ${data.email || "—"}`,
+      `Service: ${data.service}`,
+      `Event type: ${data.eventType || "—"}`,
+      `Event date: ${data.date || "—"}`,
+      `Delivery location: ${data.location}`,
+      `Budget: ${data.budget || "—"}`,
+      `Description: ${data.notes}`,
     ];
     return lines.join("\n");
   }
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const url = whatsappLink(buildMessage());
+  function onSubmit(data: CustomOrderForm) {
+    const url = whatsappLink(buildMessage(data));
     window.open(url, "_blank", "noopener,noreferrer");
   }
+
+  const inputClass =
+    "w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm";
 
   return (
     <PageShell>
@@ -83,46 +134,41 @@ function CustomPage() {
 
       <section className="px-5 md:px-6 pb-16 md:pb-32">
         <form
-          onSubmit={onSubmit}
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
           className="max-w-2xl mx-auto bg-surface/60 border border-border rounded-sm p-5 sm:p-8 md:p-12 space-y-6 md:space-y-8"
         >
-          <Field label="Full name">
+          <Field label="Full name" error={errors.name?.message}>
             <input
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+              {...register("name")}
+              className={inputClass}
               placeholder="Your name"
+              autoComplete="name"
             />
           </Field>
 
           <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
-            <Field label="Phone / WhatsApp">
+            <Field label="Phone / WhatsApp" error={errors.phone?.message}>
               <input
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+                {...register("phone")}
+                className={inputClass}
                 placeholder="+91 ..."
+                autoComplete="tel"
               />
             </Field>
-            <Field label="Email (optional)">
+            <Field label="Email (optional)" error={errors.email?.message}>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+                {...register("email")}
+                className={inputClass}
                 placeholder="you@email.com"
+                autoComplete="email"
               />
             </Field>
           </div>
 
-          <Field label="Service required">
-            <select
-              value={service}
-              onChange={(e) => setService(e.target.value)}
-              className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
-            >
+          <Field label="Service required" error={errors.service?.message}>
+            <select {...register("service")} className={inputClass}>
               {serviceOptions.map((s) => (
                 <option key={s} value={s}>
                   {s}
@@ -131,50 +177,41 @@ function CustomPage() {
             </select>
           </Field>
 
-          <Field label="Event type (wedding, birthday, engagement…)">
+          <Field label="Event type (wedding, birthday, engagement…)" error={errors.eventType?.message}>
             <input
-              value={eventType}
-              onChange={(e) => setEventType(e.target.value)}
-              className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+              {...register("eventType")}
+              className={inputClass}
               placeholder="Engagement"
             />
           </Field>
 
           <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
-            <Field label="Event date">
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
-              />
+            <Field label="Event date" error={errors.date?.message}>
+              <input type="date" {...register("date")} className={inputClass} />
             </Field>
 
-            <Field label="Budget range (optional)">
+            <Field label="Budget range (optional)" error={errors.budget?.message}>
               <input
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+                {...register("budget")}
+                className={inputClass}
                 placeholder="₹2,000–5,000"
               />
             </Field>
           </div>
 
-          <Field label="Delivery location">
+          <Field label="Delivery location" error={errors.location?.message}>
             <input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm"
+              {...register("location")}
+              className={inputClass}
               placeholder="City / area"
             />
           </Field>
 
-          <Field label="Description / the brief">
+          <Field label="Description / the brief" error={errors.notes?.message}>
             <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              {...register("notes")}
               rows={5}
-              className="w-full bg-transparent border-b border-border focus:border-foreground outline-none py-2 text-sm resize-none"
+              className={`${inputClass} resize-none`}
               placeholder="Colours, theme, names, recipient, anything else…"
             />
           </Field>
@@ -201,13 +238,22 @@ function CustomPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
       <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted block mb-2">
         {label}
       </span>
       {children}
+      {error ? <p className="text-[11px] text-red-600 mt-1">{error}</p> : null}
     </label>
   );
 }

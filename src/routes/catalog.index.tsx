@@ -1,23 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, products, type Category } from "@/data/products";
-import { site, whatsappLink } from "@/lib/site";
+import { site, siteUrl, whatsappLink } from "@/lib/site";
 
 const PAGE_SIZE = 12;
 
+const categoryIds = categories.map((c) => c.id) as [Category, ...Category[]];
+
+const catalogSearchSchema = z.object({
+  category: z.enum(categoryIds).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+});
+
 export const Route = createFileRoute("/catalog/")({
+  validateSearch: catalogSearchSchema,
   head: () => ({
     meta: [
       { title: "Past Creations — DaintyHand | Custom Gifts & Hampers" },
       { name: "description", content: "Browse past creations: hampers, bouquets, invitations, frames and calligraphy — fully customisable, handcrafted with care and shipped across India & worldwide." },
       { property: "og:title", content: "Past Creations — DaintyHand" },
       { property: "og:description", content: "Browse past creations — every piece is fully customisable to your occasion." },
-      { property: "og:url", content: "https://dainty-insight-finder.lovable.app/catalog" },
+      { property: "og:url", content: siteUrl("/catalog") },
     ],
     links: [
-      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/catalog" },
+      { rel: "canonical", href: siteUrl("/catalog") },
     ],
   }),
   component: CatalogPage,
@@ -26,17 +34,33 @@ export const Route = createFileRoute("/catalog/")({
 type Filter = Category | "all";
 
 function CatalogPage() {
-  const [filter, setFilter] = useState<Filter>("all");
-  const [page, setPage] = useState(1);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const filter: Filter = search.category ?? "all";
+  const page = search.page ?? 1;
 
   const filtered = filter === "all" ? products : products.filter((p) => p.category === filter);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
+  const setSearch = (next: { category?: Category; page?: number }) => {
+    navigate({
+      search: (prev) => ({
+        category: "category" in next ? next.category : prev.category,
+        page: "page" in next ? next.page : prev.page,
+      }),
+      replace: true,
+    });
+  };
+
   const handleFilter = (f: Filter) => {
-    setFilter(f);
-    setPage(1);
+    setSearch({ category: f === "all" ? undefined : f, page: undefined });
+  };
+
+  const handlePage = (p: number) => {
+    setSearch({ page: p === 1 ? undefined : p });
   };
 
   return (
@@ -114,7 +138,7 @@ function CatalogPage() {
         {totalPages > 1 && (
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 mt-10 md:mt-14">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => handlePage(Math.max(1, safePage - 1))}
               disabled={safePage === 1}
               className="grid place-items-center w-9 h-9 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
               aria-label="Previous page"
@@ -124,7 +148,7 @@ function CatalogPage() {
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
-                onClick={() => setPage(p)}
+                onClick={() => handlePage(p)}
                 className={`grid place-items-center w-9 h-9 rounded-full text-[11px] font-medium transition-colors ${
                   p === safePage
                     ? "bg-foreground text-background"
@@ -136,7 +160,7 @@ function CatalogPage() {
               </button>
             ))}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => handlePage(Math.min(totalPages, safePage + 1))}
               disabled={safePage === totalPages}
               className="grid place-items-center w-9 h-9 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
               aria-label="Next page"

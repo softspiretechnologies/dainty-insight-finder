@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { site, whatsappLink } from "@/lib/site";
+import { site, siteUrl, whatsappLink } from "@/lib/site";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/contact")({
       { property: "og:description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
     ],
     links: [
-      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/contact" },
+      { rel: "canonical", href: siteUrl("/contact") },
     ],
   }),
   component: ContactPage,

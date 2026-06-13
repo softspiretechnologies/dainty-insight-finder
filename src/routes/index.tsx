@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, galleryImages } from "@/data/products";
-import { site, whatsappLink } from "@/lib/site";
-import hampersImg from "@/assets/service-hampers.jpg";
+import { site, siteUrl, whatsappLink } from "@/lib/site";
 import portraitImg from "@/assets/portrait-nafisa.jpg";
 import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
 import momentBirthday from "@/assets/moment-birthday.jpg";
@@ -18,12 +17,12 @@ export const Route = createFileRoute("/")({
       { name: "keywords", content: "Wedding Gifts India, Nikah Invitations, Save The Date Shoots, Custom Hampers India, Proposal Setup, Birthday Surprise, Wedding Invitations, Handcrafted Gifts Worldwide, Perinthalmanna gifting studio" },
       { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
       { property: "og:description", content: "Wedding gifts, nikah invitations, save-the-date shoots & surprise setups handcrafted and shipped across India & worldwide." },
-      { property: "og:url", content: "https://dainty-insight-finder.lovable.app/" },
-      { property: "og:image", content: hampersImg },
-      { name: "twitter:image", content: hampersImg },
+      { property: "og:url", content: siteUrl("/") },
+      { property: "og:image", content: siteUrl("/og-image.jpg") },
+      { name: "twitter:image", content: siteUrl("/og-image.jpg") },
     ],
     links: [
-      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/" },
+      { rel: "canonical", href: siteUrl("/") },
     ],
     scripts: [
       {
@@ -33,8 +32,8 @@ export const Route = createFileRoute("/")({
           "@type": "LocalBusiness",
           name: "DaintyHand",
           description: "Handcrafted gifts, wedding essentials and celebration studio based in Kerala — shipping across India & worldwide.",
-          image: "https://dainty-insight-finder.lovable.app/og-image.jpg",
-          url: "https://dainty-insight-finder.lovable.app/",
+          image: siteUrl("/og-image.jpg"),
+          url: siteUrl("/"),
           telephone: "+91-9999999999",
           email: "hello@daintyhand.in",
           address: {
@@ -131,6 +130,7 @@ function Index() {
             <Link
               key={cat.id}
               to="/catalog"
+              search={{ category: cat.id }}
               className="bg-background p-4 md:p-8 group hover:bg-surface transition-colors flex flex-col"
             >
               <span className="font-mono text-[9px] text-muted mb-3 md:mb-6 block">

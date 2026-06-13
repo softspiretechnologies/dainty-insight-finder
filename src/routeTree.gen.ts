@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as CustomRouteImport } from './routes/custom'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CatalogRouteImport } from './routes/catalog'
@@ -27,6 +28,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomRoute = CustomRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRouteWithChildren
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/catalog/$slug': typeof CatalogSlugRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/catalog/$slug': typeof CatalogSlugRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRouteWithChildren
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/catalog/$slug': typeof CatalogSlugRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/contact'
     | '/custom'
+    | '/robots.txt'
     | '/services'
     | '/sitemap.xml'
     | '/catalog/$slug'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/custom'
+    | '/robots.txt'
     | '/services'
     | '/sitemap.xml'
     | '/catalog/$slug'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/contact'
     | '/custom'
+    | '/robots.txt'
     | '/services'
     | '/sitemap.xml'
     | '/catalog/$slug'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   CatalogRoute: typeof CatalogRouteWithChildren
   ContactRoute: typeof ContactRoute
   CustomRoute: typeof CustomRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
@@ -157,6 +170,13 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/services'
       preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/custom': {
@@ -230,6 +250,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogRoute: CatalogRouteWithChildren,
   ContactRoute: ContactRoute,
   CustomRoute: CustomRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }

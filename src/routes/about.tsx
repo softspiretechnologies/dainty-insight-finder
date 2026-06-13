@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { site, whatsappLink } from "@/lib/site";
+import { site, siteUrl, whatsappLink } from "@/lib/site";
 import portraitImg from "@/assets/portrait-nafisa.jpg";
 
 export const Route = createFileRoute("/about")({
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/about")({
       { name: "twitter:image", content: portraitImg },
     ],
     links: [
-      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/about" },
+      { rel: "canonical", href: siteUrl("/about") },
     ],
   }),
   component: AboutPage,

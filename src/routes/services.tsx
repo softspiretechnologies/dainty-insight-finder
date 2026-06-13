@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { site, whatsappLink } from "@/lib/site";
+import { site, siteUrl, whatsappLink } from "@/lib/site";
 import shootImg from "@/assets/service-invitations.jpg";
 import proposalImg from "@/assets/moment-proposal.jpg";
 import coupleImg from "@/assets/moment-couple.jpg";
@@ -16,11 +16,11 @@ export const Route = createFileRoute("/services")({
       { name: "keywords", content: "Save The Date Shoots, Proposal Setup, Birthday Surprise, Couple Shoot, Memory Reels, Wedding Studio Malappuram, Perinthalmanna celebrations, Event Styling India" },
       { property: "og:title", content: "Celebration Services — DaintyHand" },
       { property: "og:description", content: "Save the date shoots, proposals, surprises, couple shoots and memory reels across India & worldwide." },
-      { property: "og:url", content: "https://dainty-insight-finder.lovable.app/services" },
+      { property: "og:url", content: siteUrl("/services") },
       { property: "og:image", content: shootImg },
     ],
     links: [
-      { rel: "canonical", href: "https://dainty-insight-finder.lovable.app/services" },
+      { rel: "canonical", href: siteUrl("/services") },
     ],
     scripts: [
       {
