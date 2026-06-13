@@ -6,48 +6,12 @@ import { eq } from "drizzle-orm";
 
 import { categories, products, siteSettings, adminUsers } from "../src/db/schema";
 import { seedCategories, seedProducts } from "../src/data/catalog-seed";
+import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
 import { site } from "../src/lib/site";
 
 const ROOT = process.cwd();
 const ASSETS_DIR = path.join(ROOT, "src/assets");
 const UPLOADS_DIR = path.join(ROOT, "public/uploads");
-
-const categoryImageFiles: Record<string, string> = {
-  hampers: "service-hampers.jpg",
-  bouquets: "service-bouquets.jpg",
-  invitations: "service-invitations.jpg",
-  engagement: "service-engagement.jpg",
-  frames: "gallery-4.jpg",
-  albums: "gallery-6.jpg",
-  calligraphy: "gallery-3.jpg",
-  celebrations: "gallery-5.jpg",
-};
-
-const productImageFiles: Record<string, string> = {
-  "ribbon-wrap-hamper": "service-hampers.jpg",
-  "wax-seal-keepsake": "gallery-1.jpg",
-  "candle-and-cotton-hamper": "gallery-6.jpg",
-  "garden-meadow-bouquet": "service-bouquets.jpg",
-  "jasmine-marigold-arrangement": "gallery-2.jpg",
-  "cotton-paper-invitation-suite": "service-invitations.jpg",
-  "kerala-script-card": "gallery-3.jpg",
-  "place-card-set": "gallery-5.jpg",
-  "ring-box-hamper": "service-engagement.jpg",
-  "promise-chest": "gallery-4.jpg",
-  "chocolate-bouquet": "gallery-2.jpg",
-  "cash-bouquet": "service-bouquets.jpg",
-  "acrylic-couple-frame": "gallery-4.jpg",
-  "memory-frame": "gallery-1.jpg",
-  "wedding-album": "gallery-6.jpg",
-  "memory-book": "gallery-5.jpg",
-  "arabic-name-calligraphy": "gallery-3.jpg",
-  "event-signage-set": "gallery-5.jpg",
-  "save-the-date-shoot": "service-invitations.jpg",
-  "birthday-surprise-setup": "service-engagement.jpg",
-  "proposal-setup": "service-engagement.jpg",
-  "memory-reel": "gallery-3.jpg",
-  "nikah-invitation-suite": "service-invitations.jpg",
-};
 
 async function copyAssetToUploads(assetFile: string, subdir: string, destName: string) {
   const src = path.join(ASSETS_DIR, assetFile);

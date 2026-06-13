@@ -1,0 +1,37 @@
+/** Maps seed slugs/ids to files under src/assets/. Used by db:seed and the build step. */
+export const categoryImageFiles: Record<string, string> = {
+  hampers: "service-hampers.jpg",
+  bouquets: "service-bouquets.jpg",
+  invitations: "service-invitations.jpg",
+  engagement: "service-engagement.jpg",
+  frames: "gallery-4.jpg",
+  albums: "gallery-6.jpg",
+  calligraphy: "gallery-3.jpg",
+  celebrations: "gallery-5.jpg",
+};
+
+export const productImageFiles: Record<string, string> = {
+  "ribbon-wrap-hamper": "service-hampers.jpg",
+  "wax-seal-keepsake": "gallery-1.jpg",
+  "candle-and-cotton-hamper": "gallery-6.jpg",
+  "garden-meadow-bouquet": "service-bouquets.jpg",
+  "jasmine-marigold-arrangement": "gallery-2.jpg",
+  "cotton-paper-invitation-suite": "service-invitations.jpg",
+  "kerala-script-card": "gallery-3.jpg",
+  "place-card-set": "gallery-5.jpg",
+  "ring-box-hamper": "service-engagement.jpg",
+  "promise-chest": "gallery-4.jpg",
+  "chocolate-bouquet": "gallery-2.jpg",
+  "cash-bouquet": "service-bouquets.jpg",
+  "acrylic-couple-frame": "gallery-4.jpg",
+  "memory-frame": "gallery-1.jpg",
+  "wedding-album": "gallery-6.jpg",
+  "memory-book": "gallery-5.jpg",
+  "arabic-name-calligraphy": "gallery-3.jpg",
+  "event-signage-set": "gallery-5.jpg",
+  "save-the-date-shoot": "service-invitations.jpg",
+  "birthday-surprise-setup": "service-engagement.jpg",
+  "proposal-setup": "service-engagement.jpg",
+  "memory-reel": "gallery-3.jpg",
+  "nikah-invitation-suite": "service-invitations.jpg",
+};

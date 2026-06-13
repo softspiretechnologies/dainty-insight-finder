@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && node scripts/write-hostinger-entry.mjs",
-    "build:dev": "vite build --mode development && node scripts/write-hostinger-entry.mjs",
+    "build": "tsx scripts/prepare-uploads.ts && vite build && node scripts/write-hostinger-entry.mjs",
+    "build:dev": "tsx scripts/prepare-uploads.ts && vite build --mode development && node scripts/write-hostinger-entry.mjs",
     "start": "node dist/server/hostinger-entry.mjs",
     "preview": "vite preview",
     "lint": "eslint .",

@@ -1,4 +1,5 @@
 import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { getServerConfig } from "@/lib/config.server";
@@ -9,7 +10,16 @@ const MAX_BYTES = 5 * 1024 * 1024;
 function uploadsRoot() {
   const { uploadsDir } = getServerConfig();
   if (uploadsDir) return uploadsDir;
-  return path.join(process.cwd(), "public", "uploads");
+
+  const cwd = process.cwd();
+  const candidates = [
+    path.join(cwd, "dist", "public", "uploads"),
+    path.join(cwd, "public", "uploads"),
+  ];
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir;
+  }
+  return candidates[1];
 }
 
 function sanitizeFilename(name: string) {
