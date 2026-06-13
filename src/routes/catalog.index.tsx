@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { categories, products, type Category } from "@/data/products";
 import { site, whatsappLink } from "@/lib/site";
@@ -67,33 +68,36 @@ function CatalogPage() {
                   />
                 </div>
               </Link>
-              <div className="flex items-start justify-between gap-2 sm:gap-4">
-                <div className="min-w-0">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted block mb-1.5 sm:mb-2">
+              <div className="min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted truncate">
                     {categories.find((c) => c.id === p.category)?.label}
                   </span>
-                  <Link to="/catalog/$slug" params={{ slug: p.slug }}>
-                    <h3 className="font-display text-base sm:text-xl italic leading-tight hover:text-primary transition-colors">{p.name}</h3>
-                  </Link>
-                  <p className="text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">{p.blurb}</p>
-                  <span className="inline-block mt-3 font-mono text-[9px] uppercase tracking-[0.2em] text-primary border border-primary/40 rounded-full px-2 py-0.5">
-                    Fully customisable
-                  </span>
+                  {p.priceFrom ? (
+                    <span className="font-mono text-[9px] uppercase tracking-widest text-muted shrink-0">
+                      from {p.priceFrom}
+                    </span>
+                  ) : null}
                 </div>
-                {p.priceFrom ? (
-                  <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted shrink-0 pt-1 text-right leading-snug">
-                    Starting<br />from {p.priceFrom}
+                <Link to="/catalog/$slug" params={{ slug: p.slug }}>
+                  <h3 className="font-display text-base sm:text-xl italic leading-tight mt-1.5 hover:text-primary transition-colors">{p.name}</h3>
+                </Link>
+                <p className="text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">{p.blurb}</p>
+                <div className="flex items-center justify-between gap-2 mt-3">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary border border-primary/40 rounded-full px-2 py-0.5">
+                    Customisable
                   </span>
-                ) : null}
+                  <a
+                    href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about "${p.name}".`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Enquire about ${p.name} on WhatsApp`}
+                    className="shrink-0 grid place-items-center w-9 h-9 rounded-full border border-foreground text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
+                  </a>
+                </div>
               </div>
-              <a
-                href={whatsappLink(`Hi ${site.founder}, I'd like to enquire about "${p.name}".`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 sm:mt-4 self-start text-[10px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
-              >
-                Enquire on WhatsApp →
-              </a>
             </article>
           ))}
         </div>
