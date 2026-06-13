@@ -263,7 +263,7 @@ siteUrl(path?: string)           // Builds absolute URL from a path (uses VITE_S
 cn(...inputs)                    // clsx + tailwind-merge
 
 // src/lib/config.server.ts
-getServerConfig()                // Server-only env reads (per-request)
+getServerConfig()                // Server-only env reads (per-request) 
 ```
 
 ## Route conventions
