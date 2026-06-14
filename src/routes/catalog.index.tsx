@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useMemo } from "react";
 
 import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
@@ -8,6 +9,7 @@ import { categories as staticCategories, type Category } from "@/data/products";
 import { getCatalogProducts } from "@/lib/api/catalog";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 12;
@@ -96,6 +98,11 @@ function CatalogPage() {
     updateSearch({ page: p === 1 ? undefined : p });
   };
 
+  const sortedCategories = useMemo(
+    () => sortCategoriesWithSelectedFirst(categories, selectedCategories),
+    [categories, selectedCategories],
+  );
+
   return (
     <PageShell>
       <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">
@@ -112,7 +119,7 @@ function CatalogPage() {
 
       <section className="px-5 md:px-6 border-y border-border">
         <div className="max-w-7xl mx-auto flex gap-1.5 md:gap-2 py-3 md:py-6 overflow-x-auto md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {categories.map((category) => {
+          {sortedCategories.map((category) => {
             const active = selectedCategories.has(category.id);
             return (
               <CategoryChip

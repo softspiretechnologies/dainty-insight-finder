@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FormErrorBanner } from "@/components/admin/AdminField";
 import { listAdminCategories } from "@/lib/api/admin/categories";
 import { deleteAdminProduct, listAdminProducts } from "@/lib/api/admin/products";
+import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products/")({
@@ -58,6 +59,11 @@ function AdminProductsPage() {
 
   const hasActiveFilters = query.trim().length > 0 || selectedCategories.size > 0;
 
+  const sortedCategories = useMemo(
+    () => sortCategoriesWithSelectedFirst(categories, selectedCategories),
+    [categories, selectedCategories],
+  );
+
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
     setDeletingId(id);
@@ -108,7 +114,7 @@ function AdminProductsPage() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {categories.map((category) => {
+            {sortedCategories.map((category) => {
               const active = selectedCategories.has(category.id);
               return (
                 <CategoryChip
