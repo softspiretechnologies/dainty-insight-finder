@@ -5,33 +5,48 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormErrorBanner } from "@/components/admin/AdminField";
+import { listAdminCategories } from "@/lib/api/admin/categories";
 import { deleteAdminProduct, listAdminProducts } from "@/lib/api/admin/products";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products/")({
   loader: async () => {
-    const products = await listAdminProducts();
-    return { products };
+    const [products, categories] = await Promise.all([listAdminProducts(), listAdminCategories()]);
+    return { products, categories };
   },
   component: AdminProductsPage,
 });
 
+type CategoryFilter = "all" | string;
+
 function AdminProductsPage() {
-  const { products } = Route.useLoaderData();
+  const { products, categories } = Route.useLoaderData();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+
+  const categoryLabels = useMemo(
+    () => new Map(categories.map((category) => [category.id, category.label])),
+    [categories],
+  );
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.categoryId.toLowerCase().includes(q) ||
-        p.slug.toLowerCase().includes(q),
-    );
-  }, [products, query]);
+    return products.filter((product) => {
+      if (categoryFilter !== "all" && product.categoryId !== categoryFilter) return false;
+      if (!q) return true;
+      return (
+        product.name.toLowerCase().includes(q) ||
+        product.categoryId.toLowerCase().includes(q) ||
+        (categoryLabels.get(product.categoryId)?.toLowerCase().includes(q) ?? false) ||
+        product.slug.toLowerCase().includes(q)
+      );
+    });
+  }, [products, query, categoryFilter, categoryLabels]);
+
+  const hasActiveFilters = query.trim().length > 0 || categoryFilter !== "all";
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -53,7 +68,11 @@ function AdminProductsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Products</h1>
-          <p className="text-sm text-muted mt-1">{products.length} items in catalog</p>
+          <p className="text-sm text-muted mt-1">
+            {hasActiveFilters
+              ? `${filtered.length} of ${products.length} items shown`
+              : `${products.length} items in catalog`}
+          </p>
         </div>
         <Button asChild className="w-full sm:w-auto h-11 shrink-0">
           <Link to="/admin/products/$productId" params={{ productId: "new" }}>
@@ -67,14 +86,31 @@ function AdminProductsPage() {
       {deleteError ? <FormErrorBanner message={deleteError} /> : null}
 
       {products.length > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-          <Input
-            placeholder="Search by name, category or slug…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9 h-11"
-          />
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+            <Input
+              placeholder="Search by name, category or slug…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-9 h-11"
+            />
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <CategoryChip active={categoryFilter === "all"} onClick={() => setCategoryFilter("all")}>
+              All
+            </CategoryChip>
+            {categories.map((category) => (
+              <CategoryChip
+                key={category.id}
+                active={categoryFilter === category.id}
+                onClick={() => setCategoryFilter(category.id)}
+              >
+                {category.label}
+              </CategoryChip>
+            ))}
+          </div>
         </div>
       )}
 
@@ -96,7 +132,7 @@ function AdminProductsPage() {
       {/* No search results */}
       {products.length > 0 && filtered.length === 0 && (
         <div className="py-12 text-center text-sm text-muted border border-dashed border-border rounded-xl">
-          No products match "{query}"
+          {hasActiveFilters ? "No products match your filters." : "No products found."}
         </div>
       )}
 
@@ -117,7 +153,7 @@ function AdminProductsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="font-medium text-sm leading-snug line-clamp-2">{product.name}</h2>
-                  <p className="text-xs text-muted mt-1 capitalize">{product.categoryId}</p>
+                  <p className="text-xs text-muted mt-1">{categoryLabels.get(product.categoryId) ?? product.categoryId}</p>
                   {product.priceFrom && (
                     <p className="text-xs font-medium text-primary mt-1">{product.priceFrom}</p>
                   )}
@@ -183,7 +219,7 @@ function AdminProductsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="inline-block font-mono text-[10px] uppercase tracking-wider border border-border rounded-full px-2.5 py-0.5 text-muted">
-                      {product.categoryId}
+                      {categoryLabels.get(product.categoryId) ?? product.categoryId}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-muted hidden lg:table-cell max-w-[160px]">
@@ -223,5 +259,30 @@ function AdminProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function CategoryChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 whitespace-nowrap text-[10px] uppercase tracking-[0.18em] font-medium px-3 py-2 rounded-full border transition-colors",
+        active
+          ? "bg-foreground text-background border-foreground"
+          : "bg-background text-muted border-border hover:text-foreground hover:border-foreground",
+      )}
+    >
+      {children}
+    </button>
   );
 }
