@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search, X } from "lucide-react";
 import { useState, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,25 +17,35 @@ export const Route = createFileRoute("/admin/products/")({
   component: AdminProductsPage,
 });
 
-type CategoryFilter = "all" | string;
-
 function AdminProductsPage() {
   const { products, categories } = Route.useLoaderData();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
 
   const categoryLabels = useMemo(
     () => new Map(categories.map((category) => [category.id, category.label])),
     [categories],
   );
 
+  const addCategoryFilter = (categoryId: string) => {
+    setSelectedCategories((prev) => new Set(prev).add(categoryId));
+  };
+
+  const removeCategoryFilter = (categoryId: string) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      next.delete(categoryId);
+      return next;
+    });
+  };
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     return products.filter((product) => {
-      if (categoryFilter !== "all" && product.categoryId !== categoryFilter) return false;
+      if (selectedCategories.size > 0 && !selectedCategories.has(product.categoryId)) return false;
       if (!q) return true;
       return (
         product.name.toLowerCase().includes(q) ||
@@ -44,9 +54,9 @@ function AdminProductsPage() {
         product.slug.toLowerCase().includes(q)
       );
     });
-  }, [products, query, categoryFilter, categoryLabels]);
+  }, [products, query, selectedCategories, categoryLabels]);
 
-  const hasActiveFilters = query.trim().length > 0 || categoryFilter !== "all";
+  const hasActiveFilters = query.trim().length > 0 || selectedCategories.size > 0;
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -98,18 +108,19 @@ function AdminProductsPage() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <CategoryChip active={categoryFilter === "all"} onClick={() => setCategoryFilter("all")}>
-              All
-            </CategoryChip>
-            {categories.map((category) => (
-              <CategoryChip
-                key={category.id}
-                active={categoryFilter === category.id}
-                onClick={() => setCategoryFilter(category.id)}
-              >
-                {category.label}
-              </CategoryChip>
-            ))}
+            {categories.map((category) => {
+              const active = selectedCategories.has(category.id);
+              return (
+                <CategoryChip
+                  key={category.id}
+                  active={active}
+                  onSelect={() => addCategoryFilter(category.id)}
+                  onRemove={() => removeCategoryFilter(category.id)}
+                >
+                  {category.label}
+                </CategoryChip>
+              );
+            })}
           </div>
         </div>
       )}
@@ -264,25 +275,45 @@ function AdminProductsPage() {
 
 function CategoryChip({
   active,
-  onClick,
+  onSelect,
+  onRemove,
   children,
 }: {
   active: boolean;
-  onClick: () => void;
+  onSelect: () => void;
+  onRemove: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <span
       className={cn(
-        "shrink-0 whitespace-nowrap text-[10px] uppercase tracking-[0.18em] font-medium px-3 py-2 rounded-full border transition-colors",
+        "inline-flex shrink-0 items-center rounded-full border text-[10px] uppercase tracking-[0.18em] font-medium transition-colors",
         active
           ? "bg-foreground text-background border-foreground"
-          : "bg-background text-muted border-border hover:text-foreground hover:border-foreground",
+          : "bg-background text-muted border-border",
       )}
     >
-      {children}
-    </button>
+      <button
+        type="button"
+        onClick={onSelect}
+        disabled={active}
+        className={cn(
+          "whitespace-nowrap py-2 pl-3",
+          active ? "pr-1 cursor-default" : "pr-3 hover:text-foreground hover:border-foreground",
+        )}
+      >
+        {children}
+      </button>
+      {active ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="mr-1.5 grid h-5 w-5 place-items-center rounded-full hover:bg-background/20"
+          aria-label={`Remove ${String(children)} filter`}
+        >
+          <X className="w-3 h-3" />
+        </button>
+      ) : null}
+    </span>
   );
 }

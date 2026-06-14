@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
@@ -8,15 +8,28 @@ import { categories as staticCategories, type Category } from "@/data/products";
 import { getCatalogProducts } from "@/lib/api/catalog";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 12;
 
 const categoryIds = staticCategories.map((c) => c.id) as [Category, ...Category[]];
 
 const catalogSearchSchema = z.object({
-  category: z.enum(categoryIds).optional(),
+  category: z.union([z.enum(categoryIds), z.array(z.enum(categoryIds))]).optional(),
   page: z.coerce.number().int().min(1).optional(),
 });
+
+function selectedCategoriesFromSearch(category: Category | Category[] | undefined) {
+  if (!category) return new Set<Category>();
+  if (Array.isArray(category)) return new Set(category);
+  return new Set([category]);
+}
+
+function categorySearchParam(categories: Set<Category>) {
+  if (categories.size === 0) return undefined;
+  const values = [...categories];
+  return values.length === 1 ? values[0] : values;
+}
 
 export const Route = createFileRoute("/catalog/")({
   validateSearch: catalogSearchSchema,
@@ -36,8 +49,6 @@ export const Route = createFileRoute("/catalog/")({
   component: CatalogPage,
 });
 
-type Filter = Category | "all";
-
 function CatalogPage() {
   const { categories } = useRouteContext({ from: "__root__" });
   const { waLink, founder } = useSiteContact();
@@ -45,30 +56,44 @@ function CatalogPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const filter: Filter = search.category ?? "all";
+  const selectedCategories = selectedCategoriesFromSearch(search.category);
   const page = search.page ?? 1;
 
-  const filtered = filter === "all" ? products : products.filter((p) => p.category === filter);
+  const filtered =
+    selectedCategories.size === 0
+      ? products
+      : products.filter((product) => selectedCategories.has(product.category));
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  const setSearch = (next: { category?: Category; page?: number }) => {
+  const updateSearch = (next: { categories?: Set<Category>; page?: number }) => {
     navigate({
       search: (prev) => ({
-        category: "category" in next ? next.category : prev.category,
+        category:
+          "categories" in next
+            ? categorySearchParam(next.categories ?? new Set())
+            : prev.category,
         page: "page" in next ? next.page : prev.page,
       }),
       replace: true,
     });
   };
 
-  const handleFilter = (f: Filter) => {
-    setSearch({ category: f === "all" ? undefined : f, page: undefined });
+  const addCategoryFilter = (categoryId: Category) => {
+    const next = new Set(selectedCategories);
+    next.add(categoryId);
+    updateSearch({ categories: next, page: undefined });
+  };
+
+  const removeCategoryFilter = (categoryId: Category) => {
+    const next = new Set(selectedCategories);
+    next.delete(categoryId);
+    updateSearch({ categories: next, page: undefined });
   };
 
   const handlePage = (p: number) => {
-    setSearch({ page: p === 1 ? undefined : p });
+    updateSearch({ page: p === 1 ? undefined : p });
   };
 
   return (
@@ -87,12 +112,19 @@ function CatalogPage() {
 
       <section className="px-5 md:px-6 border-y border-border">
         <div className="max-w-7xl mx-auto flex gap-1.5 md:gap-2 py-3 md:py-6 overflow-x-auto md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Chip active={filter === "all"} onClick={() => handleFilter("all")}>All</Chip>
-          {categories.map((c) => (
-            <Chip key={c.id} active={filter === c.id} onClick={() => handleFilter(c.id)}>
-              {c.label}
-            </Chip>
-          ))}
+          {categories.map((category) => {
+            const active = selectedCategories.has(category.id);
+            return (
+              <CategoryChip
+                key={category.id}
+                active={active}
+                onSelect={() => addCategoryFilter(category.id)}
+                onRemove={() => removeCategoryFilter(category.id)}
+              >
+                {category.label}
+              </CategoryChip>
+            );
+          })}
         </div>
       </section>
 
@@ -132,7 +164,9 @@ function CatalogPage() {
         </div>
 
         {visible.length === 0 ? (
-          <p className="max-w-7xl mx-auto text-sm text-muted mt-12">Nothing in this category yet.</p>
+          <p className="max-w-7xl mx-auto text-sm text-muted mt-12">
+            {selectedCategories.size > 0 ? "Nothing matches your filters yet." : "Nothing in this category yet."}
+          </p>
         ) : null}
 
         {totalPages > 1 && (
@@ -192,25 +226,47 @@ function CatalogPage() {
   );
 }
 
-function Chip({
+function CategoryChip({
   active,
-  onClick,
+  onSelect,
+  onRemove,
   children,
 }: {
   active: boolean;
-  onClick: () => void;
+  onSelect: () => void;
+  onRemove: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`shrink-0 whitespace-nowrap text-[10px] md:text-[11px] uppercase tracking-[0.18em] md:tracking-[0.2em] font-medium px-3 py-1.5 md:px-4 md:py-2 rounded-full border transition-colors ${
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border text-[10px] md:text-[11px] uppercase tracking-[0.18em] md:tracking-[0.2em] font-medium transition-colors",
         active
           ? "bg-foreground text-background border-foreground"
-          : "bg-background text-muted border-border hover:text-foreground hover:border-foreground"
-      }`}
+          : "bg-background text-muted border-border",
+      )}
     >
-      {children}
-    </button>
+      <button
+        type="button"
+        onClick={onSelect}
+        disabled={active}
+        className={cn(
+          "whitespace-nowrap py-1.5 md:py-2 pl-3 md:pl-4",
+          active ? "pr-1 cursor-default" : "pr-3 md:pr-4 hover:text-foreground",
+        )}
+      >
+        {children}
+      </button>
+      {active ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="mr-1.5 grid h-5 w-5 place-items-center rounded-full hover:bg-background/20"
+          aria-label={`Remove ${String(children)} filter`}
+        >
+          <X className="w-3 h-3" />
+        </button>
+      ) : null}
+    </span>
   );
 }
