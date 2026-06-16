@@ -18,6 +18,15 @@ export const Route = createFileRoute("/admin/products/")({
   component: AdminProductsPage,
 });
 
+type StatusFilter = "all" | "active" | "hidden" | "featured";
+
+const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "active", label: "Active" },
+  { id: "hidden", label: "Hidden" },
+  { id: "featured", label: "Homepage" },
+];
+
 function AdminProductsPage() {
   const { products, categories } = Route.useLoaderData();
   const router = useRouter();
@@ -28,6 +37,7 @@ function AdminProductsPage() {
   const [statusToggleId, setStatusToggleId] = useState<number | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
 
   const categoryLabels = useMemo(
@@ -50,6 +60,9 @@ function AdminProductsPage() {
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     return products.filter((product) => {
+      if (statusFilter === "active" && !product.isActive) return false;
+      if (statusFilter === "hidden" && product.isActive) return false;
+      if (statusFilter === "featured" && !product.featuredOnHomepage) return false;
       if (selectedCategories.size > 0 && !selectedCategories.has(product.categoryId)) return false;
       if (!q) return true;
       return (
@@ -59,9 +72,10 @@ function AdminProductsPage() {
         product.slug.toLowerCase().includes(q)
       );
     });
-  }, [products, query, selectedCategories, categoryLabels]);
+  }, [products, query, statusFilter, selectedCategories, categoryLabels]);
 
-  const hasActiveFilters = query.trim().length > 0 || selectedCategories.size > 0;
+  const hasActiveFilters =
+    query.trim().length > 0 || statusFilter !== "all" || selectedCategories.size > 0;
   const featuredCount = useMemo(() => products.filter((product) => product.featuredOnHomepage).length, [products]);
   const hiddenCount = useMemo(() => products.filter((product) => !product.isActive).length, [products]);
 
@@ -149,7 +163,19 @@ function AdminProductsPage() {
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {STATUS_FILTERS.map((option) => (
+              <FilterChip
+                key={option.id}
+                active={statusFilter === option.id}
+                onSelect={() => setStatusFilter(option.id)}
+              >
+                {option.label}
+              </FilterChip>
+            ))}
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {sortedCategories.map((category) => {
               const active = selectedCategories.has(category.id);
               return (
@@ -442,6 +468,31 @@ function AdminProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  onSelect,
+  children,
+}: {
+  active: boolean;
+  onSelect: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap",
+        active
+          ? "bg-foreground text-background border-foreground"
+          : "bg-background text-muted border-border hover:text-foreground hover:border-foreground",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
