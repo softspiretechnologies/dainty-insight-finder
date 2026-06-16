@@ -63,6 +63,37 @@ export const getAdminProduct = createServerFn({ method: "GET" })
     return rows[0] ?? null;
   });
 
+async function resolveHomepageFeaturedState(
+  db: ReturnType<typeof getDb>,
+  options: {
+    isActive: boolean;
+    featuredOnHomepage: boolean;
+    excludeId?: number;
+    previousFeatured?: boolean;
+    previousSortOrder?: number;
+  },
+) {
+  const { isActive, featuredOnHomepage, excludeId, previousFeatured, previousSortOrder } = options;
+
+  if (!isActive || !featuredOnHomepage) {
+    return { featuredOnHomepage: false, homepageSortOrder: 0 };
+  }
+
+  await assertHomepageFeaturedLimit(db, true, excludeId);
+
+  if (previousFeatured) {
+    return { featuredOnHomepage: true, homepageSortOrder: previousSortOrder ?? 0 };
+  }
+
+  const featuredRows = await db
+    .select({ order: productsTable.homepageSortOrder })
+    .from(productsTable)
+    .where(eq(productsTable.featuredOnHomepage, true));
+  const nextOrder = featuredRows.length > 0 ? Math.max(...featuredRows.map((row) => row.order)) + 1 : 0;
+
+  return { featuredOnHomepage: true, homepageSortOrder: nextOrder };
+}
+
 export const saveAdminProduct = createServerFn({ method: "POST" })
   .validator(productInputSchema)
   .handler(async ({ data }) => {
@@ -90,31 +121,57 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
     }
 
     const db = getDb();
-    const values = {
-      slug: data.slug,
-      name: data.name,
-      categoryId: data.categoryId as CategoryId,
-      blurb: data.blurb,
-      description: data.description,
-      details: parseDetails(data.details),
-      imagePath,
-      priceFrom: data.priceFrom?.trim() || null,
-    };
 
     try {
       if (id) {
         const existing = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
         if (!existing[0]) throw new Error("Product not found");
+
+        const featuredState = await resolveHomepageFeaturedState(db, {
+          isActive: data.isActive,
+          featuredOnHomepage: data.featuredOnHomepage,
+          excludeId: id,
+          previousFeatured: existing[0].featuredOnHomepage,
+          previousSortOrder: existing[0].homepageSortOrder,
+        });
+
+        const values = {
+          slug: data.slug,
+          name: data.name,
+          categoryId: data.categoryId as CategoryId,
+          blurb: data.blurb,
+          description: data.description,
+          details: parseDetails(data.details),
+          imagePath,
+          priceFrom: data.priceFrom?.trim() || null,
+          isActive: data.isActive,
+          ...featuredState,
+        };
+
         await db.update(productsTable).set(values).where(eq(productsTable.id, id));
         clearDataCache();
         return { id };
       }
 
-      const result = await db.insert(productsTable).values({
-        ...values,
-        featuredOnHomepage: false,
-        homepageSortOrder: 0,
+      const featuredState = await resolveHomepageFeaturedState(db, {
+        isActive: data.isActive,
+        featuredOnHomepage: data.featuredOnHomepage,
       });
+
+      const values = {
+        slug: data.slug,
+        name: data.name,
+        categoryId: data.categoryId as CategoryId,
+        blurb: data.blurb,
+        description: data.description,
+        details: parseDetails(data.details),
+        imagePath,
+        priceFrom: data.priceFrom?.trim() || null,
+        isActive: data.isActive,
+        ...featuredState,
+      };
+
+      const result = await db.insert(productsTable).values(values);
       const header = Array.isArray(result) ? result[0] : result;
       const insertId = Number((header as { insertId?: number }).insertId);
       clearDataCache();

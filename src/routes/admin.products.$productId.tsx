@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { ImagePlus, ChevronLeft, Package } from "lucide-react";
+import { ImagePlus, ChevronLeft, Package, Eye, EyeOff, Star } from "lucide-react";
 
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ function AdminProductEditPage() {
   const [description, setDescription] = useState(product?.description ?? "");
   const [details, setDetails] = useState(normalizeProductDetails(product?.details).join("\n"));
   const [priceFrom, setPriceFrom] = useState(product?.priceFrom ?? "");
+  const [isActive, setIsActive] = useState(product?.isActive ?? true);
+  const [featuredOnHomepage, setFeaturedOnHomepage] = useState(product?.featuredOnHomepage ?? false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -98,6 +100,8 @@ function AdminProductEditPage() {
       description,
       details,
       priceFrom: priceFrom || undefined,
+      isActive,
+      featuredOnHomepage: isActive ? featuredOnHomepage : false,
     };
 
     const validation = validateForm(adminProductFormSchema, payload);
@@ -129,6 +133,8 @@ function AdminProductEditPage() {
           id: isNew ? "new" : product!.id,
           ...validation.data,
           priceFrom: validation.data.priceFrom || undefined,
+          isActive: validation.data.isActive,
+          featuredOnHomepage: validation.data.featuredOnHomepage,
           existingImagePath: product?.imagePath,
           image: imagePayload,
         },
@@ -160,7 +166,7 @@ function AdminProductEditPage() {
         <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">
           {isNew ? "New product" : "Edit product"}
         </h1>
-        {!isNew && slug && (
+        {!isNew && slug && isActive ? (
           <a
             href={`/catalog/${slug}`}
             target="_blank"
@@ -169,7 +175,7 @@ function AdminProductEditPage() {
           >
             View on site ↗
           </a>
-        )}
+        ) : null}
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
@@ -355,7 +361,62 @@ function AdminProductEditPage() {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-border flex flex-col gap-3">
+        <div className="mt-8 pt-6 border-t border-border space-y-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Visibility & homepage</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="flex items-start gap-3 rounded-xl border border-border p-4 cursor-pointer hover:border-foreground/30 transition-colors">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => {
+                  const active = e.target.checked;
+                  setIsActive(active);
+                  if (!active) setFeaturedOnHomepage(false);
+                }}
+                className="mt-1 h-4 w-4 shrink-0 accent-foreground"
+              />
+              <span className="min-w-0">
+                <span className="inline-flex items-center gap-2 text-sm font-medium">
+                  {isActive ? (
+                    <Eye className="w-4 h-4 text-emerald-700" />
+                  ) : (
+                    <EyeOff className="w-4 h-4 text-muted" />
+                  )}
+                  Listed on site
+                </span>
+                <span className="block text-xs text-muted mt-1 leading-relaxed">
+                  When off, the product is hidden from the catalog, product pages, and sitemap.
+                </span>
+              </span>
+            </label>
+
+            <label
+              className={cn(
+                "flex items-start gap-3 rounded-xl border border-border p-4 transition-colors",
+                isActive ? "cursor-pointer hover:border-foreground/30" : "cursor-not-allowed opacity-60",
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={featuredOnHomepage}
+                disabled={!isActive}
+                onChange={(e) => setFeaturedOnHomepage(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-foreground disabled:cursor-not-allowed"
+              />
+              <span className="min-w-0">
+                <span className="inline-flex items-center gap-2 text-sm font-medium">
+                  <Star className={cn("w-4 h-4", featuredOnHomepage ? "text-primary fill-primary/30" : "text-muted")} />
+                  Homepage gallery
+                </span>
+                <span className="block text-xs text-muted mt-1 leading-relaxed">
+                  Show in Recent Creations on the homepage. Up to 6 products at a time.
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-border flex flex-col gap-3">
           {formError ? <FormErrorBanner message={formError} /> : null}
           <div className="flex gap-3 w-full sm:w-auto sm:ml-auto">
             <Button type="button" variant="outline" className="flex-1 sm:flex-none h-11" asChild>

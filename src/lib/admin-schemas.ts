@@ -63,6 +63,8 @@ export const adminProductFormSchema = z.object({
   description: z.string().trim().min(1, "Description is required"),
   details: z.string().trim().min(1, "Add at least one detail"),
   priceFrom: z.string().trim().max(64).optional(),
+  isActive: z.boolean(),
+  featuredOnHomepage: z.boolean(),
 });
 
 export const productInputSchema = z.object({
@@ -78,6 +80,8 @@ export const productInputSchema = z.object({
   description: z.string().min(1),
   details: z.string().min(1),
   priceFrom: z.string().max(64).optional(),
+  isActive: z.boolean(),
+  featuredOnHomepage: z.boolean(),
   existingImagePath: uploadPathSchema.optional(),
   image: imageUploadPayloadSchema.optional(),
 });
