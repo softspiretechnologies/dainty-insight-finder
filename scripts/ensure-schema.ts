@@ -39,6 +39,17 @@ const siteSettingsColumns: Array<{ name: string; ddl: string }> = [
   },
 ];
 
+const productColumns: Array<{ name: string; ddl: string }> = [
+  {
+    name: "featured_on_homepage",
+    ddl: "ALTER TABLE `products` ADD `featured_on_homepage` boolean NOT NULL DEFAULT false",
+  },
+  {
+    name: "homepage_sort_order",
+    ddl: "ALTER TABLE `products` ADD `homepage_sort_order` int NOT NULL DEFAULT 0",
+  },
+];
+
 async function columnExists(conn: mysql.Connection, table: string, column: string) {
   const [rows] = await conn.query<mysql.RowDataPacket[]>(
     "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1",
@@ -66,6 +77,13 @@ async function main() {
       if (!(await columnExists(conn, "site_settings", column.name))) {
         await conn.query(column.ddl);
         console.log(`Added site_settings.${column.name}`);
+      }
+    }
+
+    for (const column of productColumns) {
+      if (!(await columnExists(conn, "products", column.name))) {
+        await conn.query(column.ddl);
+        console.log(`Added products.${column.name}`);
       }
     }
   } finally {

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
@@ -25,8 +25,27 @@ function parseDetails(raw: string) {
     .filter(Boolean);
 }
 
+const MAX_HOMEPAGE_FEATURED = 6;
+
 function isDuplicateKeyError(error: unknown) {
   return error instanceof Error && /duplicate|unique/i.test(error.message);
+}
+
+async function assertHomepageFeaturedLimit(db: ReturnType<typeof getDb>, featured: boolean, excludeId?: number) {
+  if (!featured) return;
+
+  const rows = await db
+    .select({ id: productsTable.id })
+    .from(productsTable)
+    .where(
+      excludeId
+        ? and(eq(productsTable.featuredOnHomepage, true), ne(productsTable.id, excludeId))
+        : eq(productsTable.featuredOnHomepage, true),
+    );
+
+  if (rows.length >= MAX_HOMEPAGE_FEATURED) {
+    throw new Error(`Maximum ${MAX_HOMEPAGE_FEATURED} products can be featured on the homepage. Unfeature another product first.`);
+  }
 }
 
 export const listAdminProducts = createServerFn({ method: "GET" }).handler(async () => {
@@ -91,7 +110,11 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
         return { id };
       }
 
-      const result = await db.insert(productsTable).values(values);
+      const result = await db.insert(productsTable).values({
+        ...values,
+        featuredOnHomepage: false,
+        homepageSortOrder: 0,
+      });
       const header = Array.isArray(result) ? result[0] : result;
       const insertId = Number((header as { insertId?: number }).insertId);
       clearDataCache();
@@ -105,6 +128,39 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
       }
       throw error;
     }
+  });
+
+export const toggleAdminProductHomepageFeatured = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number().int().positive(), featured: z.boolean() }))
+  .handler(async ({ data }) => {
+    requireAdmin();
+    const db = getDb();
+    const rows = await db.select().from(productsTable).where(eq(productsTable.id, data.id)).limit(1);
+    const product = rows[0];
+    if (!product) throw new Error("Product not found");
+
+    if (data.featured) {
+      await assertHomepageFeaturedLimit(db, true, data.id);
+      const featuredRows = await db
+        .select({ order: productsTable.homepageSortOrder })
+        .from(productsTable)
+        .where(eq(productsTable.featuredOnHomepage, true));
+      const nextOrder =
+        featuredRows.length > 0 ? Math.max(...featuredRows.map((row) => row.order)) + 1 : 0;
+
+      await db
+        .update(productsTable)
+        .set({ featuredOnHomepage: true, homepageSortOrder: nextOrder })
+        .where(eq(productsTable.id, data.id));
+    } else {
+      await db
+        .update(productsTable)
+        .set({ featuredOnHomepage: false, homepageSortOrder: 0 })
+        .where(eq(productsTable.id, data.id));
+    }
+
+    clearDataCache();
+    return { featured: data.featured };
   });
 
 export const deleteAdminProduct = createServerFn({ method: "POST" })

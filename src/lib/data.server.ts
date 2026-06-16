@@ -12,7 +12,17 @@ import { getCached } from "@/lib/cache.server";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
 import { site } from "@/lib/site";
-import type { CatalogCategory, CatalogProduct, CatalogService, CategoryId, ServicesPageData, SiteSettingsData, Testimonial, TestimonialsSectionData } from "@/types/catalog";
+import type {
+  CatalogCategory,
+  CatalogProduct,
+  CatalogService,
+  CategoryId,
+  HomepageGalleryItem,
+  ServicesPageData,
+  SiteSettingsData,
+  Testimonial,
+  TestimonialsSectionData,
+} from "@/types/catalog";
 
 export { clearDataCache } from "@/lib/cache.server";
 
@@ -112,6 +122,33 @@ export async function getProducts(): Promise<CatalogProduct[]> {
         return rows.map(mapProduct);
       },
       () => staticProducts.map((p) => ({ ...p })),
+    ),
+  );
+}
+
+export async function getFeaturedHomepageProducts(): Promise<HomepageGalleryItem[]> {
+  if (!isDatabaseConfigured()) {
+    return [];
+  }
+
+  return getCached("featuredHomepageProducts", () =>
+    withDbFallback(
+      async () => {
+        const db = getDb();
+        const rows = await db
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.featuredOnHomepage, true))
+          .orderBy(asc(productsTable.homepageSortOrder), asc(productsTable.name))
+          .limit(6);
+        return rows.map((row) => ({
+          slug: row.slug,
+          name: row.name,
+          blurb: row.blurb,
+          image: row.imagePath,
+        }));
+      },
+      () => [],
     ),
   );
 }

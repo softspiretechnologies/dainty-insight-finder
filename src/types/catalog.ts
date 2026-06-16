@@ -75,3 +75,10 @@ export type TestimonialsSectionData = {
   heading: string;
   items: Testimonial[];
 };
+
+export type HomepageGalleryItem = {
+  slug: string;
+  name: string;
+  blurb: string;
+  image: string;
+};

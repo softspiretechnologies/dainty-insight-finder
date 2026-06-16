@@ -4,7 +4,7 @@ import { OptimizedImage, catalogGridSizes } from "@/components/ui/optimized-imag
 import { galleryImages } from "@/data/products";
 import { site, siteUrl, formatTelephone } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
-import { getRootPageData, getHomeTestimonials } from "@/lib/api/catalog";
+import { getRootPageData, getHomeGallery, getHomeTestimonials } from "@/lib/api/catalog";
 import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
 import momentBirthday from "@/assets/moment-birthday.jpg";
 import momentProposal from "@/assets/moment-proposal.jpg";
@@ -13,8 +13,12 @@ import momentReel from "@/assets/moment-reel.jpg";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [{ siteSettings }, testimonials] = await Promise.all([getRootPageData(), getHomeTestimonials()]);
-    return { siteSettings, testimonials };
+    const [{ siteSettings }, testimonials, featuredGallery] = await Promise.all([
+      getRootPageData(),
+      getHomeTestimonials(),
+      getHomeGallery(),
+    ]);
+    return { siteSettings, testimonials, featuredGallery };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -71,9 +75,48 @@ const features = [
   { t: "Global delivery", d: "Handcrafted in Kerala, delivered anywhere in India or abroad." },
 ];
 
+const galleryAspects = [
+  "aspect-[4/5]",
+  "aspect-[4/3]",
+  "aspect-[2/3]",
+  "aspect-square",
+  "aspect-[4/3]",
+  "aspect-[4/5]",
+] as const;
+
+type GalleryDisplayItem = {
+  src: string;
+  alt: string;
+  slug?: string;
+  w: number;
+  h: number;
+};
+
+function buildGalleryItems(
+  featured: Array<{ slug: string; name: string; blurb: string; image: string }>,
+): GalleryDisplayItem[] {
+  if (featured.length > 0) {
+    return featured.map((product, index) => ({
+      src: product.image,
+      alt: product.name,
+      slug: product.slug,
+      w: 640,
+      h: index % 2 === 0 ? 800 : 512,
+    }));
+  }
+
+  return galleryImages.map((img) => ({
+    src: img.src,
+    alt: img.alt,
+    w: img.w,
+    h: img.h,
+  }));
+}
+
 function Index() {
   const { categories } = useRouteContext({ from: "__root__" });
-  const { testimonials } = Route.useLoaderData();
+  const { testimonials, featuredGallery } = Route.useLoaderData();
+  const galleryItems = buildGalleryItems(featuredGallery);
   const { waLink, founder } = useSiteContact();
 
   return (
@@ -326,16 +369,16 @@ function Index() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             <div className="space-y-3 md:space-y-6">
-              <GalleryImg img={galleryImages[0]} aspect="aspect-[4/5]" />
-              <GalleryImg img={galleryImages[1]} aspect="aspect-[4/3]" />
+              {galleryItems[0] ? <GalleryImg img={galleryItems[0]} aspect={galleryAspects[0]} /> : null}
+              {galleryItems[1] ? <GalleryImg img={galleryItems[1]} aspect={galleryAspects[1]} /> : null}
             </div>
             <div className="space-y-3 md:space-y-6 pt-10 md:pt-20">
-              <GalleryImg img={galleryImages[2]} aspect="aspect-[2/3]" />
-              <GalleryImg img={galleryImages[3]} aspect="aspect-square" />
+              {galleryItems[2] ? <GalleryImg img={galleryItems[2]} aspect={galleryAspects[2]} /> : null}
+              {galleryItems[3] ? <GalleryImg img={galleryItems[3]} aspect={galleryAspects[3]} /> : null}
             </div>
             <div className="hidden md:block space-y-6">
-              <GalleryImg img={galleryImages[4]} aspect="aspect-[4/3]" />
-              <GalleryImg img={galleryImages[5]} aspect="aspect-[4/5]" />
+              {galleryItems[4] ? <GalleryImg img={galleryItems[4]} aspect={galleryAspects[4]} /> : null}
+              {galleryItems[5] ? <GalleryImg img={galleryItems[5]} aspect={galleryAspects[5]} /> : null}
             </div>
           </div>
 
@@ -415,17 +458,29 @@ function Index() {
   );
 }
 
-function GalleryImg({ img, aspect }: { img: (typeof galleryImages)[number]; aspect: string }) {
-  return (
-    <div className={`w-full ${aspect} overflow-hidden rounded-sm`}>
-      <OptimizedImage
-        src={img.src}
-        alt={img.alt}
-        width={img.w}
-        height={img.h}
-        sizes="(max-width: 768px) 50vw, 25vw"
-        className="w-full h-full object-cover"
-      />
-    </div>
+function GalleryImg({ img, aspect }: { img: GalleryDisplayItem; aspect: string }) {
+  const image = (
+    <OptimizedImage
+      src={img.src}
+      alt={img.alt}
+      width={img.w}
+      height={img.h}
+      sizes="(max-width: 768px) 50vw, 25vw"
+      className="w-full h-full object-cover"
+    />
   );
+
+  if (img.slug) {
+    return (
+      <Link
+        to="/catalog/$slug"
+        params={{ slug: img.slug }}
+        className={`block w-full ${aspect} overflow-hidden rounded-sm`}
+      >
+        {image}
+      </Link>
+    );
+  }
+
+  return <div className={`w-full ${aspect} overflow-hidden rounded-sm`}>{image}</div>;
 }

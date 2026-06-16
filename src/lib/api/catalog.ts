@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getAdminSession } from "@/lib/auth.server";
 import {
   getCategories,
+  getFeaturedHomepageProducts,
   getProductBySlug,
   getProductCount,
   getProducts,
@@ -44,4 +45,8 @@ export const getServicesPageDataFn = createServerFn({ method: "GET" }).handler(a
 
 export const getHomeTestimonials = createServerFn({ method: "GET" }).handler(async () =>
   getTestimonialsSection(),
+);
+
+export const getHomeGallery = createServerFn({ method: "GET" }).handler(async () =>
+  getFeaturedHomepageProducts(),
 );

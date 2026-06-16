@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Package, Search, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search, X, Star } from "lucide-react";
 import { useState, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormErrorBanner } from "@/components/admin/AdminField";
 import { listAdminCategories } from "@/lib/api/admin/categories";
-import { deleteAdminProduct, listAdminProducts } from "@/lib/api/admin/products";
+import { deleteAdminProduct, listAdminProducts, toggleAdminProductHomepageFeatured } from "@/lib/api/admin/products";
 import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +23,8 @@ function AdminProductsPage() {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [featuredToggleId, setFeaturedToggleId] = useState<number | null>(null);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
 
@@ -58,11 +60,25 @@ function AdminProductsPage() {
   }, [products, query, selectedCategories, categoryLabels]);
 
   const hasActiveFilters = query.trim().length > 0 || selectedCategories.size > 0;
+  const featuredCount = useMemo(() => products.filter((product) => product.featuredOnHomepage).length, [products]);
 
   const sortedCategories = useMemo(
     () => sortCategoriesWithSelectedFirst(categories, selectedCategories),
     [categories, selectedCategories],
   );
+
+  const handleToggleFeatured = async (id: number, featured: boolean) => {
+    setFeaturedToggleId(id);
+    setFeaturedError(null);
+    try {
+      await toggleAdminProductHomepageFeatured({ data: { id, featured } });
+      await router.invalidate();
+    } catch (err) {
+      setFeaturedError(err instanceof Error ? err.message : "Failed to update homepage feature");
+    } finally {
+      setFeaturedToggleId(null);
+    }
+  };
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -88,6 +104,7 @@ function AdminProductsPage() {
             {hasActiveFilters
               ? `${filtered.length} of ${products.length} items shown`
               : `${products.length} items in catalog`}
+            {featuredCount > 0 ? ` · ${featuredCount}/6 on homepage` : null}
           </p>
         </div>
         <Button asChild className="w-full sm:w-auto h-11 shrink-0">
@@ -100,6 +117,7 @@ function AdminProductsPage() {
 
       {/* Search */}
       {deleteError ? <FormErrorBanner message={deleteError} /> : null}
+      {featuredError ? <FormErrorBanner message={featuredError} /> : null}
 
       {products.length > 0 && (
         <div className="space-y-3">
@@ -178,6 +196,29 @@ function AdminProductsPage() {
                 </div>
               </div>
               <div className="flex gap-2 px-4 pb-4">
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "h-10 px-3.5 shrink-0",
+                    product.featuredOnHomepage
+                      ? "text-primary border-primary/40 bg-primary/5 hover:bg-primary/10"
+                      : "text-muted hover:text-primary hover:border-primary/40",
+                  )}
+                  disabled={featuredToggleId === product.id}
+                  onClick={() => handleToggleFeatured(product.id, !product.featuredOnHomepage)}
+                  aria-label={
+                    product.featuredOnHomepage
+                      ? `Remove ${product.name} from homepage gallery`
+                      : `Feature ${product.name} on homepage gallery`
+                  }
+                  title={product.featuredOnHomepage ? "On homepage" : "Add to homepage"}
+                >
+                  {featuredToggleId === product.id ? (
+                    <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Star className={cn("w-3.5 h-3.5", product.featuredOnHomepage && "fill-primary/30")} />
+                  )}
+                </Button>
                 <Button variant="outline" className="flex-1 h-10 text-sm" asChild>
                   <Link to="/admin/products/$productId" params={{ productId: String(product.id) }}>
                     <Pencil className="w-3.5 h-3.5 mr-2" />
@@ -247,6 +288,30 @@ function AdminProductsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-8 px-3",
+                          product.featuredOnHomepage
+                            ? "text-primary border-primary/40 bg-primary/5 hover:bg-primary/10"
+                            : "text-muted hover:text-primary hover:border-primary/40",
+                        )}
+                        disabled={featuredToggleId === product.id}
+                        onClick={() => handleToggleFeatured(product.id, !product.featuredOnHomepage)}
+                        aria-label={
+                          product.featuredOnHomepage
+                            ? `Remove ${product.name} from homepage gallery`
+                            : `Feature ${product.name} on homepage gallery`
+                        }
+                        title={product.featuredOnHomepage ? "On homepage" : "Add to homepage"}
+                      >
+                        {featuredToggleId === product.id ? (
+                          <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Star className={cn("w-3 h-3", product.featuredOnHomepage && "fill-primary/30")} />
+                        )}
+                      </Button>
                       <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5" asChild>
                         <Link to="/admin/products/$productId" params={{ productId: String(product.id) }}>
                           <Pencil className="w-3 h-3" />
