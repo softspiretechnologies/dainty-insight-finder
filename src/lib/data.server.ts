@@ -1,4 +1,4 @@
-import { asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 
 import { getDb, isDatabaseConfigured } from "@/db/index.server";
 import { categories as categoriesTable, products as productsTable, services as servicesTable, siteSettings, testimonials as testimonialsTable } from "@/db/schema";
@@ -118,7 +118,11 @@ export async function getProducts(): Promise<CatalogProduct[]> {
     withDbFallback(
       async () => {
         const db = getDb();
-        const rows = await db.select().from(productsTable).orderBy(asc(productsTable.name));
+        const rows = await db
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.isActive, true))
+          .orderBy(asc(productsTable.name));
         return rows.map(mapProduct);
       },
       () => staticProducts.map((p) => ({ ...p })),
@@ -138,7 +142,7 @@ export async function getFeaturedHomepageProducts(): Promise<HomepageGalleryItem
         const rows = await db
           .select()
           .from(productsTable)
-          .where(eq(productsTable.featuredOnHomepage, true))
+          .where(and(eq(productsTable.featuredOnHomepage, true), eq(productsTable.isActive, true)))
           .orderBy(asc(productsTable.homepageSortOrder), asc(productsTable.name))
           .limit(6);
         return rows.map((row) => ({
@@ -162,7 +166,11 @@ export async function getProductBySlug(slug: string): Promise<CatalogProduct | u
     withDbFallback(
       async () => {
         const db = getDb();
-        const rows = await db.select().from(productsTable).where(eq(productsTable.slug, slug)).limit(1);
+        const rows = await db
+          .select()
+          .from(productsTable)
+          .where(and(eq(productsTable.slug, slug), eq(productsTable.isActive, true)))
+          .limit(1);
         return rows[0] ? mapProduct(rows[0]) : undefined;
       },
       () => staticProducts.find((p) => p.slug === slug),
@@ -209,7 +217,10 @@ export async function getProductCount(): Promise<number> {
     withDbFallback(
       async () => {
         const db = getDb();
-        const [row] = await db.select({ value: count() }).from(productsTable);
+        const [row] = await db
+          .select({ value: count() })
+          .from(productsTable)
+          .where(eq(productsTable.isActive, true));
         return Number(row?.value ?? 0);
       },
       () => staticProducts.length,

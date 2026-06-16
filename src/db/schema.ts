@@ -26,6 +26,7 @@ export const products = mysqlTable("products", {
   details: json("details").$type<string[]>().notNull(),
   imagePath: varchar("image_path", { length: 512 }).notNull().default(""),
   priceFrom: varchar("price_from", { length: 64 }),
+  isActive: boolean("is_active").notNull().default(true),
   featuredOnHomepage: boolean("featured_on_homepage").notNull().default(false),
   homepageSortOrder: int("homepage_sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),

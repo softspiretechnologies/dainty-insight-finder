@@ -41,6 +41,10 @@ const siteSettingsColumns: Array<{ name: string; ddl: string }> = [
 
 const productColumns: Array<{ name: string; ddl: string }> = [
   {
+    name: "is_active",
+    ddl: "ALTER TABLE `products` ADD `is_active` boolean NOT NULL DEFAULT true",
+  },
+  {
     name: "featured_on_homepage",
     ddl: "ALTER TABLE `products` ADD `featured_on_homepage` boolean NOT NULL DEFAULT false",
   },

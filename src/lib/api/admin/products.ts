@@ -140,6 +140,9 @@ export const toggleAdminProductHomepageFeatured = createServerFn({ method: "POST
     if (!product) throw new Error("Product not found");
 
     if (data.featured) {
+      if (!product.isActive) {
+        throw new Error("Activate the product before featuring it on the homepage.");
+      }
       await assertHomepageFeaturedLimit(db, true, data.id);
       const featuredRows = await db
         .select({ order: productsTable.homepageSortOrder })
@@ -161,6 +164,28 @@ export const toggleAdminProductHomepageFeatured = createServerFn({ method: "POST
 
     clearDataCache();
     return { featured: data.featured };
+  });
+
+export const toggleAdminProductActive = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number().int().positive(), active: z.boolean() }))
+  .handler(async ({ data }) => {
+    requireAdmin();
+    const db = getDb();
+    const rows = await db.select().from(productsTable).where(eq(productsTable.id, data.id)).limit(1);
+    const product = rows[0];
+    if (!product) throw new Error("Product not found");
+
+    if (data.active) {
+      await db.update(productsTable).set({ isActive: true }).where(eq(productsTable.id, data.id));
+    } else {
+      await db
+        .update(productsTable)
+        .set({ isActive: false, featuredOnHomepage: false, homepageSortOrder: 0 })
+        .where(eq(productsTable.id, data.id));
+    }
+
+    clearDataCache();
+    return { active: data.active };
   });
 
 export const deleteAdminProduct = createServerFn({ method: "POST" })

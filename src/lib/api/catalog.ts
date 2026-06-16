@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import { count } from "drizzle-orm";
 import { z } from "zod";
 
+import { getDb } from "@/db/index.server";
+import { products as productsTable } from "@/db/schema";
 import { getAdminSession } from "@/lib/auth.server";
 import {
   getCategories,
@@ -34,8 +37,10 @@ export const getSitemapProducts = createServerFn({ method: "GET" }).handler(asyn
 
 export const getAdminDashboardData = createServerFn({ method: "GET" }).handler(async () => {
   requireAdmin();
+  const db = getDb();
+  const [row] = await db.select({ value: count() }).from(productsTable);
   return {
-    productCount: await getProductCount(),
+    productCount: Number(row?.value ?? 0),
   };
 });
 

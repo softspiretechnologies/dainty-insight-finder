@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Package, Search, X, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search, X, Star, Eye, EyeOff } from "lucide-react";
 import { useState, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormErrorBanner } from "@/components/admin/AdminField";
 import { listAdminCategories } from "@/lib/api/admin/categories";
-import { deleteAdminProduct, listAdminProducts, toggleAdminProductHomepageFeatured } from "@/lib/api/admin/products";
+import { deleteAdminProduct, listAdminProducts, toggleAdminProductActive, toggleAdminProductHomepageFeatured } from "@/lib/api/admin/products";
 import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,8 @@ function AdminProductsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [featuredToggleId, setFeaturedToggleId] = useState<number | null>(null);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
+  const [statusToggleId, setStatusToggleId] = useState<number | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
 
@@ -61,11 +63,25 @@ function AdminProductsPage() {
 
   const hasActiveFilters = query.trim().length > 0 || selectedCategories.size > 0;
   const featuredCount = useMemo(() => products.filter((product) => product.featuredOnHomepage).length, [products]);
+  const hiddenCount = useMemo(() => products.filter((product) => !product.isActive).length, [products]);
 
   const sortedCategories = useMemo(
     () => sortCategoriesWithSelectedFirst(categories, selectedCategories),
     [categories, selectedCategories],
   );
+
+  const handleToggleActive = async (id: number, active: boolean) => {
+    setStatusToggleId(id);
+    setStatusError(null);
+    try {
+      await toggleAdminProductActive({ data: { id, active } });
+      await router.invalidate();
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : "Failed to update product status");
+    } finally {
+      setStatusToggleId(null);
+    }
+  };
 
   const handleToggleFeatured = async (id: number, featured: boolean) => {
     setFeaturedToggleId(id);
@@ -105,6 +121,7 @@ function AdminProductsPage() {
               ? `${filtered.length} of ${products.length} items shown`
               : `${products.length} items in catalog`}
             {featuredCount > 0 ? ` · ${featuredCount}/6 on homepage` : null}
+            {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : null}
           </p>
         </div>
         <Button asChild className="w-full sm:w-auto h-11 shrink-0">
@@ -118,6 +135,7 @@ function AdminProductsPage() {
       {/* Search */}
       {deleteError ? <FormErrorBanner message={deleteError} /> : null}
       {featuredError ? <FormErrorBanner message={featuredError} /> : null}
+      {statusError ? <FormErrorBanner message={statusError} /> : null}
 
       {products.length > 0 && (
         <div className="space-y-3">
@@ -175,7 +193,13 @@ function AdminProductsPage() {
       {filtered.length > 0 && (
         <div className="md:hidden space-y-3">
           {filtered.map((product) => (
-            <article key={product.id} className="border border-border rounded-xl overflow-hidden bg-surface/20">
+            <article
+              key={product.id}
+              className={cn(
+                "border border-border rounded-xl overflow-hidden bg-surface/20",
+                !product.isActive && "opacity-60",
+              )}
+            >
               <div className="flex gap-4 p-4">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
                   {product.imagePath ? (
@@ -187,7 +211,14 @@ function AdminProductsPage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-medium text-sm leading-snug line-clamp-2">{product.name}</h2>
+                  <h2 className="font-medium text-sm leading-snug line-clamp-2">
+                    {product.name}
+                    {!product.isActive ? (
+                      <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted align-middle">
+                        Hidden
+                      </span>
+                    ) : null}
+                  </h2>
                   <p className="text-xs text-muted mt-1">{categoryLabels.get(product.categoryId) ?? product.categoryId}</p>
                   {product.priceFrom && (
                     <p className="text-xs font-medium text-primary mt-1">{product.priceFrom}</p>
@@ -200,18 +231,49 @@ function AdminProductsPage() {
                   variant="outline"
                   className={cn(
                     "h-10 px-3.5 shrink-0",
+                    product.isActive
+                      ? "text-emerald-700 border-emerald-300/60 bg-emerald-50 hover:bg-emerald-100"
+                      : "text-muted hover:text-foreground hover:border-border",
+                  )}
+                  disabled={statusToggleId === product.id}
+                  onClick={() => handleToggleActive(product.id, !product.isActive)}
+                  aria-label={
+                    product.isActive
+                      ? `Hide ${product.name} from the public site`
+                      : `Show ${product.name} on the public site`
+                  }
+                  title={product.isActive ? "Listed publicly" : "Hidden from site"}
+                >
+                  {statusToggleId === product.id ? (
+                    <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
+                  ) : product.isActive ? (
+                    <Eye className="w-3.5 h-3.5" />
+                  ) : (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "h-10 px-3.5 shrink-0",
                     product.featuredOnHomepage
                       ? "text-primary border-primary/40 bg-primary/5 hover:bg-primary/10"
                       : "text-muted hover:text-primary hover:border-primary/40",
                   )}
-                  disabled={featuredToggleId === product.id}
+                  disabled={featuredToggleId === product.id || !product.isActive}
                   onClick={() => handleToggleFeatured(product.id, !product.featuredOnHomepage)}
                   aria-label={
                     product.featuredOnHomepage
                       ? `Remove ${product.name} from homepage gallery`
                       : `Feature ${product.name} on homepage gallery`
                   }
-                  title={product.featuredOnHomepage ? "On homepage" : "Add to homepage"}
+                  title={
+                    !product.isActive
+                      ? "Activate product to feature on homepage"
+                      : product.featuredOnHomepage
+                        ? "On homepage"
+                        : "Add to homepage"
+                  }
                 >
                   {featuredToggleId === product.id ? (
                     <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
@@ -260,7 +322,7 @@ function AdminProductsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((product) => (
-                <tr key={product.id} className="hover:bg-surface/20 transition-colors">
+                <tr key={product.id} className={cn("hover:bg-surface/20 transition-colors", !product.isActive && "opacity-60")}>
                   <td className="px-4 py-3">
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-surface border border-border shrink-0">
                       {product.imagePath ? (
@@ -273,7 +335,14 @@ function AdminProductsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 font-medium max-w-[200px]">
-                    <span className="line-clamp-2 leading-snug">{product.name}</span>
+                    <span className="line-clamp-2 leading-snug inline-flex items-start gap-2">
+                      {product.name}
+                      {!product.isActive ? (
+                        <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[9px] uppercase tracking-wider text-muted">
+                          Hidden
+                        </span>
+                      ) : null}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="inline-block font-mono text-[10px] uppercase tracking-wider border border-border rounded-full px-2.5 py-0.5 text-muted">
@@ -293,18 +362,50 @@ function AdminProductsPage() {
                         size="sm"
                         className={cn(
                           "h-8 px-3",
+                          product.isActive
+                            ? "text-emerald-700 border-emerald-300/60 bg-emerald-50 hover:bg-emerald-100"
+                            : "text-muted hover:text-foreground hover:border-border",
+                        )}
+                        disabled={statusToggleId === product.id}
+                        onClick={() => handleToggleActive(product.id, !product.isActive)}
+                        aria-label={
+                          product.isActive
+                            ? `Hide ${product.name} from the public site`
+                            : `Show ${product.name} on the public site`
+                        }
+                        title={product.isActive ? "Listed publicly" : "Hidden from site"}
+                      >
+                        {statusToggleId === product.id ? (
+                          <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                        ) : product.isActive ? (
+                          <Eye className="w-3 h-3" />
+                        ) : (
+                          <EyeOff className="w-3 h-3" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-8 px-3",
                           product.featuredOnHomepage
                             ? "text-primary border-primary/40 bg-primary/5 hover:bg-primary/10"
                             : "text-muted hover:text-primary hover:border-primary/40",
                         )}
-                        disabled={featuredToggleId === product.id}
+                        disabled={featuredToggleId === product.id || !product.isActive}
                         onClick={() => handleToggleFeatured(product.id, !product.featuredOnHomepage)}
                         aria-label={
                           product.featuredOnHomepage
                             ? `Remove ${product.name} from homepage gallery`
                             : `Feature ${product.name} on homepage gallery`
                         }
-                        title={product.featuredOnHomepage ? "On homepage" : "Add to homepage"}
+                        title={
+                          !product.isActive
+                            ? "Activate product to feature on homepage"
+                            : product.featuredOnHomepage
+                              ? "On homepage"
+                              : "Add to homepage"
+                        }
                       >
                         {featuredToggleId === product.id ? (
                           <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
