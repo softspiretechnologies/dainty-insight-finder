@@ -13,6 +13,8 @@ import {
   type FieldErrors,
 } from "@/lib/admin-validation";
 import { getAdminSettings, saveAdminSettings } from "@/lib/api/admin/settings";
+import { changePassword, logoutAllAdminSessions } from "@/lib/api/admin/account";
+import { logoutAdmin } from "@/lib/api/admin/auth";
 
 export const Route = createFileRoute("/admin/settings")({
   loader: async () => {
@@ -53,6 +55,11 @@ function AdminSettingsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [success, setSuccess] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [accountLoading, setAccountLoading] = useState(false);
 
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
@@ -61,6 +68,37 @@ function AdminSettingsPage() {
       delete next[field];
       return next;
     });
+  };
+
+  const handlePasswordChange = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setAccountError(null);
+    setAccountLoading(true);
+    try {
+      const result = await changePassword({
+        data: { currentPassword, newPassword, confirmPassword },
+      });
+      if (!result.ok) {
+        setAccountError(result.error);
+        setAccountLoading(false);
+        return;
+      }
+      await router.navigate({ to: "/admin/login" });
+    } catch (error) {
+      setAccountError(error instanceof Error ? error.message : "Failed to change password");
+      setAccountLoading(false);
+    }
+  };
+
+  const endSession = async (all: boolean) => {
+    setAccountError(null);
+    try {
+      if (all) await logoutAllAdminSessions();
+      else await logoutAdmin();
+      await router.navigate({ to: "/admin/login" });
+    } catch (error) {
+      setAccountError(error instanceof Error ? error.message : "Failed to log out");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -250,6 +288,64 @@ function AdminSettingsPage() {
           )}
         </Button>
       </form>
+
+      <div className="border-t border-border pt-8 space-y-6">
+        <div>
+          <h2 className="font-display text-2xl italic">Admin account</h2>
+          <p className="text-sm text-muted mt-1">
+            Changing your password revokes every existing admin session.
+          </p>
+        </div>
+        <form
+          onSubmit={handlePasswordChange}
+          className="space-y-4 border border-border rounded-xl p-4 sm:p-5"
+        >
+          <AdminField label="Current password" htmlFor="currentPassword" required>
+            <Input
+              id="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+            />
+          </AdminField>
+          <AdminField
+            label="New password"
+            htmlFor="newPassword"
+            required
+            hint="At least 12 characters."
+          >
+            <Input
+              id="newPassword"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+            />
+          </AdminField>
+          <AdminField label="Confirm new password" htmlFor="confirmPassword" required>
+            <Input
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+            />
+          </AdminField>
+          {accountError ? <FormErrorBanner message={accountError} /> : null}
+          <Button type="submit" disabled={accountLoading}>
+            {accountLoading ? "Changing…" : "Change password"}
+          </Button>
+        </form>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button type="button" variant="outline" onClick={() => endSession(false)}>
+            Log out current session
+          </Button>
+          <Button type="button" variant="outline" onClick={() => endSession(true)}>
+            Log out all sessions
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

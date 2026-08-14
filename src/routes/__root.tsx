@@ -13,6 +13,8 @@ import { getRootPageData } from "../lib/api/catalog";
 import { siteUrl } from "../lib/site";
 import type { CatalogCategory, SiteSettingsData } from "../types/catalog";
 
+const analyticsId = import.meta.env.VITE_GA_ID?.trim();
+
 function NotFoundComponent() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
@@ -148,6 +150,14 @@ export const Route = createRootRouteWithContext<{
           },
         }),
       },
+      ...(analyticsId
+        ? [
+            { src: `https://www.googletagmanager.com/gtag/js?id=${analyticsId}`, async: true },
+            {
+              children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`,
+            },
+          ]
+        : []),
     ],
   }),
   shellComponent: RootShell,

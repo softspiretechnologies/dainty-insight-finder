@@ -1,4 +1,5 @@
 import process from "node:process";
+import { z } from "zod";
 
 // Server-only config. The .server.ts suffix prevents Vite from bundling
 // this file into the client — values here never reach the browser.
@@ -16,11 +17,50 @@ import process from "node:process";
 //     and server (analytics IDs, public URLs). Define in .env with the
 //     VITE_ prefix. Never put secrets here — they ship to the browser.
 
-export function getServerConfig() {
+const serverEnvSchema = z
+  .object({
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    DATABASE_URL: z.string().trim().min(1).optional(),
+    ADMIN_SESSION_SECRET: z.string().trim().min(32).optional(),
+    UPLOADS_DIR: z.string().trim().min(1).optional(),
+    VITE_SITE_URL: z.string().trim().url().optional(),
+  })
+  .superRefine((env, ctx) => {
+    if (env.NODE_ENV !== "production") return;
+    for (const key of ["DATABASE_URL", "ADMIN_SESSION_SECRET", "VITE_SITE_URL"] as const) {
+      if (!env[key]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `${key} is required in production`,
+        });
+      }
+    }
+  });
+
+export type ServerConfig = {
+  nodeEnv: "development" | "test" | "production";
+  databaseUrl?: string;
+  adminSessionSecret?: string;
+  uploadsDir?: string;
+  siteUrl?: string;
+};
+
+export function parseServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
+  const result = serverEnvSchema.safeParse(env);
+  if (!result.success) {
+    const fields = result.error.issues.map((issue) => issue.path.join(".")).join(", ");
+    throw new Error(`Invalid server configuration: ${fields}`);
+  }
   return {
-    nodeEnv: process.env.NODE_ENV,
-    databaseUrl: process.env.DATABASE_URL?.trim() || undefined,
-    adminSessionSecret: process.env.ADMIN_SESSION_SECRET?.trim() || undefined,
-    uploadsDir: process.env.UPLOADS_DIR?.trim() || undefined,
+    nodeEnv: result.data.NODE_ENV,
+    databaseUrl: result.data.DATABASE_URL,
+    adminSessionSecret: result.data.ADMIN_SESSION_SECRET,
+    uploadsDir: result.data.UPLOADS_DIR,
+    siteUrl: result.data.VITE_SITE_URL,
   };
+}
+
+export function getServerConfig() {
+  return parseServerConfig(process.env);
 }

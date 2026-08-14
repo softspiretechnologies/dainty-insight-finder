@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { blogPosts } from "@/data/blog";
 import { siteUrl } from "@/lib/site";
+import { listPublishedBlogPosts } from "@/lib/api/blog";
 
 export const Route = createFileRoute("/blog/")({
+  loader: () => listPublishedBlogPosts(),
   head: () => ({
     meta: [
       { title: "Journal & Gifting Guides — DaintyHand Kerala" },
@@ -50,6 +51,7 @@ export const Route = createFileRoute("/blog/")({
 });
 
 function BlogIndexPage() {
+  const blogPosts = Route.useLoaderData();
   return (
     <PageShell>
       <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">

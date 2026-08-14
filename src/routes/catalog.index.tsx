@@ -11,6 +11,7 @@ import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 const PAGE_SIZE = 12;
 
@@ -124,6 +125,7 @@ function CatalogPage() {
     const next = new Set(selectedCategories);
     next.add(categoryId);
     updateSearch({ categories: next, page: undefined });
+    trackEvent("catalog_category_filter", { category: categoryId, source_page: "catalog" });
   };
 
   const removeCategoryFilter = (categoryId: Category) => {

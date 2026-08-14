@@ -15,6 +15,7 @@ import { getCached } from "@/lib/cache.server";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
 import { site } from "@/lib/site";
+import { logError } from "@/lib/logger.server";
 import type {
   CatalogCategory,
   CatalogProduct,
@@ -61,10 +62,15 @@ function staticServicesPageData(): ServicesPageData {
   };
 }
 
-async function withDbFallback<T>(query: () => Promise<T>, fallback: () => T): Promise<T> {
+async function withDbFallback<T>(
+  operation: string,
+  query: () => Promise<T>,
+  fallback: () => T,
+): Promise<T> {
   try {
     return await query();
-  } catch {
+  } catch (error) {
+    logError("catalog.database_failure", error, { operation });
     return fallback();
   }
 }
@@ -99,6 +105,7 @@ export async function getCategories(): Promise<CatalogCategory[]> {
 
   return getCached("categories", () =>
     withDbFallback(
+      "getCategories",
       async () => {
         const db = getDb();
         const rows = await db
@@ -119,6 +126,7 @@ export async function getProducts(): Promise<CatalogProduct[]> {
 
   return getCached("products", () =>
     withDbFallback(
+      "getProducts",
       async () => {
         const db = getDb();
         const rows = await db
@@ -140,6 +148,7 @@ export async function getFeaturedHomepageProducts(): Promise<HomepageGalleryItem
 
   return getCached("featuredHomepageProducts", () =>
     withDbFallback(
+      "getFeaturedHomepageProducts",
       async () => {
         const db = getDb();
         const rows = await db
@@ -167,6 +176,7 @@ export async function getProductBySlug(slug: string): Promise<CatalogProduct | u
 
   return getCached(`product:${slug}`, () =>
     withDbFallback(
+      "getProductBySlug",
       async () => {
         const db = getDb();
         const rows = await db
@@ -187,24 +197,28 @@ export async function getSiteSettings(): Promise<SiteSettingsData> {
   }
 
   return getCached("siteSettings", () =>
-    withDbFallback(async () => {
-      const db = getDb();
-      const rows = await db.select().from(siteSettings).limit(1);
-      const row = rows[0];
-      if (!row) return staticSiteSettings();
+    withDbFallback(
+      "getSiteSettings",
+      async () => {
+        const db = getDb();
+        const rows = await db.select().from(siteSettings).limit(1);
+        const row = rows[0];
+        if (!row) return staticSiteSettings();
 
-      return {
-        whatsappNumber: row.whatsappNumber,
-        email: row.email,
-        instagramUrl: row.instagramUrl,
-        instagramHandle: row.instagramHandle,
-        founder: row.founder,
-        location: row.location,
-        servicesIntro: row.servicesIntro || defaultServicesPageContent.intro,
-        servicesFooterTitle: row.servicesFooterTitle || defaultServicesPageContent.footerTitle,
-        servicesFooterBlurb: row.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
-      };
-    }, staticSiteSettings),
+        return {
+          whatsappNumber: row.whatsappNumber,
+          email: row.email,
+          instagramUrl: row.instagramUrl,
+          instagramHandle: row.instagramHandle,
+          founder: row.founder,
+          location: row.location,
+          servicesIntro: row.servicesIntro || defaultServicesPageContent.intro,
+          servicesFooterTitle: row.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+          servicesFooterBlurb: row.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
+        };
+      },
+      staticSiteSettings,
+    ),
   );
 }
 
@@ -215,6 +229,7 @@ export async function getProductCount(): Promise<number> {
 
   return getCached("productCount", () =>
     withDbFallback(
+      "getProductCount",
       async () => {
         const db = getDb();
         const [row] = await db
@@ -245,24 +260,28 @@ export async function getServicesPageData(): Promise<ServicesPageData> {
   }
 
   return getCached("servicesPage", () =>
-    withDbFallback(async () => {
-      const db = getDb();
-      const [settingsRows, serviceRows] = await Promise.all([
-        db.select().from(siteSettings).limit(1),
-        db.select().from(servicesTable).orderBy(asc(servicesTable.sortOrder)),
-      ]);
+    withDbFallback(
+      "getServicesPageData",
+      async () => {
+        const db = getDb();
+        const [settingsRows, serviceRows] = await Promise.all([
+          db.select().from(siteSettings).limit(1),
+          db.select().from(servicesTable).orderBy(asc(servicesTable.sortOrder)),
+        ]);
 
-      const settings = settingsRows[0];
-      const services =
-        serviceRows.length > 0 ? serviceRows.map(mapService) : staticServicesPageData().services;
+        const settings = settingsRows[0];
+        const services =
+          serviceRows.length > 0 ? serviceRows.map(mapService) : staticServicesPageData().services;
 
-      return {
-        intro: settings?.servicesIntro || defaultServicesPageContent.intro,
-        footerTitle: settings?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
-        footerBlurb: settings?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
-        services,
-      };
-    }, staticServicesPageData),
+        return {
+          intro: settings?.servicesIntro || defaultServicesPageContent.intro,
+          footerTitle: settings?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+          footerBlurb: settings?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
+          services,
+        };
+      },
+      staticServicesPageData,
+    ),
   );
 }
 
@@ -297,20 +316,25 @@ export async function getTestimonialsSection(): Promise<TestimonialsSectionData>
   }
 
   return getCached("testimonialsSection", () =>
-    withDbFallback(async () => {
-      const db = getDb();
-      const [settingsRows, rows] = await Promise.all([
-        db.select().from(siteSettings).limit(1),
-        db.select().from(testimonialsTable).orderBy(asc(testimonialsTable.sortOrder)),
-      ]);
+    withDbFallback(
+      "getTestimonialsSection",
+      async () => {
+        const db = getDb();
+        const [settingsRows, rows] = await Promise.all([
+          db.select().from(siteSettings).limit(1),
+          db.select().from(testimonialsTable).orderBy(asc(testimonialsTable.sortOrder)),
+        ]);
 
-      const settings = settingsRows[0];
-      const items = rows.length > 0 ? rows.map(mapTestimonial) : staticTestimonialsSection().items;
+        const settings = settingsRows[0];
+        const items =
+          rows.length > 0 ? rows.map(mapTestimonial) : staticTestimonialsSection().items;
 
-      return {
-        heading: settings?.testimonialsHeading || defaultTestimonialsHeading,
-        items,
-      };
-    }, staticTestimonialsSection),
+        return {
+          heading: settings?.testimonialsHeading || defaultTestimonialsHeading,
+          items,
+        };
+      },
+      staticTestimonialsSection,
+    ),
   );
 }

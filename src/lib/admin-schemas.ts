@@ -148,3 +148,31 @@ export const testimonialInputSchema = z.object({
 export const testimonialsSectionInputSchema = adminTestimonialsSectionFormSchema;
 
 export const settingsSchema = adminSettingsFormSchema;
+
+export const adminBlogPostSchema = z.object({
+  id: z.union([z.literal("new"), z.number().int().positive()]),
+  title: z.string().trim().min(1, "Title is required").max(256),
+  slug: z
+    .string()
+    .trim()
+    .min(1, "Slug is required")
+    .max(160)
+    .regex(slugPattern, "Slug must use lowercase letters, numbers and hyphens"),
+  excerpt: z.string().trim().min(1, "Excerpt is required").max(1000),
+  content: z.string().trim().min(1, "Content is required"),
+  featuredImage: z.string().trim().max(512).optional(),
+  metaTitle: z.string().trim().max(256).optional(),
+  metaDescription: z.string().trim().max(1000).optional(),
+  isPublished: z.boolean(),
+});
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(12, "Use at least 12 characters").max(128),
+    confirmPassword: z.string().min(1, "Confirm the new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  });

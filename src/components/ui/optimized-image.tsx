@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { imageSrcSet } from "@/lib/image-variants";
 
 type OptimizedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
   /** Mark the LCP image — eager load + high fetch priority (one per page). */
@@ -11,11 +12,16 @@ export function OptimizedImage({
   fetchPriority,
   decoding = "async",
   className,
+  src,
+  srcSet,
   ...props
 }: OptimizedImageProps) {
+  const generatedSrcSet = typeof src === "string" ? imageSrcSet(src) : undefined;
   return (
     <img
       {...props}
+      src={src}
+      srcSet={srcSet ?? generatedSrcSet}
       className={cn(className)}
       loading={priority ? "eager" : (loading ?? "lazy")}
       fetchPriority={priority ? "high" : fetchPriority}

@@ -10,6 +10,9 @@ export type BlogPost = {
   targetKeyword: string;
   relatedCategorySlug?: string;
   image: string;
+  datePublished?: string;
+  metaTitle?: string;
+  metaDescription?: string;
 };
 
 export const blogPosts: BlogPost[] = [

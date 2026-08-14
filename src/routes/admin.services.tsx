@@ -418,8 +418,8 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
         <BulletTextarea
           id={`${service.id}-bullets`}
           value={bullets}
-          onChange={(e) => {
-            setBullets(e.target.value);
+          onChange={(value) => {
+            setBullets(value);
             setSuccess(false);
           }}
           rows={5}

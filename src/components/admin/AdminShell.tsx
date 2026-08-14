@@ -8,6 +8,7 @@ import {
   Settings,
   Sparkles,
   Tags,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -18,16 +19,36 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/admin", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard, exact: true },
-  { to: "/admin/products", label: "Products", shortLabel: "Products", icon: Package },
-  { to: "/admin/categories", label: "Categories", shortLabel: "Categories", icon: Tags },
-  { to: "/admin/services", label: "Services", shortLabel: "Services", icon: Sparkles },
+  { to: "/admin/products", label: "Products", shortLabel: "Products", icon: Package, exact: false },
+  {
+    to: "/admin/categories",
+    label: "Categories",
+    shortLabel: "Categories",
+    icon: Tags,
+    exact: false,
+  },
+  {
+    to: "/admin/services",
+    label: "Services",
+    shortLabel: "Services",
+    icon: Sparkles,
+    exact: false,
+  },
+  { to: "/admin/blog", label: "Blog", shortLabel: "Blog", icon: FileText, exact: false },
   {
     to: "/admin/testimonials",
     label: "Testimonials",
     shortLabel: "Reviews",
     icon: MessageSquareQuote,
+    exact: false,
   },
-  { to: "/admin/settings", label: "Settings", shortLabel: "Settings", icon: Settings },
+  {
+    to: "/admin/settings",
+    label: "Settings",
+    shortLabel: "Settings",
+    icon: Settings,
+    exact: false,
+  },
 ] as const;
 
 function NavLink({

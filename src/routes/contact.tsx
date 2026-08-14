@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -87,6 +88,7 @@ function ContactPage() {
               href={waLink(`Hi ${founder}, I'd like to enquire.`)}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent("whatsapp_contact_click", { source_page: "contact" })}
               className="group bg-foreground text-background p-8 md:p-12 flex flex-col justify-between min-h-[200px] md:min-h-[240px]"
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50">
@@ -107,6 +109,7 @@ function ContactPage() {
               href={site.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent("instagram_click", { source_page: "contact" })}
               className="group bg-background p-8 md:p-12 flex flex-col justify-between min-h-[200px] md:min-h-[240px] hover:bg-surface transition-colors"
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">

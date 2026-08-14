@@ -90,7 +90,6 @@ export const saveAdminTestimonialsSection = createServerFn({ method: "POST" })
         servicesIntro: "",
         servicesFooterTitle: "",
         servicesFooterBlurb: "",
-        testimonialsHeading: defaultTestimonialsHeading,
         ...values,
       });
     }

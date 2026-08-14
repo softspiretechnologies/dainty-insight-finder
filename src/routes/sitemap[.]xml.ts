@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { getSitemapProducts } from "@/lib/api/catalog";
-import { blogPosts } from "@/data/blog";
+import { getPublishedBlogPosts } from "@/lib/blog.server";
 import { site } from "@/lib/site";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const products = await getSitemapProducts();
+        const [products, blogPosts] = await Promise.all([
+          getSitemapProducts(),
+          getPublishedBlogPosts(),
+        ]);
         const staticPaths = ["/", "/services", "/catalog", "/custom", "/contact", "/blog"];
         const productPaths = products.map((p) => `/catalog/${p.slug}`);
         const blogPaths = blogPosts.map((b) => `/blog/${b.slug}`);

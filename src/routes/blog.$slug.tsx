@@ -1,13 +1,15 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { getBlogPostBySlug } from "@/data/blog";
 import { Category } from "@/data/products";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { trackEvent } from "@/lib/analytics";
+import { useEffect } from "react";
+import { getPublishedBlogPost } from "@/lib/api/blog";
 
 export const Route = createFileRoute("/blog/$slug")({
-  loader: ({ params }) => {
-    const post = getBlogPostBySlug(params.slug);
+  loader: async ({ params }) => {
+    const post = await getPublishedBlogPost({ data: { slug: params.slug } });
     if (!post) throw notFound();
     return { post };
   },
@@ -19,13 +21,16 @@ export const Route = createFileRoute("/blog/$slug")({
     const url = siteUrl(`/blog/${post.slug}`);
     return {
       meta: [
-        { title: `${post.title} — DaintyHand Journal` },
-        { name: "description", content: post.excerpt },
+        { title: post.metaTitle || `${post.title} — DaintyHand Journal` },
+        { name: "description", content: post.metaDescription || post.excerpt },
         { name: "keywords", content: post.targetKeyword },
         { property: "og:title", content: `${post.title} — DaintyHand Journal` },
         { property: "og:description", content: post.excerpt },
         { property: "og:url", content: url },
-        { property: "og:image", content: siteUrl("/og-image.jpg") },
+        {
+          property: "og:image",
+          content: post.image.startsWith("http") ? post.image : siteUrl(post.image),
+        },
         { name: "twitter:card", content: "summary_large_image" },
       ],
       links: [{ rel: "canonical", href: url }],
@@ -38,7 +43,8 @@ export const Route = createFileRoute("/blog/$slug")({
             headline: post.title,
             description: post.excerpt,
             url,
-            datePublished: post.date,
+            datePublished: post.datePublished || post.date,
+            image: post.image.startsWith("http") ? post.image : siteUrl(post.image),
             author: { "@type": "Person", name: post.author },
             publisher: {
               "@type": "Organization",
@@ -70,6 +76,10 @@ export const Route = createFileRoute("/blog/$slug")({
 function BlogPostPage() {
   const { post } = Route.useLoaderData();
   const { waLink, founder } = useSiteContact();
+
+  useEffect(() => {
+    trackEvent("blog_view", { source_page: post.slug });
+  }, [post.slug]);
 
   return (
     <PageShell>

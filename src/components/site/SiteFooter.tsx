@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { site } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { trackEvent } from "@/lib/analytics";
 
 export function SiteFooter() {
   const { waLink, founder } = useSiteContact();
@@ -59,6 +60,7 @@ export function SiteFooter() {
             <div className="space-y-3">
               <a
                 href={site.instagramUrl}
+                onClick={() => trackEvent("instagram_click", { source_page: "footer" })}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group block"

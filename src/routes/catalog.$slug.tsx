@@ -1,14 +1,13 @@
 import { createFileRoute, Link, notFound, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import {
-  OptimizedImage,
-  catalogGridSizes,
-  productHeroSizes,
-} from "@/components/ui/optimized-image";
+import { OptimizedImage, productHeroSizes } from "@/components/ui/optimized-image";
 import { getProductBySlugData } from "@/lib/api/catalog";
 import { normalizeProductDetails } from "@/lib/product-details";
-import { site, siteUrl } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
+import { absoluteProductImage, buildProductStructuredData } from "@/lib/product-schema";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { trackEvent } from "@/lib/analytics";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/catalog/$slug")({
   loader: async ({ params }) => {
@@ -26,6 +25,7 @@ export const Route = createFileRoute("/catalog/$slug")({
       product.description && product.description.length > 30
         ? product.description
         : `${product.name} — custom handcrafted by DaintyHand in Perinthalmanna, Kerala. Fully personalized for weddings, engagements, Nikahs & celebrations. Ships across India & worldwide.`;
+    const productImage = absoluteProductImage(product.image);
 
     return {
       meta: [
@@ -41,9 +41,9 @@ export const Route = createFileRoute("/catalog/$slug")({
         },
         { property: "og:description", content: metaDescription },
         { property: "og:url", content: url },
-        { property: "og:image", content: siteUrl("/og-image.jpg") },
+        { property: "og:image", content: productImage },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:image", content: siteUrl("/og-image.jpg") },
+        { name: "twitter:image", content: productImage },
       ],
       links: [{ rel: "canonical", href: url }],
       scripts: [
@@ -60,39 +60,7 @@ export const Route = createFileRoute("/catalog/$slug")({
                   { "@type": "ListItem", position: 3, name: product.name, item: url },
                 ],
               },
-              {
-                "@type": "Product",
-                name: product.name,
-                description: metaDescription,
-                image: product.image.startsWith("http") ? product.image : siteUrl("/og-image.jpg"),
-                url,
-                brand: { "@type": "Brand", name: "DaintyHand" },
-                offers: {
-                  "@type": "Offer",
-                  priceCurrency: "INR",
-                  price: product.priceFrom
-                    ? product.priceFrom.replace(/[^\d]/g, "") || "1000"
-                    : "1000",
-                  availability: "https://schema.org/InStock",
-                  itemCondition: "https://schema.org/NewCondition",
-                  url,
-                },
-                aggregateRating: {
-                  "@type": "AggregateRating",
-                  ratingValue: "5.0",
-                  reviewCount: "48",
-                },
-                review: [
-                  {
-                    "@type": "Review",
-                    author: { "@type": "Person", name: "Fathima S." },
-                    datePublished: "2026-05-14",
-                    reviewBody:
-                      "Ordered a custom wedding hamper from DaintyHand. Nafisa was super helpful and the packaging was absolutely stunning!",
-                    reviewRating: { "@type": "Rating", ratingValue: "5" },
-                  },
-                ],
-              },
+              buildProductStructuredData(product, metaDescription),
             ],
           }),
         },
@@ -135,6 +103,10 @@ function ProductPage() {
   const { waLink, founder } = useSiteContact();
   const category = categories.find((c) => c.id === product.category);
   const details = normalizeProductDetails(product.details);
+
+  useEffect(() => {
+    trackEvent("product_view", { product_slug: product.slug, category: product.category });
+  }, [product.category, product.slug]);
 
   return (
     <PageShell>
@@ -211,6 +183,13 @@ function ProductPage() {
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() =>
+                  trackEvent("whatsapp_product_click", {
+                    product_slug: product.slug,
+                    category: product.category,
+                    source_page: "product",
+                  })
+                }
                 className="inline-flex w-full sm:w-auto items-center justify-center gap-4 bg-foreground text-background px-6 sm:px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
               >
                 Discuss this design on WhatsApp

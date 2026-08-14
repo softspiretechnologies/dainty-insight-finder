@@ -106,3 +106,22 @@ export async function incrementAdminSessionVersion(userId: number) {
     .set({ sessionVersion: sql`${adminUsers.sessionVersion} + 1` })
     .where(eq(adminUsers.id, userId));
 }
+
+export async function changeAdminPassword(
+  userId: number,
+  currentPassword: string,
+  newPassword: string,
+) {
+  const db = getDb();
+  const rows = await db.select().from(adminUsers).where(eq(adminUsers.id, userId)).limit(1);
+  const user = rows[0];
+  if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+    return false;
+  }
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await db
+    .update(adminUsers)
+    .set({ passwordHash, sessionVersion: sql`${adminUsers.sessionVersion} + 1` })
+    .where(eq(adminUsers.id, userId));
+  return true;
+}

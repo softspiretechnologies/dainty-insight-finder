@@ -16,6 +16,9 @@ dist-ssr
 .nitro
 *.local
 coverage
+backups/
+*.sql.gz
+uploads-*.tar.gz
 .env
 .env
 .env.*

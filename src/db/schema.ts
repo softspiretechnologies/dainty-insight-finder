@@ -89,3 +89,18 @@ export const adminLoginAttempts = mysqlTable(
     scopeKey: uniqueIndex("admin_login_attempts_scope_key").on(table.scope, table.attemptKey),
   }),
 );
+
+export const blogPosts = mysqlTable("blog_posts", {
+  id: int("id").primaryKey().autoincrement(),
+  title: varchar("title", { length: 256 }).notNull(),
+  slug: varchar("slug", { length: 160 }).notNull().unique(),
+  excerpt: text("excerpt").notNull(),
+  content: text("content").notNull(),
+  featuredImage: varchar("featured_image", { length: 512 }),
+  metaTitle: varchar("meta_title", { length: 256 }),
+  metaDescription: text("meta_description"),
+  isPublished: boolean("is_published").notNull().default(false),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});

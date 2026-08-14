@@ -5,6 +5,7 @@ import { z } from "zod";
 import { PageShell } from "@/components/site/PageShell";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { trackEvent } from "@/lib/analytics";
 
 const serviceOptions = [
   "Hamper",
@@ -141,6 +142,7 @@ function CustomPage() {
   }
 
   function onSubmit(data: CustomOrderForm) {
+    trackEvent("whatsapp_custom_order_click", { source_page: "custom", category: data.service });
     const url = waLink(buildMessage(data));
     window.open(url, "_blank", "noopener,noreferrer");
   }

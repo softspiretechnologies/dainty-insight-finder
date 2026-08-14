@@ -11,6 +11,8 @@ export default defineConfig({
   // Without this, build skips Nitro outside Lovable and dist/server/server.js won't listen on a port.
   nitro: {
     preset: "node-server",
+    // Supported by Nitro at runtime; the wrapper's narrowed config type omits this field.
+    // @ts-expect-error routeRules is a valid Nitro option.
     routeRules: {
       "/uploads/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
       "/assets/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
