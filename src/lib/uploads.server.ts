@@ -22,19 +22,28 @@ const EXT_BY_MIME: Record<string, string> = {
   "image/webp": ".webp",
 };
 
+function hostingerDomainUploadsDir(cwd = process.cwd()) {
+  const marker = `${path.sep}hbuilds${path.sep}`;
+  const idx = cwd.indexOf(marker);
+  if (idx !== -1) return path.join(cwd.slice(0, idx), "uploads");
+  if (path.basename(cwd) === "nodejs") return path.join(cwd, "..", "uploads");
+  return null;
+}
+
 function uploadsWriteRoot() {
   const { uploadsDir } = getServerConfig();
   if (uploadsDir) return uploadsDir;
-  return path.join(process.cwd(), "..", "uploads");
+  return hostingerDomainUploadsDir() ?? path.join(process.cwd(), "..", "uploads");
 }
 
 function uploadsReadRoots() {
   const cwd = process.cwd();
   const roots = [
     uploadsWriteRoot(),
+    hostingerDomainUploadsDir(cwd),
     path.join(cwd, "dist", "public", "uploads"),
     path.join(cwd, "public", "uploads"),
-  ];
+  ].filter((dir): dir is string => Boolean(dir));
 
   const seen = new Set<string>();
   return roots.filter((dir) => {
