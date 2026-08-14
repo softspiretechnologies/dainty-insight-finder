@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormErrorBanner } from "@/components/admin/AdminField";
 import { listAdminCategories } from "@/lib/api/admin/categories";
-import { deleteAdminProduct, listAdminProducts, toggleAdminProductActive, toggleAdminProductHomepageFeatured } from "@/lib/api/admin/products";
+import {
+  deleteAdminProduct,
+  listAdminProducts,
+  toggleAdminProductActive,
+  toggleAdminProductHomepageFeatured,
+} from "@/lib/api/admin/products";
 import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
 
@@ -76,8 +81,14 @@ function AdminProductsPage() {
 
   const hasActiveFilters =
     query.trim().length > 0 || statusFilter !== "all" || selectedCategories.size > 0;
-  const featuredCount = useMemo(() => products.filter((product) => product.featuredOnHomepage).length, [products]);
-  const hiddenCount = useMemo(() => products.filter((product) => !product.isActive).length, [products]);
+  const featuredCount = useMemo(
+    () => products.filter((product) => product.featuredOnHomepage).length,
+    [products],
+  );
+  const hiddenCount = useMemo(
+    () => products.filter((product) => !product.isActive).length,
+    [products],
+  );
 
   const sortedCategories = useMemo(
     () => sortCategoriesWithSelectedFirst(categories, selectedCategories),
@@ -245,11 +256,15 @@ function AdminProductsPage() {
                       </span>
                     ) : null}
                   </h2>
-                  <p className="text-xs text-muted mt-1">{categoryLabels.get(product.categoryId) ?? product.categoryId}</p>
+                  <p className="text-xs text-muted mt-1">
+                    {categoryLabels.get(product.categoryId) ?? product.categoryId}
+                  </p>
                   {product.priceFrom && (
                     <p className="text-xs font-medium text-primary mt-1">{product.priceFrom}</p>
                   )}
-                  <p className="font-mono text-[10px] text-muted/70 mt-1 truncate">{product.slug}</p>
+                  <p className="font-mono text-[10px] text-muted/70 mt-1 truncate">
+                    {product.slug}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 px-4 pb-4">
@@ -304,7 +319,9 @@ function AdminProductsPage() {
                   {featuredToggleId === product.id ? (
                     <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <Star className={cn("w-3.5 h-3.5", product.featuredOnHomepage && "fill-primary/30")} />
+                    <Star
+                      className={cn("w-3.5 h-3.5", product.featuredOnHomepage && "fill-primary/30")}
+                    />
                   )}
                 </Button>
                 <Button variant="outline" className="flex-1 h-10 text-sm" asChild>
@@ -338,21 +355,43 @@ function AdminProductsPage() {
           <table className="w-full text-sm">
             <thead className="bg-surface/40 border-b border-border">
               <tr>
-                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted w-16">Image</th>
-                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Name</th>
-                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Category</th>
-                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted hidden lg:table-cell">Slug</th>
-                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted hidden lg:table-cell">Price</th>
-                <th className="text-right px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Actions</th>
+                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted w-16">
+                  Image
+                </th>
+                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+                  Name
+                </th>
+                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+                  Category
+                </th>
+                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted hidden lg:table-cell">
+                  Slug
+                </th>
+                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted hidden lg:table-cell">
+                  Price
+                </th>
+                <th className="text-right px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((product) => (
-                <tr key={product.id} className={cn("hover:bg-surface/20 transition-colors", !product.isActive && "opacity-60")}>
+                <tr
+                  key={product.id}
+                  className={cn(
+                    "hover:bg-surface/20 transition-colors",
+                    !product.isActive && "opacity-60",
+                  )}
+                >
                   <td className="px-4 py-3">
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-surface border border-border shrink-0">
                       {product.imagePath ? (
-                        <img src={product.imagePath} alt="" className="w-full h-full object-cover" />
+                        <img
+                          src={product.imagePath}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full grid place-items-center">
                           <Package className="w-4 h-4 text-muted/30" />
@@ -419,7 +458,9 @@ function AdminProductsPage() {
                             : "text-muted hover:text-primary hover:border-primary/40",
                         )}
                         disabled={featuredToggleId === product.id || !product.isActive}
-                        onClick={() => handleToggleFeatured(product.id, !product.featuredOnHomepage)}
+                        onClick={() =>
+                          handleToggleFeatured(product.id, !product.featuredOnHomepage)
+                        }
                         aria-label={
                           product.featuredOnHomepage
                             ? `Remove ${product.name} from homepage gallery`
@@ -436,11 +477,19 @@ function AdminProductsPage() {
                         {featuredToggleId === product.id ? (
                           <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
                         ) : (
-                          <Star className={cn("w-3 h-3", product.featuredOnHomepage && "fill-primary/30")} />
+                          <Star
+                            className={cn(
+                              "w-3 h-3",
+                              product.featuredOnHomepage && "fill-primary/30",
+                            )}
+                          />
                         )}
                       </Button>
                       <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5" asChild>
-                        <Link to="/admin/products/$productId" params={{ productId: String(product.id) }}>
+                        <Link
+                          to="/admin/products/$productId"
+                          params={{ productId: String(product.id) }}
+                        >
                           <Pencil className="w-3 h-3" />
                           Edit
                         </Link>

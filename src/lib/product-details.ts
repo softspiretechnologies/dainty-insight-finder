@@ -21,10 +21,7 @@ export function normalizeProductDetails(details: unknown): string[] {
       }
     }
 
-    return trimmed
-      .split("\n")
-      .map(normalizeDetailLine)
-      .filter(Boolean);
+    return trimmed.split("\n").map(normalizeDetailLine).filter(Boolean);
   }
 
   return [];

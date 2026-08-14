@@ -15,7 +15,9 @@ export default defineConfig({
       "/uploads/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
       "/assets/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
       "/favicon.png": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
-      "/apple-touch-icon.png": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/apple-touch-icon.png": {
+        headers: { "cache-control": "public, max-age=31536000, immutable" },
+      },
       "/icon-192.png": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
       "/icon-512.png": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
       "/manifest.webmanifest": { headers: { "cache-control": "public, max-age=604800" } },

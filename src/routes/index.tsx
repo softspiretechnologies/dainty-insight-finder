@@ -22,16 +22,40 @@ export const Route = createFileRoute("/")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      { name: "description", content: "Custom hampers, nikah invitations, save-the-date shoots, proposal setups & memory reels — handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide." },
-      { name: "keywords", content: "Wedding Gifts India, Nikah Invitations, Save The Date Shoots, Custom Hampers India, Proposal Setup, Birthday Surprise, Wedding Invitations, Handcrafted Gifts Worldwide, Perinthalmanna gifting studio" },
-      { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      { property: "og:description", content: "Wedding gifts, nikah invitations, save-the-date shoots & surprise setups handcrafted and shipped across India & worldwide." },
+      { title: "DaintyHand - Handcrafted Gifts & Wedding Studio in Perinthalmanna, Kerala" },
+      {
+        name: "description",
+        content:
+          "Custom hampers, nikah invitations, save-the-date shoots, proposal setups & memory reels handcrafted by Nafisa in Perinthalmanna, Kerala. We ship across India & worldwide.",
+      },
+      {
+        name: "keywords",
+        content:
+          "Wedding Gifts Kerala, Nikah Invitations India, Save The Date Shoots Kozhikode, Custom Hampers Malappuram, Proposal Setup Kerala, Birthday Surprise Perinthalmanna, Wedding Invitations, Handcrafted Gifts Worldwide, Gifting Studio Perinthalmanna",
+      },
+      {
+        property: "og:title",
+        content: "DaintyHand - Handcrafted Gifts & Wedding Studio in Perinthalmanna, Kerala",
+      },
+      {
+        property: "og:description",
+        content:
+          "Wedding gifts, nikah invitations, save-the-date shoots & surprise setups handcrafted in Perinthalmanna and shipped across India & worldwide.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: siteUrl("/") },
       { property: "og:image", content: siteUrl("/og-image.jpg") },
       { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
+      {
+        name: "twitter:title",
+        content: "DaintyHand - Handcrafted Gifts & Wedding Studio in Perinthalmanna, Kerala",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Custom hampers, nikah invitations, save-the-date shoots & surprise setups handcrafted in Perinthalmanna, Kerala.",
+      },
       { name: "twitter:image", content: siteUrl("/og-image.jpg") },
     ],
     links: [{ rel: "canonical", href: siteUrl("/") }],
@@ -42,13 +66,27 @@ export const Route = createFileRoute("/")({
           "@context": "https://schema.org",
           "@type": "LocalBusiness",
           name: "DaintyHand",
-          description: "Handcrafted gifts, wedding essentials and celebration studio based in Kerala — shipping across India & worldwide.",
+          description:
+            "Handcrafted gifts, wedding essentials and celebration studio based in Perinthalmanna, Kerala — shipping across India & worldwide.",
           image: siteUrl("/og-image.jpg"),
           url: siteUrl("/"),
           telephone: formatTelephone(loaderData?.siteSettings.whatsappNumber ?? ""),
           email: loaderData?.siteSettings.email ?? site.email,
-          address: { "@type": "PostalAddress", addressLocality: "Perinthalmanna", addressRegion: "Kerala", addressCountry: "IN" },
-          areaServed: "India & Worldwide",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Perinthalmanna",
+            addressLocality: "Perinthalmanna",
+            addressRegion: "Kerala",
+            postalCode: "679322",
+            addressCountry: "IN",
+          },
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: "10.9752",
+            longitude: "76.2238",
+          },
+          priceRange: "₹₹",
+          areaServed: ["Perinthalmanna", "Malappuram", "Kozhikode", "Kerala", "India", "Worldwide"],
           openingHours: "Mo-Sa 10:00-19:00",
           sameAs: ["https://www.instagram.com/dainty.handd/"],
           founder: { "@type": "Person", name: loaderData?.siteSettings.founder ?? site.founder },
@@ -60,11 +98,36 @@ export const Route = createFileRoute("/")({
 });
 
 const moments = [
-  { title: "Save The Date Shoots", image: momentSaveTheDate, blurb: "Styled couple shoots edited as your save-the-date film & cards." },
-  { title: "Birthday Surprise Setups", image: momentBirthday, blurb: "Decor, florals and signage set up while they're away." },
-  { title: "Proposal Moments", image: momentProposal, blurb: "Intimate styled setups for the moment you ask." },
-  { title: "Couple Content", image: momentCouple, blurb: "Editorial portraits and pre-wedding content shoots." },
-  { title: "Memory Reels", image: momentReel, blurb: "Cinematic 30–60s reels from your photos & clips." },
+  {
+    title: "Save The Date Shoots",
+    image: momentSaveTheDate,
+    alt: "Save The Date couple pre-wedding shoot by DaintyHand in Kozhikode Kerala",
+    blurb: "Styled couple shoots edited as your save-the-date film & cards.",
+  },
+  {
+    title: "Birthday Surprise Setups",
+    image: momentBirthday,
+    alt: "Birthday surprise room floral setup by DaintyHand Perinthalmanna Kerala",
+    blurb: "Decor, florals and signage set up while they're away.",
+  },
+  {
+    title: "Proposal Moments",
+    image: momentProposal,
+    alt: "Romantic proposal setup with flowers and candlelight in Kerala",
+    blurb: "Intimate styled setups for the moment you ask.",
+  },
+  {
+    title: "Couple Content",
+    image: momentCouple,
+    alt: "Editorial couple portrait photo shoot by DaintyHand Malappuram",
+    blurb: "Editorial portraits and pre-wedding content shoots.",
+  },
+  {
+    title: "Memory Reels",
+    image: momentReel,
+    alt: "Cinematic wedding memory video reel by DaintyHand",
+    blurb: "Cinematic 30–60s reels from your photos & clips.",
+  },
 ];
 
 const features = [
@@ -121,11 +184,9 @@ function Index() {
 
   return (
     <PageShell>
-
       {/* ── Hero ─────────────────────────────────────────────── */}
       <header className="relative pt-16 pb-24 md:pt-24 md:pb-40 overflow-hidden px-5 md:px-6 border-b border-border">
         <div className="max-w-5xl mx-auto text-center">
-
           {/* eyebrow + location */}
           <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-muted animate-reveal block mb-6 md:mb-8">
             {site.location}
@@ -136,8 +197,10 @@ function Index() {
             className="font-display text-[3rem] sm:text-7xl md:text-[7rem] leading-[0.88] tracking-tighter mb-8 md:mb-12 animate-reveal"
             style={{ animationDelay: "80ms" }}
           >
-            Handcrafted<br />
-            gifts &amp;<br />
+            Handcrafted
+            <br />
+            gifts &amp;
+            <br />
             <span className="italic font-normal text-primary">wedding studio.</span>
           </h1>
 
@@ -146,7 +209,8 @@ function Index() {
             className="text-sm text-muted leading-relaxed max-w-xs mx-auto text-pretty mb-8 md:mb-12 animate-reveal"
             style={{ animationDelay: "160ms" }}
           >
-            Handcrafted in Perinthalmanna.<br />
+            Handcrafted in Perinthalmanna.
+            <br />
             Shipped across India &amp; worldwide.
           </p>
 
@@ -175,7 +239,10 @@ function Index() {
 
         {/* decorative ribbon line */}
         <div className="absolute bottom-0 left-0 w-full h-px bg-border flex items-center overflow-hidden">
-          <div className="w-48 h-px bg-primary animate-ribbon" style={{ animationDelay: "800ms" }} />
+          <div
+            className="w-48 h-px bg-primary animate-ribbon"
+            style={{ animationDelay: "800ms" }}
+          />
         </div>
       </header>
 
@@ -184,9 +251,11 @@ function Index() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 md:mb-14">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">What We Create</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                What We Create
+              </span>
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic text-balance">
-                Eight ways to celebrate.
+                Custom Handcrafted Gifts for Every Occasion in Kerala
               </h2>
             </div>
             <Link
@@ -211,7 +280,7 @@ function Index() {
                 <div className="aspect-4/5 overflow-hidden rounded-sm mb-3 md:mb-4">
                   <OptimizedImage
                     src={cat.image}
-                    alt={cat.label}
+                    alt={`${cat.label} handcrafted by DaintyHand, Perinthalmanna Kerala`}
                     width={512}
                     height={640}
                     sizes={catalogGridSizes}
@@ -219,8 +288,12 @@ function Index() {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>
-                <h3 className="font-display text-base md:text-xl mb-1.5 md:mb-2 italic">{cat.label}</h3>
-                <p className="text-[11px] text-muted leading-relaxed hidden md:block">{cat.blurb}</p>
+                <h3 className="font-display text-base md:text-xl mb-1.5 md:mb-2 italic">
+                  {cat.label}
+                </h3>
+                <p className="text-[11px] text-muted leading-relaxed hidden md:block">
+                  {cat.blurb}
+                </p>
               </Link>
             ))}
           </div>
@@ -230,7 +303,9 @@ function Index() {
       {/* ── Why DaintyHand (horizontal scroll on mobile) ─────── */}
       <section className="border-t border-border bg-surface/40">
         <div className="max-w-7xl mx-auto px-5 md:px-6 py-12 md:py-20">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted block mb-8 md:mb-10">Why DaintyHand</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted block mb-8 md:mb-10">
+            Why DaintyHand
+          </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px bg-border border border-border rounded-sm overflow-hidden">
             {features.map((f, i) => (
               <div key={f.t} className="bg-background p-6 md:p-8">
@@ -248,9 +323,11 @@ function Index() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 md:mb-14">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Beyond Gifting</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                Beyond Gifting
+              </span>
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic text-balance">
-                Moments we captured.
+                Wedding &amp; Celebration Services in Kerala
               </h2>
             </div>
             <Link
@@ -273,12 +350,16 @@ function Index() {
               >
                 <OptimizedImage
                   src={m.image}
-                  alt={m.title}
-                  sizes={i === 0 ? "(max-width: 768px) 100vw, 40vw" : "(max-width: 768px) 50vw, 20vw"}
+                  alt={m.alt || m.title}
+                  sizes={
+                    i === 0 ? "(max-width: 768px) 100vw, 40vw" : "(max-width: 768px) 50vw, 20vw"
+                  }
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <figcaption className="absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/5 to-transparent flex flex-col justify-end p-3 md:p-5">
-                  <h3 className="font-display italic text-background text-sm sm:text-base md:text-xl leading-tight">{m.title}</h3>
+                  <h3 className="font-display italic text-background text-sm sm:text-base md:text-xl leading-tight">
+                    {m.title}
+                  </h3>
                   <p className="text-background/70 text-[11px] mt-1 hidden md:block">{m.blurb}</p>
                 </figcaption>
               </figure>
@@ -292,9 +373,12 @@ function Index() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-3">How It Works</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-3">
+                How It Works
+              </span>
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl italic leading-tight">
-                A simple,<br className="hidden md:block" /> considered process.
+                A simple,
+                <br className="hidden md:block" /> considered process.
               </h2>
             </div>
             <a
@@ -309,14 +393,28 @@ function Index() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-px bg-background/10">
             {[
-              { t: "Share your idea", d: "Message on WhatsApp with the occasion, vibe and budget." },
-              { t: "We design", d: "We send mood boards, materials and a custom quote within 24 hours." },
-              { t: "Approve & confirm", d: "Approve the design, confirm with advance, we begin handcrafting." },
-              { t: "Delivery", d: "Hand-delivered locally or shipped anywhere in India & worldwide." },
+              {
+                t: "Share your idea",
+                d: "Message on WhatsApp with the occasion, vibe and budget.",
+              },
+              {
+                t: "We design",
+                d: "We send mood boards, materials and a custom quote within 24 hours.",
+              },
+              {
+                t: "Approve & confirm",
+                d: "Approve the design, confirm with advance, we begin handcrafting.",
+              },
+              {
+                t: "Delivery",
+                d: "Hand-delivered locally or shipped anywhere in India & worldwide.",
+              },
             ].map((s, i) => (
               <div key={s.t} className="bg-foreground p-7 md:p-10 border-border">
                 <span className="font-mono text-[10px] text-primary block mb-5">Step 0{i + 1}</span>
-                <h3 className="font-display italic text-xl md:text-2xl mb-3 leading-tight">{s.t}</h3>
+                <h3 className="font-display italic text-xl md:text-2xl mb-3 leading-tight">
+                  {s.t}
+                </h3>
                 <p className="text-xs text-background/60 leading-relaxed">{s.d}</p>
               </div>
             ))}
@@ -334,7 +432,10 @@ function Index() {
               { n: "1,000+", l: "Pieces Created" },
               { n: "Worldwide", l: "Orders Delivered" },
             ].map((s) => (
-              <div key={s.l} className="bg-background min-w-0 px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-12">
+              <div
+                key={s.l}
+                className="bg-background min-w-0 px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-12"
+              >
                 <div className="font-display text-2xl sm:text-3xl md:text-5xl text-primary italic leading-none mb-2 md:mb-3 wrap-break-word">
                   {s.n}
                 </div>
@@ -352,7 +453,9 @@ function Index() {
         <div className="max-w-7xl mx-auto px-5 md:px-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10 md:mb-16">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-3">Recent Creations</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-3">
+                Recent Creations
+              </span>
               <h2 className="font-display text-3xl sm:text-4xl italic text-balance">
                 Hampers, bouquets, shoots &amp; more.
               </h2>
@@ -369,21 +472,38 @@ function Index() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             <div className="space-y-3 md:space-y-6">
-              {galleryItems[0] ? <GalleryImg img={galleryItems[0]} aspect={galleryAspects[0]} /> : null}
-              {galleryItems[1] ? <GalleryImg img={galleryItems[1]} aspect={galleryAspects[1]} /> : null}
+              {galleryItems[0] ? (
+                <GalleryImg img={galleryItems[0]} aspect={galleryAspects[0]} />
+              ) : null}
+              {galleryItems[1] ? (
+                <GalleryImg img={galleryItems[1]} aspect={galleryAspects[1]} />
+              ) : null}
             </div>
             <div className="space-y-3 md:space-y-6 pt-10 md:pt-20">
-              {galleryItems[2] ? <GalleryImg img={galleryItems[2]} aspect={galleryAspects[2]} /> : null}
-              {galleryItems[3] ? <GalleryImg img={galleryItems[3]} aspect={galleryAspects[3]} /> : null}
+              {galleryItems[2] ? (
+                <GalleryImg img={galleryItems[2]} aspect={galleryAspects[2]} />
+              ) : null}
+              {galleryItems[3] ? (
+                <GalleryImg img={galleryItems[3]} aspect={galleryAspects[3]} />
+              ) : null}
             </div>
             <div className="hidden md:block space-y-6">
-              {galleryItems[4] ? <GalleryImg img={galleryItems[4]} aspect={galleryAspects[4]} /> : null}
-              {galleryItems[5] ? <GalleryImg img={galleryItems[5]} aspect={galleryAspects[5]} /> : null}
+              {galleryItems[4] ? (
+                <GalleryImg img={galleryItems[4]} aspect={galleryAspects[4]} />
+              ) : null}
+              {galleryItems[5] ? (
+                <GalleryImg img={galleryItems[5]} aspect={galleryAspects[5]} />
+              ) : null}
             </div>
           </div>
 
           <div className="mt-8 text-center md:hidden">
-            <a href={site.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-[0.2em] border-b border-background/30 pb-1">
+            <a
+              href={site.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] uppercase tracking-[0.2em] border-b border-background/30 pb-1"
+            >
               View more on Instagram
             </a>
           </div>
@@ -395,7 +515,9 @@ function Index() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 md:mb-16">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Testimonials</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                Testimonials
+              </span>
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic">
                 {testimonials.heading}
               </h2>
@@ -413,13 +535,20 @@ function Index() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
             {testimonials.items.map((t) => (
               <figure key={t.id} className="bg-background p-6 md:p-8 flex flex-col">
-                <div className="text-primary tracking-widest text-xs mb-5" aria-label="5 out of 5 stars">★★★★★</div>
+                <div
+                  className="text-primary tracking-widest text-xs mb-5"
+                  aria-label="5 out of 5 stars"
+                >
+                  ★★★★★
+                </div>
                 <blockquote className="font-display italic text-base leading-relaxed mb-6 flex-1">
                   "{t.quote}"
                 </blockquote>
                 <figcaption className="border-t border-border pt-4">
                   <div className="text-sm font-medium">{t.customerName}</div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted mt-1">{t.location} · {t.context}</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted mt-1">
+                    {t.location} · {t.context}
+                  </div>
                 </figcaption>
               </figure>
             ))}
@@ -430,7 +559,9 @@ function Index() {
       {/* ── Closing CTA ──────────────────────────────────────── */}
       <section className="py-20 md:py-32 px-5 md:px-6 bg-foreground text-background">
         <div className="max-w-5xl mx-auto">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-5">Ready to begin?</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-5">
+            Ready to begin?
+          </span>
           <h2 className="font-display text-[2.5rem] sm:text-6xl md:text-7xl italic leading-[0.9] tracking-tighter mb-10 md:mb-14 text-balance">
             Every gift starts with <span className="text-primary">your story.</span>
           </h2>
@@ -453,7 +584,6 @@ function Index() {
           </div>
         </div>
       </section>
-
     </PageShell>
   );
 }

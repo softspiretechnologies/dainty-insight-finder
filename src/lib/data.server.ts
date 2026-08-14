@@ -1,11 +1,14 @@
 import { and, asc, count, eq } from "drizzle-orm";
 
 import { getDb, isDatabaseConfigured } from "@/db/index.server";
-import { categories as categoriesTable, products as productsTable, services as servicesTable, siteSettings, testimonials as testimonialsTable } from "@/db/schema";
 import {
-  categories as staticCategories,
-  products as staticProducts,
-} from "@/data/products";
+  categories as categoriesTable,
+  products as productsTable,
+  services as servicesTable,
+  siteSettings,
+  testimonials as testimonialsTable,
+} from "@/db/schema";
+import { categories as staticCategories, products as staticProducts } from "@/data/products";
 import { defaultServicesPageContent, seedServices } from "@/data/services-seed";
 import { defaultTestimonialsHeading, seedTestimonials } from "@/data/testimonials-seed";
 import { getCached } from "@/lib/cache.server";
@@ -39,10 +42,7 @@ const staticSiteSettings = (): SiteSettingsData => ({
 });
 
 function parseBullets(raw: string) {
-  return raw
-    .split("\n")
-    .map(stripBulletPrefix)
-    .filter(Boolean);
+  return raw.split("\n").map(stripBulletPrefix).filter(Boolean);
 }
 
 function staticServicesPageData(): ServicesPageData {
@@ -101,7 +101,10 @@ export async function getCategories(): Promise<CatalogCategory[]> {
     withDbFallback(
       async () => {
         const db = getDb();
-        const rows = await db.select().from(categoriesTable).orderBy(asc(categoriesTable.sortOrder));
+        const rows = await db
+          .select()
+          .from(categoriesTable)
+          .orderBy(asc(categoriesTable.sortOrder));
         return rows.map(mapCategory);
       },
       () => staticCategories.map((c) => ({ ...c })),
@@ -184,27 +187,24 @@ export async function getSiteSettings(): Promise<SiteSettingsData> {
   }
 
   return getCached("siteSettings", () =>
-    withDbFallback(
-      async () => {
-        const db = getDb();
-        const rows = await db.select().from(siteSettings).limit(1);
-        const row = rows[0];
-        if (!row) return staticSiteSettings();
+    withDbFallback(async () => {
+      const db = getDb();
+      const rows = await db.select().from(siteSettings).limit(1);
+      const row = rows[0];
+      if (!row) return staticSiteSettings();
 
-        return {
-          whatsappNumber: row.whatsappNumber,
-          email: row.email,
-          instagramUrl: row.instagramUrl,
-          instagramHandle: row.instagramHandle,
-          founder: row.founder,
-          location: row.location,
-          servicesIntro: row.servicesIntro || defaultServicesPageContent.intro,
-          servicesFooterTitle: row.servicesFooterTitle || defaultServicesPageContent.footerTitle,
-          servicesFooterBlurb: row.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
-        };
-      },
-      staticSiteSettings,
-    ),
+      return {
+        whatsappNumber: row.whatsappNumber,
+        email: row.email,
+        instagramUrl: row.instagramUrl,
+        instagramHandle: row.instagramHandle,
+        founder: row.founder,
+        location: row.location,
+        servicesIntro: row.servicesIntro || defaultServicesPageContent.intro,
+        servicesFooterTitle: row.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+        servicesFooterBlurb: row.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
+      };
+    }, staticSiteSettings),
   );
 }
 
@@ -245,26 +245,24 @@ export async function getServicesPageData(): Promise<ServicesPageData> {
   }
 
   return getCached("servicesPage", () =>
-    withDbFallback(
-      async () => {
-        const db = getDb();
-        const [settingsRows, serviceRows] = await Promise.all([
-          db.select().from(siteSettings).limit(1),
-          db.select().from(servicesTable).orderBy(asc(servicesTable.sortOrder)),
-        ]);
+    withDbFallback(async () => {
+      const db = getDb();
+      const [settingsRows, serviceRows] = await Promise.all([
+        db.select().from(siteSettings).limit(1),
+        db.select().from(servicesTable).orderBy(asc(servicesTable.sortOrder)),
+      ]);
 
-        const settings = settingsRows[0];
-        const services = serviceRows.length > 0 ? serviceRows.map(mapService) : staticServicesPageData().services;
+      const settings = settingsRows[0];
+      const services =
+        serviceRows.length > 0 ? serviceRows.map(mapService) : staticServicesPageData().services;
 
-        return {
-          intro: settings?.servicesIntro || defaultServicesPageContent.intro,
-          footerTitle: settings?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
-          footerBlurb: settings?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
-          services,
-        };
-      },
-      staticServicesPageData,
-    ),
+      return {
+        intro: settings?.servicesIntro || defaultServicesPageContent.intro,
+        footerTitle: settings?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+        footerBlurb: settings?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
+        services,
+      };
+    }, staticServicesPageData),
   );
 }
 
@@ -299,23 +297,20 @@ export async function getTestimonialsSection(): Promise<TestimonialsSectionData>
   }
 
   return getCached("testimonialsSection", () =>
-    withDbFallback(
-      async () => {
-        const db = getDb();
-        const [settingsRows, rows] = await Promise.all([
-          db.select().from(siteSettings).limit(1),
-          db.select().from(testimonialsTable).orderBy(asc(testimonialsTable.sortOrder)),
-        ]);
+    withDbFallback(async () => {
+      const db = getDb();
+      const [settingsRows, rows] = await Promise.all([
+        db.select().from(siteSettings).limit(1),
+        db.select().from(testimonialsTable).orderBy(asc(testimonialsTable.sortOrder)),
+      ]);
 
-        const settings = settingsRows[0];
-        const items = rows.length > 0 ? rows.map(mapTestimonial) : staticTestimonialsSection().items;
+      const settings = settingsRows[0];
+      const items = rows.length > 0 ? rows.map(mapTestimonial) : staticTestimonialsSection().items;
 
-        return {
-          heading: settings?.testimonialsHeading || defaultTestimonialsHeading,
-          items,
-        };
-      },
-      staticTestimonialsSection,
-    ),
+      return {
+        heading: settings?.testimonialsHeading || defaultTestimonialsHeading,
+        items,
+      };
+    }, staticTestimonialsSection),
   );
 }

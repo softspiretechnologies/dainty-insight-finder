@@ -38,14 +38,54 @@ export const Route = createFileRoute("/catalog/")({
   loader: () => getCatalogProducts(),
   head: () => ({
     meta: [
-      { title: "Past Creations — DaintyHand | Custom Gifts & Hampers" },
-      { name: "description", content: "Browse past creations: hampers, bouquets, invitations, frames and calligraphy — fully customisable, handcrafted with care and shipped across India & worldwide." },
-      { property: "og:title", content: "Past Creations — DaintyHand" },
-      { property: "og:description", content: "Browse past creations — every piece is fully customisable to your occasion." },
+      { title: "Custom Hampers, Bouquets & Wedding Gifts - DaintyHand Kerala" },
+      {
+        name: "description",
+        content:
+          "Browse handcrafted hampers, chocolate bouquets, wedding invitation suites, ring trays and acrylic frames. Customised for engagements, nikahs and celebrations across Kerala & India.",
+      },
+      {
+        name: "keywords",
+        content:
+          "Custom Hampers Kerala, Chocolate Bouquets Malappuram, Nikah Invitations, Wedding Ring Trays, Acrylic Memory Frames, Handcrafted Gifts Perinthalmanna",
+      },
+      {
+        property: "og:title",
+        content: "Custom Hampers, Bouquets & Wedding Gifts - DaintyHand Kerala",
+      },
+      {
+        property: "og:description",
+        content:
+          "Browse handcrafted hampers, chocolate bouquets, wedding invitation suites, ring trays and acrylic frames. Customised for engagements, nikahs and celebrations.",
+      },
       { property: "og:url", content: siteUrl("/catalog") },
+      { property: "og:image", content: siteUrl("/og-image.jpg") },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [
-      { rel: "canonical", href: siteUrl("/catalog") },
+    links: [{ rel: "canonical", href: siteUrl("/catalog") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: siteUrl("/") },
+                { "@type": "ListItem", position: 2, name: "Catalog", item: siteUrl("/catalog") },
+              ],
+            },
+            {
+              "@type": "CollectionPage",
+              name: "Past Creations & Custom Gifts",
+              description:
+                "Handcrafted gift hampers, bouquets, invitations and wedding keepsakes by DaintyHand in Perinthalmanna, Kerala.",
+              url: siteUrl("/catalog"),
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: CatalogPage,
@@ -73,9 +113,7 @@ function CatalogPage() {
     navigate({
       search: (prev) => ({
         category:
-          "categories" in next
-            ? categorySearchParam(next.categories ?? new Set())
-            : prev.category,
+          "categories" in next ? categorySearchParam(next.categories ?? new Set()) : prev.category,
         page: "page" in next ? next.page : prev.page,
       }),
       replace: true,
@@ -107,12 +145,15 @@ function CatalogPage() {
     <PageShell>
       <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">
         <div className="max-w-7xl mx-auto">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Past Creations</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+            Past Creations
+          </span>
           <h1 className="font-display text-4xl sm:text-5xl md:text-7xl tracking-tighter mt-4 mb-5 md:mb-6 text-balance">
             A look at <span className="italic font-normal text-primary">past creations.</span>
           </h1>
           <p className="max-w-xl text-sm text-muted leading-relaxed text-pretty">
-            Every piece below was made for someone — and every piece is a starting point. Pick what inspires you and we'll fully customise it for your occasion on WhatsApp.
+            Every piece below was made for someone — and every piece is a starting point. Pick what
+            inspires you and we'll fully customise it for your occasion on WhatsApp.
           </p>
         </div>
       </section>
@@ -157,9 +198,13 @@ function CatalogPage() {
                   {categories.find((c) => c.id === p.category)?.label}
                 </span>
                 <Link to="/catalog/$slug" params={{ slug: p.slug }}>
-                  <h3 className="font-display text-base sm:text-xl italic leading-tight mt-1.5 hover:text-primary transition-colors">{p.name}</h3>
+                  <h3 className="font-display text-base sm:text-xl italic leading-tight mt-1.5 hover:text-primary transition-colors">
+                    {p.name}
+                  </h3>
                 </Link>
-                <p className="text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">{p.blurb}</p>
+                <p className="text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">
+                  {p.blurb}
+                </p>
                 <div className="mt-3">
                   <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary border border-primary/40 rounded-full px-2 py-0.5">
                     Customisable
@@ -172,7 +217,9 @@ function CatalogPage() {
 
         {visible.length === 0 ? (
           <p className="max-w-7xl mx-auto text-sm text-muted mt-12">
-            {selectedCategories.size > 0 ? "Nothing matches your filters yet." : "Nothing in this category yet."}
+            {selectedCategories.size > 0
+              ? "Nothing matches your filters yet."
+              : "Nothing in this category yet."}
           </p>
         ) : null}
 
@@ -214,7 +261,9 @@ function CatalogPage() {
 
       <section className="px-5 md:px-6 pb-16 md:pb-24">
         <div className="max-w-3xl mx-auto text-center border-t border-border pt-12 md:pt-16">
-          <h2 className="font-display text-2xl md:text-3xl italic mb-4">Don't see what you want?</h2>
+          <h2 className="font-display text-2xl md:text-3xl italic mb-4">
+            Don't see what you want?
+          </h2>
           <p className="text-sm text-muted mb-8 leading-relaxed">
             Almost everything is made-to-order. Tell {founder} what you have in mind.
           </p>

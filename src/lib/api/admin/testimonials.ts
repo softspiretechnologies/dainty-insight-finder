@@ -52,7 +52,11 @@ export const saveAdminTestimonial = createServerFn({ method: "POST" })
       return { id: insertId };
     }
 
-    const existing = await db.select().from(testimonialsTable).where(eq(testimonialsTable.id, data.id)).limit(1);
+    const existing = await db
+      .select()
+      .from(testimonialsTable)
+      .where(eq(testimonialsTable.id, data.id))
+      .limit(1);
     if (!existing[0]) throw new Error("Testimonial not found");
 
     await db.update(testimonialsTable).set(values).where(eq(testimonialsTable.id, data.id));

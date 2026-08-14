@@ -53,7 +53,11 @@ export const saveAdminCategory = createServerFn({ method: "POST" })
       sortOrder: data.sortOrder,
     };
 
-    const existing = await db.select().from(categoriesTable).where(eq(categoriesTable.id, data.id)).limit(1);
+    const existing = await db
+      .select()
+      .from(categoriesTable)
+      .where(eq(categoriesTable.id, data.id))
+      .limit(1);
     if (existing[0]) {
       await db.update(categoriesTable).set(values).where(eq(categoriesTable.id, data.id));
     } else {

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { getSitemapProducts } from "@/lib/api/catalog";
+import { blogPosts } from "@/data/blog";
 import { site } from "@/lib/site";
 
 export const Route = createFileRoute("/sitemap.xml")({
@@ -8,9 +9,10 @@ export const Route = createFileRoute("/sitemap.xml")({
     handlers: {
       GET: async () => {
         const products = await getSitemapProducts();
-        const staticPaths = ["/", "/services", "/catalog", "/custom", "/contact"];
+        const staticPaths = ["/", "/services", "/catalog", "/custom", "/contact", "/blog"];
         const productPaths = products.map((p) => `/catalog/${p.slug}`);
-        const all = [...staticPaths, ...productPaths];
+        const blogPaths = blogPosts.map((b) => `/blog/${b.slug}`);
+        const all = [...staticPaths, ...productPaths, ...blogPaths];
 
         const xml = [
           `<?xml version="1.0" encoding="UTF-8"?>`,

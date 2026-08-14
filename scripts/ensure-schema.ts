@@ -24,7 +24,10 @@ const statements = [
 ];
 
 const siteSettingsColumns: Array<{ name: string; ddl: string }> = [
-  { name: "services_intro", ddl: "ALTER TABLE `site_settings` ADD `services_intro` text NOT NULL DEFAULT ('')" },
+  {
+    name: "services_intro",
+    ddl: "ALTER TABLE `site_settings` ADD `services_intro` text NOT NULL DEFAULT ('')",
+  },
   {
     name: "services_footer_title",
     ddl: "ALTER TABLE `site_settings` ADD `services_footer_title` varchar(256) NOT NULL DEFAULT ('')",

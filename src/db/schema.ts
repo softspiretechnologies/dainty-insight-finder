@@ -1,12 +1,4 @@
-import {
-  boolean,
-  int,
-  json,
-  mysqlTable,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { boolean, int, json, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 export const categories = mysqlTable("categories", {
   id: varchar("id", { length: 32 }).primaryKey(),

@@ -2,11 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import {
-  deleteCookie,
-  getCookie,
-  setCookie,
-} from "@tanstack/react-start/server";
+import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 
 import { getDb, isDatabaseConfigured } from "@/db/index.server";
 import { adminUsers } from "@/db/schema";
@@ -54,7 +50,9 @@ function verifyToken(token: string): string | null {
 }
 
 function encodeSession(session: AdminSession) {
-  const payload = Buffer.from(JSON.stringify({ ...session, exp: Date.now() + SESSION_MAX_AGE * 1000 })).toString("base64url");
+  const payload = Buffer.from(
+    JSON.stringify({ ...session, exp: Date.now() + SESSION_MAX_AGE * 1000 }),
+  ).toString("base64url");
   return signToken(payload);
 }
 
@@ -63,7 +61,9 @@ function decodeSession(token: string): AdminSession | null {
   if (!payload) return null;
 
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as AdminSession & { exp: number };
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as AdminSession & {
+      exp: number;
+    };
     if (!data.userId || !data.email || Date.now() > data.exp) return null;
     return { userId: data.userId, email: data.email, name: data.name };
   } catch {
@@ -92,11 +92,18 @@ export function getAdminSession(): AdminSession | null {
   return decodeSession(token);
 }
 
-export async function verifyAdminCredentials(email: string, password: string): Promise<AdminSession | null> {
+export async function verifyAdminCredentials(
+  email: string,
+  password: string,
+): Promise<AdminSession | null> {
   if (!isDatabaseConfigured()) return null;
 
   const db = getDb();
-  const rows = await db.select().from(adminUsers).where(eq(adminUsers.email, email.toLowerCase().trim())).limit(1);
+  const rows = await db
+    .select()
+    .from(adminUsers)
+    .where(eq(adminUsers.email, email.toLowerCase().trim()))
+    .limit(1);
   const user = rows[0];
   if (!user) return null;
 

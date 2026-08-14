@@ -4,7 +4,11 @@ type CacheEntry = { value: unknown; expires: number };
 
 const store = new Map<string, CacheEntry>();
 
-export async function getCached<T>(key: string, loader: () => Promise<T>, ttlMs = DEFAULT_TTL_MS): Promise<T> {
+export async function getCached<T>(
+  key: string,
+  loader: () => Promise<T>,
+  ttlMs = DEFAULT_TTL_MS,
+): Promise<T> {
   const hit = store.get(key);
   if (hit && hit.expires > Date.now()) {
     return hit.value as T;

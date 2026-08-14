@@ -1,5 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Package, Tags, Settings, MessageCircle, ArrowRight, TrendingUp, Sparkles, MessageSquareQuote } from "lucide-react";
+import {
+  Package,
+  Tags,
+  Settings,
+  MessageCircle,
+  ArrowRight,
+  TrendingUp,
+  Sparkles,
+  MessageSquareQuote,
+} from "lucide-react";
 
 import { getAdminDashboardData } from "@/lib/api/catalog";
 
@@ -54,7 +63,9 @@ function AdminDashboard() {
       {/* Header */}
       <div>
         <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted mt-1.5">Manage your catalog, categories and contact settings.</p>
+        <p className="text-sm text-muted mt-1.5">
+          Manage your catalog, categories and contact settings.
+        </p>
       </div>
 
       {/* Stats */}
@@ -71,17 +82,14 @@ function AdminDashboard() {
           icon={<Tags className="w-4 h-4" />}
           href="/admin/categories"
         />
-        <StatCard
-          label="Status"
-          value="Live"
-          icon={<TrendingUp className="w-4 h-4" />}
-          badge
-        />
+        <StatCard label="Status" value="Live" icon={<TrendingUp className="w-4 h-4" />} badge />
       </div>
 
       {/* Quick actions */}
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">Quick actions</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
+          Quick actions
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {quickLinks.map((item) => (
             <Link
@@ -89,7 +97,9 @@ function AdminDashboard() {
               to={item.to}
               className="group flex flex-col gap-3 rounded-xl border border-border bg-surface/30 p-4 hover:border-foreground/30 hover:bg-surface/60 transition-all"
             >
-              <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${item.accent}`}>
+              <div
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${item.accent}`}
+              >
                 <item.icon className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -109,7 +119,9 @@ function AdminDashboard() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm">Check enquiries</p>
-          <p className="text-xs text-muted mt-0.5">Customer orders come in via WhatsApp — open it to reply.</p>
+          <p className="text-xs text-muted mt-0.5">
+            Customer orders come in via WhatsApp — open it to reply.
+          </p>
         </div>
         <a
           href="https://web.whatsapp.com"
@@ -152,13 +164,19 @@ function StatCard({
             value
           )}
         </p>
-        <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted mt-1">{label}</p>
+        <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted mt-1">
+          {label}
+        </p>
       </div>
     </div>
   );
 
   if (href) {
-    return <Link to={href} className="block">{content}</Link>;
+    return (
+      <Link to={href} className="block">
+        {content}
+      </Link>
+    );
   }
   return content;
 }

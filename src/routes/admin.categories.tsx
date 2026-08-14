@@ -8,12 +8,22 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { AdminField, FormErrorBanner, FormSuccessBanner, invalidBoxClass } from "@/components/admin/AdminField";
+import {
+  AdminField,
+  FormErrorBanner,
+  FormSuccessBanner,
+  invalidBoxClass,
+} from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { adminCategoryFormSchema } from "@/lib/admin-schemas";
-import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
+import {
+  invalidInputClass,
+  scrollToFirstField,
+  validateForm,
+  type FieldErrors,
+} from "@/lib/admin-validation";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { listAdminCategories, saveAdminCategory } from "@/lib/api/admin/categories";
 import { cn } from "@/lib/utils";
@@ -50,7 +60,9 @@ function AdminCategoriesPage() {
 
       {/* Quick preview strip */}
       <section className="mb-6 md:mb-8">
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">Homepage preview</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
+          Homepage preview
+        </p>
         <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {categories.map((category) => (
             <div key={category.id} className="shrink-0 w-24 sm:w-28">
@@ -63,7 +75,9 @@ function AdminCategoriesPage() {
                   </div>
                 )}
               </div>
-              <p className="text-[11px] font-medium mt-2 leading-tight line-clamp-2">{category.label}</p>
+              <p className="text-[11px] font-medium mt-2 leading-tight line-clamp-2">
+                {category.label}
+              </p>
             </div>
           ))}
         </div>
@@ -80,10 +94,7 @@ function AdminCategoriesPage() {
               <CategorySummary category={category} />
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-5 pt-4">
-              <CategoryForm
-                category={category}
-                onSaved={() => router.invalidate()}
-              />
+              <CategoryForm category={category} onSaved={() => router.invalidate()} />
             </AccordionContent>
           </AccordionItem>
         ))}
@@ -112,13 +123,7 @@ function CategorySummary({ category }: { category: CategoryRow }) {
   );
 }
 
-function CategoryForm({
-  category,
-  onSaved,
-}: {
-  category: CategoryRow;
-  onSaved: () => void;
-}) {
+function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: () => void }) {
   const fileInputId = useId();
   const [label, setLabel] = useState(category.label);
   const [blurb, setBlurb] = useState(category.blurb);
@@ -217,11 +222,22 @@ function CategoryForm({
           Category image<span className="text-destructive ml-0.5">*</span>
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
-          <div className={cn("w-full sm:w-40 aspect-4/5 overflow-hidden rounded-lg border bg-surface shrink-0", invalidBoxClass(fieldErrors.image))}>
+          <div
+            className={cn(
+              "w-full sm:w-40 aspect-4/5 overflow-hidden rounded-lg border bg-surface shrink-0",
+              invalidBoxClass(fieldErrors.image),
+            )}
+          >
             {previewSrc ? (
-              <img src={previewSrc} alt={`${label} preview`} className="w-full h-full object-cover" />
+              <img
+                src={previewSrc}
+                alt={`${label} preview`}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className="w-full h-full grid place-items-center text-xs text-muted">No image</div>
+              <div className="w-full h-full grid place-items-center text-xs text-muted">
+                No image
+              </div>
             )}
           </div>
           <div className="flex-1 w-full space-y-2">
@@ -245,13 +261,20 @@ function CategoryForm({
             {imageFile ? (
               <p className="text-xs text-muted truncate">{imageFile.name}</p>
             ) : (
-              <p className="text-xs text-muted">JPEG, PNG or WebP · max 5 MB. Leave unchanged to keep current image.</p>
+              <p className="text-xs text-muted">
+                JPEG, PNG or WebP · max 5 MB. Leave unchanged to keep current image.
+              </p>
             )}
           </div>
         </div>
       </div>
 
-      <AdminField label="Display label" htmlFor={`${category.id}-label`} required error={fieldErrors.label}>
+      <AdminField
+        label="Display label"
+        htmlFor={`${category.id}-label`}
+        required
+        error={fieldErrors.label}
+      >
         <Input
           id={`${category.id}-label`}
           value={label}
@@ -284,7 +307,12 @@ function CategoryForm({
         />
       </AdminField>
 
-      <AdminField label="Sort order" htmlFor={`${category.id}-sort`} required error={fieldErrors.sortOrder}>
+      <AdminField
+        label="Sort order"
+        htmlFor={`${category.id}-sort`}
+        required
+        error={fieldErrors.sortOrder}
+      >
         <Input
           id={`${category.id}-sort`}
           type="number"
@@ -335,7 +363,9 @@ function CategoryForm({
         </Button>
 
         {isDirty && !loading ? (
-          <span className={cn("text-xs text-muted sm:ml-auto", "sm:order-last")}>Unsaved changes</span>
+          <span className={cn("text-xs text-muted sm:ml-auto", "sm:order-last")}>
+            Unsaved changes
+          </span>
         ) : null}
       </div>
     </form>

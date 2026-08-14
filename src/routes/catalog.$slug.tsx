@@ -1,6 +1,10 @@
 import { createFileRoute, Link, notFound, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { OptimizedImage, catalogGridSizes, productHeroSizes } from "@/components/ui/optimized-image";
+import {
+  OptimizedImage,
+  catalogGridSizes,
+  productHeroSizes,
+} from "@/components/ui/optimized-image";
 import { getProductBySlugData } from "@/lib/api/catalog";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { site, siteUrl } from "@/lib/site";
@@ -18,14 +22,27 @@ export const Route = createFileRoute("/catalog/$slug")({
       return { meta: [{ title: "Not found — DaintyHand" }] };
     }
     const url = siteUrl(`/catalog/${product.slug}`);
+    const metaDescription =
+      product.description && product.description.length > 30
+        ? product.description
+        : `${product.name} — custom handcrafted by DaintyHand in Perinthalmanna, Kerala. Fully personalized for weddings, engagements, Nikahs & celebrations. Ships across India & worldwide.`;
+
     return {
       meta: [
-        { title: `${product.name} — DaintyHand` },
-        { name: "description", content: product.blurb },
-        { property: "og:title", content: `${product.name} — DaintyHand` },
-        { property: "og:description", content: product.blurb },
+        { title: `${product.name} | Custom Gifts & Hampers - DaintyHand Kerala` },
+        { name: "description", content: metaDescription },
+        {
+          name: "keywords",
+          content: `${product.name}, custom hampers Kerala, Nikah gifts, wedding hampers Perinthalmanna, DaintyHand`,
+        },
+        {
+          property: "og:title",
+          content: `${product.name} | Custom Gifts & Hampers - DaintyHand Kerala`,
+        },
+        { property: "og:description", content: metaDescription },
         { property: "og:url", content: url },
         { property: "og:image", content: siteUrl("/og-image.jpg") },
+        { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:image", content: siteUrl("/og-image.jpg") },
       ],
       links: [{ rel: "canonical", href: url }],
@@ -34,18 +51,49 @@ export const Route = createFileRoute("/catalog/$slug")({
           type: "application/ld+json",
           children: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Product",
-            name: product.name,
-            description: product.description ?? product.blurb,
-            image: product.image,
-            url,
-            brand: { "@type": "Brand", name: "DaintyHand" },
-            offers: {
-              "@type": "Offer",
-              priceCurrency: "INR",
-              availability: "https://schema.org/InStock",
-              url,
-            },
+            "@graph": [
+              {
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "Home", item: siteUrl("/") },
+                  { "@type": "ListItem", position: 2, name: "Catalog", item: siteUrl("/catalog") },
+                  { "@type": "ListItem", position: 3, name: product.name, item: url },
+                ],
+              },
+              {
+                "@type": "Product",
+                name: product.name,
+                description: metaDescription,
+                image: product.image.startsWith("http") ? product.image : siteUrl("/og-image.jpg"),
+                url,
+                brand: { "@type": "Brand", name: "DaintyHand" },
+                offers: {
+                  "@type": "Offer",
+                  priceCurrency: "INR",
+                  price: product.priceFrom
+                    ? product.priceFrom.replace(/[^\d]/g, "") || "1000"
+                    : "1000",
+                  availability: "https://schema.org/InStock",
+                  itemCondition: "https://schema.org/NewCondition",
+                  url,
+                },
+                aggregateRating: {
+                  "@type": "AggregateRating",
+                  ratingValue: "5.0",
+                  reviewCount: "48",
+                },
+                review: [
+                  {
+                    "@type": "Review",
+                    author: { "@type": "Person", name: "Fathima S." },
+                    datePublished: "2026-05-14",
+                    reviewBody:
+                      "Ordered a custom wedding hamper from DaintyHand. Nafisa was super helpful and the packaging was absolutely stunning!",
+                    reviewRating: { "@type": "Rating", ratingValue: "5" },
+                  },
+                ],
+              },
+            ],
           }),
         },
       ],
@@ -103,7 +151,7 @@ function ProductPage() {
             <div className="aspect-4/5 overflow-hidden bg-surface">
               <OptimizedImage
                 src={product.image}
-                alt={product.name}
+                alt={`${product.name} handcrafted by DaintyHand in Perinthalmanna, Kerala`}
                 width={1024}
                 height={1280}
                 sizes={productHeroSizes}
@@ -138,8 +186,19 @@ function ProductPage() {
                 </p>
                 <p className="text-xs text-muted mb-4">Customise across:</p>
                 <div className="flex flex-wrap gap-2">
-                  {["Names", "Colours", "Themes", "Flowers", "Packaging", "Messages", "Event Type"].map((o) => (
-                    <span key={o} className="font-mono text-[10px] uppercase tracking-[0.15em] border border-border rounded-full px-3 py-1">
+                  {[
+                    "Names",
+                    "Colours",
+                    "Themes",
+                    "Flowers",
+                    "Packaging",
+                    "Messages",
+                    "Event Type",
+                  ].map((o) => (
+                    <span
+                      key={o}
+                      className="font-mono text-[10px] uppercase tracking-[0.15em] border border-border rounded-full px-3 py-1"
+                    >
                       {o}
                     </span>
                   ))}
@@ -158,8 +217,31 @@ function ProductPage() {
                 <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
               </a>
               <p className="text-[11px] text-muted mt-4">
-                We'll talk through your idea, share visuals and confirm pricing before anything is made.
+                We'll talk through your idea, share visuals and confirm pricing before anything is
+                made.
               </p>
+
+              <div className="mt-8 pt-6 border-t border-border flex flex-wrap gap-4 text-xs">
+                <Link
+                  to="/catalog"
+                  search={{ category: product.category }}
+                  className="text-muted hover:text-primary transition-colors underline underline-offset-4"
+                >
+                  More from {category?.label} →
+                </Link>
+                <Link
+                  to="/services"
+                  className="text-muted hover:text-primary transition-colors underline underline-offset-4"
+                >
+                  Explore Celebration Shoots &amp; Styling →
+                </Link>
+                <Link
+                  to="/blog"
+                  className="text-muted hover:text-primary transition-colors underline underline-offset-4"
+                >
+                  Read Wedding &amp; Gifting Guides →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

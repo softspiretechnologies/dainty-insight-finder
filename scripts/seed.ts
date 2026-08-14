@@ -5,7 +5,14 @@ import "./load-env.ts";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
-import { categories, products, services, siteSettings, testimonials, adminUsers } from "../src/db/schema";
+import {
+  categories,
+  products,
+  services,
+  siteSettings,
+  testimonials,
+  adminUsers,
+} from "../src/db/schema";
 import { seedCategories, seedProducts } from "../src/data/catalog-seed";
 import { categoryImageFiles, productImageFiles } from "../src/data/upload-asset-map";
 import { serviceImageFiles } from "../src/data/service-asset-map";
@@ -47,7 +54,10 @@ async function main() {
   const { drizzle } = await import("drizzle-orm/mysql2");
   const mysql = await import("mysql2/promise");
   const pool = mysql.default.createPool(databaseUrl);
-  const db = drizzle(pool, { schema: { categories, products, services, testimonials, siteSettings, adminUsers }, mode: "default" });
+  const db = drizzle(pool, {
+    schema: { categories, products, services, testimonials, siteSettings, adminUsers },
+    mode: "default",
+  });
 
   console.log("Seeding categories...");
   for (let i = 0; i < seedCategories.length; i++) {
@@ -75,7 +85,11 @@ async function main() {
     const assetFile = productImageFiles[product.slug];
     const imagePath = await copyAssetToUploads(assetFile, "products", `${product.slug}.jpg`);
 
-    const existing = await db.select().from(products).where(eq(products.slug, product.slug)).limit(1);
+    const existing = await db
+      .select()
+      .from(products)
+      .where(eq(products.slug, product.slug))
+      .limit(1);
     const values = {
       slug: product.slug,
       name: product.name,
@@ -139,20 +153,29 @@ async function main() {
     founder: site.founder,
     location: site.location,
     servicesIntro: settingsRows[0]?.servicesIntro || defaultServicesPageContent.intro,
-    servicesFooterTitle: settingsRows[0]?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
-    servicesFooterBlurb: settingsRows[0]?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
+    servicesFooterTitle:
+      settingsRows[0]?.servicesFooterTitle || defaultServicesPageContent.footerTitle,
+    servicesFooterBlurb:
+      settingsRows[0]?.servicesFooterBlurb || defaultServicesPageContent.footerBlurb,
     testimonialsHeading: settingsRows[0]?.testimonialsHeading || defaultTestimonialsHeading,
   };
 
   if (settingsRows[0]) {
-    await db.update(siteSettings).set(settingsValues).where(eq(siteSettings.id, settingsRows[0].id));
+    await db
+      .update(siteSettings)
+      .set(settingsValues)
+      .where(eq(siteSettings.id, settingsRows[0].id));
   } else {
     await db.insert(siteSettings).values({ id: 1, ...settingsValues });
   }
 
   console.log("Seeding admin user...");
   const passwordHash = await bcrypt.hash(adminPassword, 12);
-  const userRows = await db.select().from(adminUsers).where(eq(adminUsers.email, adminEmail.toLowerCase())).limit(1);
+  const userRows = await db
+    .select()
+    .from(adminUsers)
+    .where(eq(adminUsers.email, adminEmail.toLowerCase()))
+    .limit(1);
 
   if (userRows[0]) {
     await db

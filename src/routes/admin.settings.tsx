@@ -6,7 +6,12 @@ import { AdminField, FormErrorBanner, FormSuccessBanner } from "@/components/adm
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminSettingsFormSchema } from "@/lib/admin-schemas";
-import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
+import {
+  invalidInputClass,
+  scrollToFirstField,
+  validateForm,
+  type FieldErrors,
+} from "@/lib/admin-validation";
 import { getAdminSettings, saveAdminSettings } from "@/lib/api/admin/settings";
 
 export const Route = createFileRoute("/admin/settings")({
@@ -94,7 +99,9 @@ function AdminSettingsPage() {
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         <div className="border border-border rounded-xl p-4 sm:p-5 space-y-5 bg-surface/20">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Contact channels</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+            Contact channels
+          </p>
 
           <FieldGroup icon={MessageCircle}>
             <AdminField
@@ -136,7 +143,12 @@ function AdminSettingsPage() {
 
           <FieldGroup icon={Instagram}>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
-              <AdminField label="Instagram URL" htmlFor="instagramUrl" required error={fieldErrors.instagramUrl}>
+              <AdminField
+                label="Instagram URL"
+                htmlFor="instagramUrl"
+                required
+                error={fieldErrors.instagramUrl}
+              >
                 <Input
                   id="instagramUrl"
                   type="url"
@@ -149,7 +161,12 @@ function AdminSettingsPage() {
                   className={`h-11 ${invalidInputClass(fieldErrors.instagramUrl)}`}
                 />
               </AdminField>
-              <AdminField label="Handle" htmlFor="instagramHandle" required error={fieldErrors.instagramHandle}>
+              <AdminField
+                label="Handle"
+                htmlFor="instagramHandle"
+                required
+                error={fieldErrors.instagramHandle}
+              >
                 <Input
                   id="instagramHandle"
                   value={instagramHandle}
@@ -166,7 +183,9 @@ function AdminSettingsPage() {
         </div>
 
         <div className="border border-border rounded-xl p-4 sm:p-5 space-y-5 bg-surface/20">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Studio info</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+            Studio info
+          </p>
 
           <FieldGroup icon={User}>
             <AdminField
@@ -190,7 +209,12 @@ function AdminSettingsPage() {
           </FieldGroup>
 
           <FieldGroup icon={MapPin}>
-            <AdminField label="Studio location" htmlFor="location" required error={fieldErrors.location}>
+            <AdminField
+              label="Studio location"
+              htmlFor="location"
+              required
+              error={fieldErrors.location}
+            >
               <Input
                 id="location"
                 value={location}

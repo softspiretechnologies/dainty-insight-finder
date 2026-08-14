@@ -10,17 +10,51 @@ export const Route = createFileRoute("/services")({
   head: ({ loaderData }) => {
     const intro =
       loaderData?.intro ??
-      "Save-the-date shoots, proposal setups, birthday surprises, couple shoots and memory reels — styled by DaintyHand across India & worldwide.";
+      "Save-the-date shoots, proposal setups, birthday surprises, couple shoots and memory reels — styled by DaintyHand across Kerala, India & worldwide.";
+
+    const serviceGraph =
+      loaderData?.services.map((service) => ({
+        "@type": "Service",
+        name: service.title,
+        description: service.blurb,
+        provider: {
+          "@type": "LocalBusiness",
+          name: "DaintyHand",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Perinthalmanna",
+            addressRegion: "Kerala",
+          },
+        },
+        areaServed: ["Malappuram", "Kozhikode", "Kerala", "India", "Worldwide"],
+        serviceType: service.title,
+      })) ?? [];
 
     return {
       meta: [
-        { title: "Celebration Services — DaintyHand | Shoots & Event Styling" },
-        { name: "description", content: intro },
-        { name: "keywords", content: "Save The Date Shoots, Proposal Setup, Birthday Surprise, Couple Shoot, Memory Reels, Wedding Studio Malappuram, Perinthalmanna celebrations, Event Styling India" },
-        { property: "og:title", content: "Celebration Services — DaintyHand" },
-        { property: "og:description", content: intro },
+        { title: "Save The Date Shoots, Proposal Setups & Birthday Surprises - DaintyHand" },
+        {
+          name: "description",
+          content:
+            "Professional celebration services in Malappuram & Kerala: save-the-date couple shoots, surprise birthday setups, proposal styling and cinematic memory reels.",
+        },
+        {
+          name: "keywords",
+          content:
+            "Save The Date Shoots Kozhikode, Proposal Setup Kerala, Birthday Surprise Malappuram, Couple Shoot Perinthalmanna, Memory Reels Kerala, Event Styling",
+        },
+        {
+          property: "og:title",
+          content: "Save The Date Shoots, Proposal Setups & Birthday Surprises - DaintyHand",
+        },
+        {
+          property: "og:description",
+          content:
+            "Professional celebration services in Malappuram & Kerala: save-the-date couple shoots, surprise birthday setups, proposal styling and cinematic memory reels.",
+        },
         { property: "og:url", content: siteUrl("/services") },
         { property: "og:image", content: siteUrl("/og-image.jpg") },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
       links: [{ rel: "canonical", href: siteUrl("/services") }],
       scripts: [
@@ -28,15 +62,21 @@ export const Route = createFileRoute("/services")({
           type: "application/ld+json",
           children: JSON.stringify({
             "@context": "https://schema.org",
-            "@graph":
-              loaderData?.services.map((service) => ({
-                "@type": "Service",
-                name: service.title,
-                description: service.blurb,
-                provider: { "@type": "LocalBusiness", name: "DaintyHand" },
-                areaServed: "India & Worldwide",
-                serviceType: service.title,
-              })) ?? [],
+            "@graph": [
+              {
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "Home", item: siteUrl("/") },
+                  {
+                    "@type": "ListItem",
+                    position: 2,
+                    name: "Services",
+                    item: siteUrl("/services"),
+                  },
+                ],
+              },
+              ...serviceGraph,
+            ],
           }),
         },
       ],
@@ -53,18 +93,26 @@ function ServicesPage() {
     <PageShell>
       <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">
         <div className="max-w-4xl mx-auto text-center">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Celebration Services</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+            Celebration Services
+          </span>
           <h1 className="font-display text-4xl sm:text-5xl md:text-7xl tracking-tighter mt-4 mb-5 md:mb-6 text-balance">
-            We don't just make gifts. <span className="italic text-primary">We create moments.</span>
+            We don't just make gifts.{" "}
+            <span className="italic text-primary">We create moments.</span>
           </h1>
-          <p className="text-sm md:text-base text-muted leading-relaxed max-w-2xl mx-auto text-pretty">{intro}</p>
+          <p className="text-sm md:text-base text-muted leading-relaxed max-w-2xl mx-auto text-pretty">
+            {intro}
+          </p>
         </div>
       </section>
 
       <section className="px-5 md:px-6 pb-16 md:pb-24">
         <div className="max-w-6xl mx-auto space-y-14 md:space-y-24">
           {services.map((s, i) => (
-            <article key={s.id} className={`grid md:grid-cols-2 gap-6 md:gap-12 items-center ${i % 2 ? "md:[direction:rtl]" : ""}`}>
+            <article
+              key={s.id}
+              className={`grid md:grid-cols-2 gap-6 md:gap-12 items-center ${i % 2 ? "md:[direction:rtl]" : ""}`}
+            >
               <div className="aspect-4/3 overflow-hidden bg-surface md:[direction:ltr]">
                 <OptimizedImage
                   src={s.image}
@@ -75,8 +123,12 @@ function ServicesPage() {
                 />
               </div>
               <div className="md:[direction:ltr]">
-                <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">0{i + 1}</span>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl italic mt-3 mb-4 md:mb-5">{s.title}</h2>
+                <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                  0{i + 1}
+                </span>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl italic mt-3 mb-4 md:mb-5">
+                  {s.title}
+                </h2>
                 <p className="text-sm text-muted leading-relaxed mb-6 text-pretty">{s.blurb}</p>
                 <ul className="space-y-2 mb-8 border-t border-border pt-4">
                   {s.bullets.map((b) => (

@@ -82,13 +82,13 @@ npm run preview   # preview production build locally
 
 The production build uses **Nitro `node-server`** and outputs to `dist/`.
 
-| Hostinger setting | Value |
-| --- | --- |
-| Framework preset | **React Router** |
-| Build command | `npm run build` |
-| Output directory | `dist` |
-| Entry file | `dist/server/hostinger-entry.mjs` |
-| Node version | 22.x |
+| Hostinger setting | Value                             |
+| ----------------- | --------------------------------- |
+| Framework preset  | **React Router**                  |
+| Build command     | `npm run build`                   |
+| Output directory  | `dist`                            |
+| Entry file        | `dist/server/hostinger-entry.mjs` |
+| Node version      | 22.x                              |
 
 **First-time deploy steps:**
 
@@ -120,9 +120,9 @@ Set WhatsApp and other contact details in **Admin → Settings** (`/admin/settin
 
 Admin uploads are saved **outside** `dist/` so redeploys do not wipe them:
 
-| Location | Purpose |
-| --- | --- |
-| `public/uploads/` | Bundled seed images at build time |
+| Location                       | Purpose                                        |
+| ------------------------------ | ---------------------------------------------- |
+| `public/uploads/`              | Bundled seed images at build time              |
 | `../uploads/` or `UPLOADS_DIR` | Persistent runtime uploads (survives redeploy) |
 
 `npm run build` copies seed images to both locations. New admin uploads always go to the persistent folder.
@@ -149,13 +149,13 @@ Local development uses its own MySQL database via `.env` — keep `DATABASE_URL`
 
 ## Admin portal
 
-| Path | Purpose |
-| --- | --- |
-| `/admin/login` | Admin sign-in |
-| `/admin` | Dashboard |
-| `/admin/products` | Product list + add/edit/delete |
-| `/admin/categories` | Edit category labels, blurbs, images |
-| `/admin/settings` | WhatsApp, email, Instagram, founder, location |
+| Path                | Purpose                                       |
+| ------------------- | --------------------------------------------- |
+| `/admin/login`      | Admin sign-in                                 |
+| `/admin`            | Dashboard                                     |
+| `/admin/products`   | Product list + add/edit/delete                |
+| `/admin/categories` | Edit category labels, blurbs, images          |
+| `/admin/settings`   | WhatsApp, email, Instagram, founder, location |
 
 Product and category images use **file upload only** (no URL paste). Images are saved to the persistent uploads folder and served at `/uploads/*`.
 
@@ -168,12 +168,12 @@ npm run format    # Prettier
 
 ## Configuration
 
-| What | Where |
-| --- | --- |
-| WhatsApp & contact details | MySQL `site_settings` via `/admin/settings` |
-| Products & categories (fallback) | `src/data/products.ts` |
-| Live catalog | MySQL via `src/lib/data.server.ts` |
-| Site URL (canonical, OG, sitemap) | `VITE_SITE_URL` env var |
+| What                              | Where                                       |
+| --------------------------------- | ------------------------------------------- |
+| WhatsApp & contact details        | MySQL `site_settings` via `/admin/settings` |
+| Products & categories (fallback)  | `src/data/products.ts`                      |
+| Live catalog                      | MySQL via `src/lib/data.server.ts`          |
+| Site URL (canonical, OG, sitemap) | `VITE_SITE_URL` env var                     |
 
 ## Project structure
 
@@ -192,13 +192,13 @@ See `PROJECT_CONTEXT.md` for a full architecture overview.
 
 ## Public routes
 
-| Path | Page |
-| --- | --- |
-| `/` | Home |
-| `/catalog` | Product catalog (supports `?category=` and `?page=` query params) |
-| `/catalog/:slug` | Product detail |
-| `/services` | Celebration services |
-| `/custom` | Custom order form → WhatsApp |
-| `/contact` | Contact & delivery info |
-| `/sitemap.xml` | Dynamic sitemap |
-| `/robots.txt` | Dynamic robots.txt |
+| Path             | Page                                                              |
+| ---------------- | ----------------------------------------------------------------- |
+| `/`              | Home                                                              |
+| `/catalog`       | Product catalog (supports `?category=` and `?page=` query params) |
+| `/catalog/:slug` | Product detail                                                    |
+| `/services`      | Celebration services                                              |
+| `/custom`        | Custom order form → WhatsApp                                      |
+| `/contact`       | Contact & delivery info                                           |
+| `/sitemap.xml`   | Dynamic sitemap                                                   |
+| `/robots.txt`    | Dynamic robots.txt                                                |

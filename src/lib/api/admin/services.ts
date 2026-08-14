@@ -18,10 +18,7 @@ function requireAdmin() {
 }
 
 function parseBullets(raw: string) {
-  return raw
-    .split("\n")
-    .map(stripBulletPrefix)
-    .filter(Boolean);
+  return raw.split("\n").map(stripBulletPrefix).filter(Boolean);
 }
 
 export const listAdminServicesData = createServerFn({ method: "GET" }).handler(async () => {
@@ -94,7 +91,11 @@ export const saveAdminService = createServerFn({ method: "POST" })
       sortOrder: data.sortOrder,
     };
 
-    const existing = await db.select().from(servicesTable).where(eq(servicesTable.id, data.id)).limit(1);
+    const existing = await db
+      .select()
+      .from(servicesTable)
+      .where(eq(servicesTable.id, data.id))
+      .limit(1);
     if (existing[0]) {
       await db.update(servicesTable).set(values).where(eq(servicesTable.id, data.id));
     } else {

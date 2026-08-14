@@ -8,6 +8,7 @@ import { Menu } from "lucide-react";
 const navItems = [
   { to: "/catalog", label: "Past Creations" },
   { to: "/services", label: "Services" },
+  { to: "/blog", label: "Journal" },
   { to: "/custom", label: "Custom Order" },
   { to: "/contact", label: "Contact" },
 ] as const;
@@ -50,10 +51,7 @@ export function SiteHeader() {
           {/* Mobile hamburger */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <button
-                className="md:hidden p-2 -mr-2 text-foreground"
-                aria-label="Open menu"
-              >
+              <button className="md:hidden p-2 -mr-2 text-foreground" aria-label="Open menu">
                 <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>

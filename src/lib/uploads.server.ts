@@ -8,7 +8,8 @@ function getAppRoot() {
   const cwd = process.cwd();
   if (existsSync(path.join(cwd, "dist", "public"))) return cwd;
   if (existsSync(path.join(cwd, "..", "public"))) return path.resolve(cwd, "..");
-  if (existsSync(path.join(cwd, "..", "..", "dist", "public"))) return path.resolve(cwd, "..", "..");
+  if (existsSync(path.join(cwd, "..", "..", "dist", "public")))
+    return path.resolve(cwd, "..", "..");
   return cwd;
 }
 
@@ -66,7 +67,14 @@ export function resolveUploadFile(relativePath: string) {
 
 function validateImageBuffer(buffer: Buffer, mime: string) {
   if (mime === "image/jpeg" && buffer[0] === 0xff && buffer[1] === 0xd8) return;
-  if (mime === "image/png" && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return;
+  if (
+    mime === "image/png" &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  )
+    return;
   if (
     mime === "image/webp" &&
     buffer.length >= 12 &&
@@ -78,7 +86,11 @@ function validateImageBuffer(buffer: Buffer, mime: string) {
   throw new Error("File content does not match the declared image type");
 }
 
-async function mirrorUploadToPublicBundle(fullPath: string, subdir: "products" | "categories" | "services", filename: string) {
+async function mirrorUploadToPublicBundle(
+  fullPath: string,
+  subdir: "products" | "categories" | "services",
+  filename: string,
+) {
   const mirrorDir = path.join(getAppRoot(), "dist", "public", "uploads", subdir);
   if (!existsSync(path.dirname(mirrorDir))) return;
 

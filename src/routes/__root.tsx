@@ -17,7 +17,9 @@ function NotFoundComponent() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
       <div className="text-center">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted block mb-4">404</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted block mb-4">
+          404
+        </span>
         <h1 className="font-display text-5xl sm:text-7xl italic tracking-tighter mb-4">
           Page not found.
         </h1>
@@ -42,7 +44,9 @@ function ErrorComponent({ reset }: { error: Error; reset: () => void }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
       <div className="text-center">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted block mb-4">Error</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted block mb-4">
+          Error
+        </span>
         <h1 className="font-display text-4xl sm:text-6xl italic tracking-tighter mb-4">
           Something went wrong.
         </h1>
@@ -51,7 +55,10 @@ function ErrorComponent({ reset }: { error: Error; reset: () => void }) {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="inline-flex items-center justify-center gap-4 bg-foreground text-background px-7 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
           >
             Try again
@@ -82,15 +89,27 @@ export const Route = createRootRouteWithContext<{
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      { name: "description", content: "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide." },
+      {
+        name: "description",
+        content:
+          "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide.",
+      },
       { name: "author", content: "DaintyHand" },
       { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      { property: "og:description", content: "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide." },
+      {
+        property: "og:description",
+        content:
+          "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@dainty.handd" },
       { name: "twitter:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      { name: "twitter:description", content: "Custom hampers, bouquets, invitations and celebration services handcrafted with care and shipped across India & worldwide." },
+      {
+        name: "twitter:description",
+        content:
+          "Custom hampers, bouquets, invitations and celebration services handcrafted with care and shipped across India & worldwide.",
+      },
       { property: "og:image", content: siteUrl("/og-image.jpg") },
       { property: "og:image:width", content: "1080" },
       { property: "og:image:height", content: "1080" },

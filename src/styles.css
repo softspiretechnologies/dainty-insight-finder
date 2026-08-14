@@ -28,13 +28,23 @@
 }
 
 @keyframes reveal-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes ribbon-slide {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 @utility animate-reveal {
@@ -51,7 +61,8 @@
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-body);
@@ -70,7 +81,9 @@
   }
   /* Avoid iOS zoom-on-focus by keeping form text at 16px on small screens */
   @media (max-width: 640px) {
-    input, select, textarea {
+    input,
+    select,
+    textarea {
       font-size: 16px;
     }
   }

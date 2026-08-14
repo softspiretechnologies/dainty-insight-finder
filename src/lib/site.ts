@@ -10,8 +10,7 @@ const WHATSAPP_NUMBER = PLACEHOLDER_WHATSAPP;
 
 /** Override with VITE_SITE_URL when deploying to a custom domain. */
 const BASE_URL =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_SITE_URL) ||
-  "https://dainty-insight-finder.lovable.app";
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_SITE_URL) || "https://daintyhand.in";
 
 export const site = {
   name: "DaintyHand",

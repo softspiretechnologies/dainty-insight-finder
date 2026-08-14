@@ -69,11 +69,7 @@ export const adminProductFormSchema = z.object({
 
 export const productInputSchema = z.object({
   id: z.union([z.literal("new"), z.number().int().positive()]),
-  slug: z
-    .string()
-    .min(1)
-    .max(128)
-    .regex(slugPattern, "Invalid slug format"),
+  slug: z.string().min(1).max(128).regex(slugPattern, "Invalid slug format"),
   name: z.string().min(1).max(256),
   categoryId: z.enum(categoryIds),
   blurb: z.string().min(1),

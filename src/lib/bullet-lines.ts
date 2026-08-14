@@ -1,4 +1,4 @@
-const BULLET_PREFIX = /^[\s•\-\*·]+\s*/;
+const BULLET_PREFIX = /^[\s•\-*·]+\s*/;
 
 /** Remove leading bullet markers from a line. */
 export function stripBulletPrefix(line: string): string {
@@ -19,11 +19,7 @@ export function plainToBulletDisplay(plain: string): string {
 
 /** Bullet textarea content → plain newline-separated text for storage. */
 export function bulletDisplayToPlain(display: string): string {
-  return display
-    .split("\n")
-    .map(stripBulletPrefix)
-    .filter(Boolean)
-    .join("\n");
+  return display.split("\n").map(stripBulletPrefix).filter(Boolean).join("\n");
 }
 
 /** Normalize a single line when parsing stored details. */

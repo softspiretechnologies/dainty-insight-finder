@@ -5,12 +5,9 @@ export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
       GET: async () => {
-        const body = [
-          "User-agent: *",
-          "Allow: /",
-          "",
-          `Sitemap: ${site.baseUrl}/sitemap.xml`,
-        ].join("\n");
+        const body = ["User-agent: *", "Allow: /", "", `Sitemap: ${site.baseUrl}/sitemap.xml`].join(
+          "\n",
+        );
 
         return new Response(body, {
           headers: {

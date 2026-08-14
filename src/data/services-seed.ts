@@ -22,7 +22,12 @@ export const seedServices: Array<{
     title: "Save The Date Shoots",
     blurb:
       "A 1–2 hour styled couple shoot, edited as a save-the-date film with matching cards. Locations across India — Perinthalmanna, Kozhikode, Kochi, Bengaluru, Dubai and beyond.",
-    bullets: ["Styled couple shoot", "Edited reel + stills", "Save-the-date card design", "Packages from ₹12,000"],
+    bullets: [
+      "Styled couple shoot",
+      "Edited reel + stills",
+      "Save-the-date card design",
+      "Packages from ₹12,000",
+    ],
     sortOrder: 0,
   },
   {
@@ -30,7 +35,12 @@ export const seedServices: Array<{
     title: "Birthday Surprise Planning",
     blurb:
       "Decor concept, balloons, florals, signage and styled cake table — set up at home or venue while the guest of honour is away.",
-    bullets: ["Decor + florals + signage", "Cake table styling", "Optional hamper add-on", "Packages from ₹4,500"],
+    bullets: [
+      "Decor + florals + signage",
+      "Cake table styling",
+      "Optional hamper add-on",
+      "Packages from ₹4,500",
+    ],
     sortOrder: 1,
   },
   {
@@ -38,7 +48,12 @@ export const seedServices: Array<{
     title: "Proposal Setups",
     blurb:
       "A private styled setup — florals, candles, signage, ring tray and an optional reel — for proposals at home, terrace or venue.",
-    bullets: ["Styled florals & candles", "Custom signage", "Ring tray & hamper option", "Reel video add-on"],
+    bullets: [
+      "Styled florals & candles",
+      "Custom signage",
+      "Ring tray & hamper option",
+      "Reel video add-on",
+    ],
     sortOrder: 2,
   },
   {
@@ -46,7 +61,12 @@ export const seedServices: Array<{
     title: "Couple Shoots",
     blurb:
       "Editorial pre-wedding and anniversary couple shoots — softly styled, candid, and edited in our warm signature tone.",
-    bullets: ["Styled outdoor / indoor shoot", "Wardrobe & prop guidance", "25+ edited portraits", "Reel highlight add-on"],
+    bullets: [
+      "Styled outdoor / indoor shoot",
+      "Wardrobe & prop guidance",
+      "25+ edited portraits",
+      "Reel highlight add-on",
+    ],
     sortOrder: 3,
   },
   {
@@ -54,7 +74,12 @@ export const seedServices: Array<{
     title: "Reels & Memory Videos",
     blurb:
       "Short reels and edited videos from your photos and clips — for birthdays, anniversaries, engagement surprises and couple stories.",
-    bullets: ["30–60s cinematic reels", "Birthday & anniversary edits", "Engagement & couple videos", "From ₹1,500"],
+    bullets: [
+      "30–60s cinematic reels",
+      "Birthday & anniversary edits",
+      "Engagement & couple videos",
+      "From ₹1,500",
+    ],
     sortOrder: 4,
   },
 ];

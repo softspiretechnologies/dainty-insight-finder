@@ -6,7 +6,12 @@ import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { loginSchema } from "@/lib/admin-schemas";
-import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
+import {
+  invalidInputClass,
+  scrollToFirstField,
+  validateForm,
+  type FieldErrors,
+} from "@/lib/admin-validation";
 import { loginAdmin } from "@/lib/api/admin/auth";
 
 export const Route = createFileRoute("/admin/login")({
@@ -69,7 +74,11 @@ function AdminLoginPage() {
           <h1 className="font-display text-3xl italic mt-1.5">Admin portal</h1>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="border border-border rounded-2xl p-6 sm:p-7 bg-surface/30 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="border border-border rounded-2xl p-6 sm:p-7 bg-surface/30 space-y-4"
+        >
           <AdminField label="Email address" htmlFor="email" required error={fieldErrors.email}>
             <Input
               id="email"
@@ -115,7 +124,9 @@ function AdminLoginPage() {
         </form>
 
         <p className="text-center text-xs text-muted">
-          <a href="/" className="hover:text-foreground transition-colors">← Back to site</a>
+          <a href="/" className="hover:text-foreground transition-colors">
+            ← Back to site
+          </a>
         </p>
       </div>
     </div>

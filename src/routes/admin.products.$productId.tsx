@@ -8,7 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BulletTextarea } from "@/components/ui/bullet-textarea";
 import { adminProductFormSchema } from "@/lib/admin-schemas";
-import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
+import {
+  invalidInputClass,
+  scrollToFirstField,
+  validateForm,
+  type FieldErrors,
+} from "@/lib/admin-validation";
 import { getAdminProduct, saveAdminProduct } from "@/lib/api/admin/products";
 import { listAdminCategories } from "@/lib/api/admin/categories";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
@@ -39,7 +44,9 @@ function slugify(value: string) {
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted border-b border-border pb-2">{title}</p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted border-b border-border pb-2">
+        {title}
+      </p>
       {children}
     </div>
   );
@@ -53,13 +60,17 @@ function AdminProductEditPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(product?.name ?? "");
-  const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? "hampers");
+  const [categoryId, setCategoryId] = useState(
+    product?.categoryId ?? categories[0]?.id ?? "hampers",
+  );
   const [blurb, setBlurb] = useState(product?.blurb ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
   const [details, setDetails] = useState(normalizeProductDetails(product?.details).join("\n"));
   const [priceFrom, setPriceFrom] = useState(product?.priceFrom ?? "");
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
-  const [featuredOnHomepage, setFeaturedOnHomepage] = useState(product?.featuredOnHomepage ?? false);
+  const [featuredOnHomepage, setFeaturedOnHomepage] = useState(
+    product?.featuredOnHomepage ?? false,
+  );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -210,7 +221,12 @@ function AdminProductEditPage() {
               </AdminField>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <AdminField label="Category" htmlFor="categoryId" required error={fieldErrors.categoryId}>
+                <AdminField
+                  label="Category"
+                  htmlFor="categoryId"
+                  required
+                  error={fieldErrors.categoryId}
+                >
                   <select
                     id="categoryId"
                     value={categoryId}
@@ -260,7 +276,12 @@ function AdminProductEditPage() {
                 />
               </AdminField>
 
-              <AdminField label="Full description" htmlFor="description" required error={fieldErrors.description}>
+              <AdminField
+                label="Full description"
+                htmlFor="description"
+                required
+                error={fieldErrors.description}
+              >
                 <Textarea
                   id="description"
                   value={description}
@@ -270,7 +291,10 @@ function AdminProductEditPage() {
                   }}
                   placeholder="Detailed description shown on the product page"
                   rows={4}
-                  className={cn("resize-y min-h-[120px]", invalidInputClass(fieldErrors.description))}
+                  className={cn(
+                    "resize-y min-h-[120px]",
+                    invalidInputClass(fieldErrors.description),
+                  )}
                 />
               </AdminField>
 
@@ -288,7 +312,9 @@ function AdminProductEditPage() {
                     setDetails(value);
                     clearFieldError("details");
                   }}
-                  placeholder={"• 600gsm cotton paper\n• Envelope, RSVP & details card\n• Silk ribbon closure"}
+                  placeholder={
+                    "• 600gsm cotton paper\n• Envelope, RSVP & details card\n• Silk ribbon closure"
+                  }
                   rows={5}
                   className={cn("resize-y min-h-[140px]", invalidInputClass(fieldErrors.details))}
                 />
@@ -315,7 +341,11 @@ function AdminProductEditPage() {
             >
               {previewSrc ? (
                 <>
-                  <img src={previewSrc} alt="Product preview" className="w-full h-full object-cover" />
+                  <img
+                    src={previewSrc}
+                    alt="Product preview"
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <div className="text-white text-center">
                       <ImagePlus className="w-7 h-7 mx-auto mb-1" />
@@ -344,7 +374,12 @@ function AdminProductEditPage() {
               }}
             />
 
-            <Button type="button" variant="outline" className="w-full h-11" onClick={() => fileInputRef.current?.click()}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11"
+              onClick={() => fileInputRef.current?.click()}
+            >
               <ImagePlus className="w-4 h-4 mr-2" />
               {imageFile ? imageFile.name : previewSrc ? "Replace image" : "Choose image"}
             </Button>
@@ -356,13 +391,17 @@ function AdminProductEditPage() {
             ) : null}
 
             {!isNew && !imageFile && !fieldErrors.image ? (
-              <p className="text-xs text-muted text-center">Leave unchanged to keep current image.</p>
+              <p className="text-xs text-muted text-center">
+                Leave unchanged to keep current image.
+              </p>
             ) : null}
           </div>
         </div>
 
         <div className="mt-8 pt-6 border-t border-border space-y-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Visibility & homepage</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+            Visibility & homepage
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="flex items-start gap-3 rounded-xl border border-border p-4 cursor-pointer hover:border-foreground/30 transition-colors">
               <input
@@ -393,7 +432,9 @@ function AdminProductEditPage() {
             <label
               className={cn(
                 "flex items-start gap-3 rounded-xl border border-border p-4 transition-colors",
-                isActive ? "cursor-pointer hover:border-foreground/30" : "cursor-not-allowed opacity-60",
+                isActive
+                  ? "cursor-pointer hover:border-foreground/30"
+                  : "cursor-not-allowed opacity-60",
               )}
             >
               <input
@@ -405,7 +446,12 @@ function AdminProductEditPage() {
               />
               <span className="min-w-0">
                 <span className="inline-flex items-center gap-2 text-sm font-medium">
-                  <Star className={cn("w-4 h-4", featuredOnHomepage ? "text-primary fill-primary/30" : "text-muted")} />
+                  <Star
+                    className={cn(
+                      "w-4 h-4",
+                      featuredOnHomepage ? "text-primary fill-primary/30" : "text-muted",
+                    )}
+                  />
                   Homepage gallery
                 </span>
                 <span className="block text-xs text-muted mt-1 leading-relaxed">
@@ -422,7 +468,11 @@ function AdminProductEditPage() {
             <Button type="button" variant="outline" className="flex-1 sm:flex-none h-11" asChild>
               <Link to="/admin/products">Cancel</Link>
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1 sm:flex-none h-11 min-w-[140px]">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="flex-1 sm:flex-none h-11 min-w-[140px]"
+            >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />

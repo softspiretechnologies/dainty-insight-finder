@@ -11,7 +11,10 @@ export function zodFieldErrors(error: z.ZodError): FieldErrors {
   return out;
 }
 
-export function validateForm<T>(schema: z.ZodType<T>, data: unknown): { ok: true; data: T } | { ok: false; errors: FieldErrors } {
+export function validateForm<T>(
+  schema: z.ZodType<T>,
+  data: unknown,
+): { ok: true; data: T } | { ok: false; errors: FieldErrors } {
   const result = schema.safeParse(data);
   if (result.success) return { ok: true, data: result.data };
   return { ok: false, errors: zodFieldErrors(result.error) };
@@ -22,7 +25,11 @@ export function scrollToFirstField(errors: FieldErrors) {
   if (!firstKey) return;
   const el = document.getElementById(`field-${firstKey}`);
   el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+  if (
+    el instanceof HTMLInputElement ||
+    el instanceof HTMLTextAreaElement ||
+    el instanceof HTMLSelectElement
+  ) {
     el.focus();
   }
 }

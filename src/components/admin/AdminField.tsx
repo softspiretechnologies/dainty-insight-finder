@@ -32,7 +32,11 @@ export function AdminField({
       >
         {children}
       </div>
-      {hint && !error ? <p id={`${htmlFor}-hint`} className="text-xs text-muted">{hint}</p> : null}
+      {hint && !error ? (
+        <p id={`${htmlFor}-hint`} className="text-xs text-muted">
+          {hint}
+        </p>
+      ) : null}
       {error ? (
         <p id={errorId} className="text-sm text-destructive" role="alert">
           {error}
@@ -44,7 +48,10 @@ export function AdminField({
 
 export function FormErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert">
+    <div
+      className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+      role="alert"
+    >
       {message}
     </div>
   );
@@ -52,7 +59,10 @@ export function FormErrorBanner({ message }: { message: string }) {
 
 export function FormSuccessBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">
+    <div
+      className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+      role="status"
+    >
       {message}
     </div>
   );

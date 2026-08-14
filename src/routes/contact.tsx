@@ -6,14 +6,52 @@ import { useSiteContact } from "@/hooks/useSiteContact";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact DaintyHand — WhatsApp, Instagram & Studio" },
-      { name: "description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
-      { property: "og:title", content: "Contact — DaintyHand" },
-      { property: "og:description", content: `Reach ${site.founder} at ${site.name} on WhatsApp, Instagram, or email — based in ${site.location}.` },
+      { title: "Contact DaintyHand | Handcrafted Gifting & Celebration Studio Kerala" },
+      {
+        name: "description",
+        content: `Get in touch with DaintyHand in Perinthalmanna, Kerala. Enquire on WhatsApp for custom gift hampers, wedding invitation suites, and event styling.`,
+      },
+      {
+        name: "keywords",
+        content:
+          "Contact DaintyHand, Gifting Studio Perinthalmanna, WhatsApp Gifting Kerala, Wedding Hampers Malappuram, Event Styling Kerala",
+      },
+      {
+        property: "og:title",
+        content: "Contact DaintyHand | Handcrafted Gifting & Celebration Studio Kerala",
+      },
+      {
+        property: "og:description",
+        content: `Get in touch with DaintyHand in Perinthalmanna, Kerala. Enquire on WhatsApp for custom gift hampers, wedding invitation suites, and event styling.`,
+      },
+      { property: "og:url", content: siteUrl("/contact") },
       { property: "og:image", content: siteUrl("/og-image.jpg") },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [
-      { rel: "canonical", href: siteUrl("/contact") },
+    links: [{ rel: "canonical", href: siteUrl("/contact") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: siteUrl("/") },
+                { "@type": "ListItem", position: 2, name: "Contact", item: siteUrl("/contact") },
+              ],
+            },
+            {
+              "@type": "ContactPage",
+              name: "Contact DaintyHand",
+              description:
+                "Contact DaintyHand for custom handcrafted hampers, wedding invitations, and celebration services in Kerala.",
+              url: siteUrl("/contact"),
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: ContactPage,
@@ -27,12 +65,15 @@ function ContactPage() {
       {/* Hero */}
       <section className="px-5 md:px-6 pt-12 md:pt-20 pb-12 md:pb-20 border-b border-border">
         <div className="max-w-4xl mx-auto">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Get in touch</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+            Get in touch
+          </span>
           <h1 className="font-display text-[2.75rem] sm:text-6xl md:text-8xl leading-[0.95] tracking-tighter mt-4 mb-6 text-balance">
             Say <span className="italic text-primary">hello.</span>
           </h1>
           <p className="text-sm text-muted max-w-sm leading-relaxed text-pretty">
-            We're fastest on WhatsApp. For a detailed brief, email works too — we reply within a day.
+            We're fastest on WhatsApp. For a detailed brief, email works too — we reply within a
+            day.
           </p>
         </div>
       </section>
@@ -41,7 +82,6 @@ function ContactPage() {
       <section className="px-5 md:px-6 py-12 md:py-20">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border rounded-sm overflow-hidden">
-
             {/* WhatsApp — primary */}
             <a
               href={waLink(`Hi ${founder}, I'd like to enquire.`)}
@@ -49,10 +89,16 @@ function ContactPage() {
               rel="noopener noreferrer"
               className="group bg-foreground text-background p-8 md:p-12 flex flex-col justify-between min-h-[200px] md:min-h-[240px]"
             >
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50">WhatsApp</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50">
+                WhatsApp
+              </span>
               <div>
-                <p className="font-display text-2xl md:text-3xl italic text-primary mb-2">Chat with {site.founder}</p>
-                <p className="text-[11px] text-background/60 uppercase tracking-[0.2em]">Usually replies within hours →</p>
+                <p className="font-display text-2xl md:text-3xl italic text-primary mb-2">
+                  Chat with {site.founder}
+                </p>
+                <p className="text-[11px] text-background/60 uppercase tracking-[0.2em]">
+                  Usually replies within hours →
+                </p>
               </div>
             </a>
 
@@ -63,10 +109,16 @@ function ContactPage() {
               rel="noopener noreferrer"
               className="group bg-background p-8 md:p-12 flex flex-col justify-between min-h-[200px] md:min-h-[240px] hover:bg-surface transition-colors"
             >
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Instagram</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                Instagram
+              </span>
               <div>
-                <p className="font-display text-2xl md:text-3xl italic group-hover:text-primary transition-colors mb-2">{site.instagramHandle}</p>
-                <p className="text-[11px] text-muted uppercase tracking-[0.2em]">DM us for inspiration & enquiries →</p>
+                <p className="font-display text-2xl md:text-3xl italic group-hover:text-primary transition-colors mb-2">
+                  {site.instagramHandle}
+                </p>
+                <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
+                  DM us for inspiration & enquiries →
+                </p>
               </div>
             </a>
 
@@ -75,22 +127,31 @@ function ContactPage() {
               href={`mailto:${site.email}`}
               className="group bg-background p-8 md:p-12 flex flex-col justify-between min-h-[160px] hover:bg-surface transition-colors"
             >
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Email</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                Email
+              </span>
               <div>
-                <p className="font-display text-xl md:text-2xl italic group-hover:text-primary transition-colors mb-2">{site.email}</p>
-                <p className="text-[11px] text-muted uppercase tracking-[0.2em]">For detailed event briefs →</p>
+                <p className="font-display text-xl md:text-2xl italic group-hover:text-primary transition-colors mb-2">
+                  {site.email}
+                </p>
+                <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
+                  For detailed event briefs →
+                </p>
               </div>
             </a>
 
             {/* Studio */}
             <div className="bg-surface/60 p-8 md:p-12 flex flex-col justify-between min-h-[160px]">
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Studio</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+                Studio
+              </span>
               <div>
                 <p className="font-display text-xl md:text-2xl italic mb-2">{site.location}</p>
-                <p className="text-[11px] text-muted uppercase tracking-[0.2em]">By appointment only</p>
+                <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
+                  By appointment only
+                </p>
               </div>
             </div>
-
           </div>
         </div>
       </section>
@@ -99,7 +160,9 @@ function ContactPage() {
       <section className="px-5 md:px-6 pb-16 md:pb-32 bg-surface/40 border-t border-border py-12 md:py-20">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 md:mb-10">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Delivery & Shipping</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+              Delivery & Shipping
+            </span>
             <h2 className="font-display text-2xl md:text-3xl italic mt-3 text-balance">
               Handcrafted here, <span className="text-primary">delivered anywhere.</span>
             </h2>
@@ -146,7 +209,9 @@ function ContactPage() {
       <section className="px-5 md:px-6 py-16 md:py-24 bg-foreground text-background">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-4">Ready to begin?</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/50 block mb-4">
+              Ready to begin?
+            </span>
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl italic leading-tight text-balance">
               Start with a <span className="text-primary">message.</span>
             </h2>

@@ -27,13 +27,17 @@ export const getRootPageData = createServerFn({ method: "GET" }).handler(async (
   return { categories, siteSettings };
 });
 
-export const getCatalogProducts = createServerFn({ method: "GET" }).handler(async () => getProducts());
+export const getCatalogProducts = createServerFn({ method: "GET" }).handler(async () =>
+  getProducts(),
+);
 
 export const getProductBySlugData = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string() }))
   .handler(async ({ data }) => getProductBySlug(data.slug));
 
-export const getSitemapProducts = createServerFn({ method: "GET" }).handler(async () => getProducts());
+export const getSitemapProducts = createServerFn({ method: "GET" }).handler(async () =>
+  getProducts(),
+);
 
 export const getAdminDashboardData = createServerFn({ method: "GET" }).handler(async () => {
   requireAdmin();

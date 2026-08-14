@@ -12,8 +12,16 @@ import { AdminField, FormErrorBanner, FormSuccessBanner } from "@/components/adm
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { adminTestimonialFormSchema, adminTestimonialsSectionFormSchema } from "@/lib/admin-schemas";
-import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
+import {
+  adminTestimonialFormSchema,
+  adminTestimonialsSectionFormSchema,
+} from "@/lib/admin-schemas";
+import {
+  invalidInputClass,
+  scrollToFirstField,
+  validateForm,
+  type FieldErrors,
+} from "@/lib/admin-validation";
 import {
   deleteAdminTestimonial,
   listAdminTestimonialsData,
@@ -83,7 +91,12 @@ function AdminTestimonialsPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
             {testimonials.length} testimonial{testimonials.length === 1 ? "" : "s"}
           </p>
-          <Button type="button" variant="outline" className="h-9" onClick={() => setShowNew((v) => !v)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9"
+            onClick={() => setShowNew((v) => !v)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add testimonial
           </Button>
@@ -105,7 +118,8 @@ function AdminTestimonialsPage() {
 
         {testimonials.length === 0 ? (
           <p className="text-sm text-muted border border-dashed border-border rounded-xl p-6 text-center">
-            No testimonials yet. Click “Add testimonial” to create your first one, or run <code className="font-mono text-xs">npm run db:seed</code>.
+            No testimonials yet. Click “Add testimonial” to create your first one, or run{" "}
+            <code className="font-mono text-xs">npm run db:seed</code>.
           </p>
         ) : null}
 
@@ -120,10 +134,7 @@ function AdminTestimonialsPage() {
                 <TestimonialSummary testimonial={testimonial} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-5 pt-4 space-y-4">
-                <TestimonialForm
-                  testimonial={testimonial}
-                  onSaved={() => router.invalidate()}
-                />
+                <TestimonialForm testimonial={testimonial} onSaved={() => router.invalidate()} />
                 <Button
                   type="button"
                   variant="outline"
@@ -186,9 +197,20 @@ function SectionHeadingForm({ heading, onSaved }: { heading: string; onSaved: ()
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="border border-border rounded-xl bg-surface/20 p-4 md:p-5 space-y-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Section heading</p>
-      <AdminField label="Homepage heading" htmlFor="testimonials-heading" required error={fieldErrors.heading}>
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="border border-border rounded-xl bg-surface/20 p-4 md:p-5 space-y-4"
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+        Section heading
+      </p>
+      <AdminField
+        label="Homepage heading"
+        htmlFor="testimonials-heading"
+        required
+        error={fieldErrors.heading}
+      >
         <Input
           id="testimonials-heading"
           value={value}
@@ -215,7 +237,9 @@ function TestimonialSummary({ testimonial }: { testimonial: TestimonialRow }) {
         <MessageSquareQuote className="w-4 h-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-display italic text-sm leading-snug line-clamp-2">"{testimonial.quote}"</p>
+        <p className="font-display italic text-sm leading-snug line-clamp-2">
+          "{testimonial.quote}"
+        </p>
         <p className="text-xs text-muted mt-1">
           {testimonial.customerName} · {testimonial.location}
         </p>
@@ -255,7 +279,14 @@ function TestimonialForm({
     setSuccess(false);
     setFormError(null);
     setFieldErrors({});
-  }, [testimonial?.id, testimonial?.quote, testimonial?.customerName, testimonial?.location, testimonial?.context, testimonial?.sortOrder]);
+  }, [
+    testimonial?.id,
+    testimonial?.quote,
+    testimonial?.customerName,
+    testimonial?.location,
+    testimonial?.context,
+    testimonial?.sortOrder,
+  ]);
 
   const isDirty = useMemo(() => {
     if (!testimonial) {
@@ -310,7 +341,12 @@ function TestimonialForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <AdminField label="Quote" htmlFor={`quote-${testimonial?.id ?? "new"}`} required error={fieldErrors.quote}>
+      <AdminField
+        label="Quote"
+        htmlFor={`quote-${testimonial?.id ?? "new"}`}
+        required
+        error={fieldErrors.quote}
+      >
         <Textarea
           id={`quote-${testimonial?.id ?? "new"}`}
           value={quote}
@@ -324,7 +360,12 @@ function TestimonialForm({
       </AdminField>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <AdminField label="Customer name" htmlFor={`name-${testimonial?.id ?? "new"}`} required error={fieldErrors.customerName}>
+        <AdminField
+          label="Customer name"
+          htmlFor={`name-${testimonial?.id ?? "new"}`}
+          required
+          error={fieldErrors.customerName}
+        >
           <Input
             id={`name-${testimonial?.id ?? "new"}`}
             value={customerName}
@@ -336,7 +377,12 @@ function TestimonialForm({
           />
         </AdminField>
 
-        <AdminField label="Location" htmlFor={`location-${testimonial?.id ?? "new"}`} required error={fieldErrors.location}>
+        <AdminField
+          label="Location"
+          htmlFor={`location-${testimonial?.id ?? "new"}`}
+          required
+          error={fieldErrors.location}
+        >
           <Input
             id={`location-${testimonial?.id ?? "new"}`}
             value={location}
@@ -350,7 +396,12 @@ function TestimonialForm({
       </div>
 
       <div className="grid sm:grid-cols-[1fr_auto] gap-4">
-        <AdminField label="Service or occasion" htmlFor={`context-${testimonial?.id ?? "new"}`} required error={fieldErrors.context}>
+        <AdminField
+          label="Service or occasion"
+          htmlFor={`context-${testimonial?.id ?? "new"}`}
+          required
+          error={fieldErrors.context}
+        >
           <Input
             id={`context-${testimonial?.id ?? "new"}`}
             value={context}
@@ -363,7 +414,12 @@ function TestimonialForm({
           />
         </AdminField>
 
-        <AdminField label="Sort order" htmlFor={`sort-${testimonial?.id ?? "new"}`} required error={fieldErrors.sortOrder}>
+        <AdminField
+          label="Sort order"
+          htmlFor={`sort-${testimonial?.id ?? "new"}`}
+          required
+          error={fieldErrors.sortOrder}
+        >
           <Input
             id={`sort-${testimonial?.id ?? "new"}`}
             type="number"
@@ -381,8 +437,14 @@ function TestimonialForm({
       {formError ? <FormErrorBanner message={formError} /> : null}
 
       <div className="flex flex-col-reverse sm:flex-row gap-3">
-        <Button type="submit" className="h-11 min-w-[130px]" disabled={loading || (!isDirty && !success && !!testimonial)}>
-          {loading ? "Saving…" : success && !isDirty ? (
+        <Button
+          type="submit"
+          className="h-11 min-w-[130px]"
+          disabled={loading || (!isDirty && !success && !!testimonial)}
+        >
+          {loading ? (
+            "Saving…"
+          ) : success && !isDirty ? (
             <span className="inline-flex items-center gap-2">
               <Check className="w-4 h-4" />
               Saved

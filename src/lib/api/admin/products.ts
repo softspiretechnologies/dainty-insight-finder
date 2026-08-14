@@ -19,10 +19,7 @@ function requireAdmin() {
 }
 
 function parseDetails(raw: string) {
-  return raw
-    .split("\n")
-    .map(stripBulletPrefix)
-    .filter(Boolean);
+  return raw.split("\n").map(stripBulletPrefix).filter(Boolean);
 }
 
 const MAX_HOMEPAGE_FEATURED = 6;
@@ -31,7 +28,11 @@ function isDuplicateKeyError(error: unknown) {
   return error instanceof Error && /duplicate|unique/i.test(error.message);
 }
 
-async function assertHomepageFeaturedLimit(db: ReturnType<typeof getDb>, featured: boolean, excludeId?: number) {
+async function assertHomepageFeaturedLimit(
+  db: ReturnType<typeof getDb>,
+  featured: boolean,
+  excludeId?: number,
+) {
   if (!featured) return;
 
   const rows = await db
@@ -44,7 +45,9 @@ async function assertHomepageFeaturedLimit(db: ReturnType<typeof getDb>, feature
     );
 
   if (rows.length >= MAX_HOMEPAGE_FEATURED) {
-    throw new Error(`Maximum ${MAX_HOMEPAGE_FEATURED} products can be featured on the homepage. Unfeature another product first.`);
+    throw new Error(
+      `Maximum ${MAX_HOMEPAGE_FEATURED} products can be featured on the homepage. Unfeature another product first.`,
+    );
   }
 }
 
@@ -59,7 +62,11 @@ export const getAdminProduct = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     requireAdmin();
     const db = getDb();
-    const rows = await db.select().from(productsTable).where(eq(productsTable.id, data.id)).limit(1);
+    const rows = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, data.id))
+      .limit(1);
     return rows[0] ?? null;
   });
 
@@ -89,7 +96,8 @@ async function resolveHomepageFeaturedState(
     .select({ order: productsTable.homepageSortOrder })
     .from(productsTable)
     .where(eq(productsTable.featuredOnHomepage, true));
-  const nextOrder = featuredRows.length > 0 ? Math.max(...featuredRows.map((row) => row.order)) + 1 : 0;
+  const nextOrder =
+    featuredRows.length > 0 ? Math.max(...featuredRows.map((row) => row.order)) + 1 : 0;
 
   return { featuredOnHomepage: true, homepageSortOrder: nextOrder };
 }
@@ -124,7 +132,11 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
 
     try {
       if (id) {
-        const existing = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
+        const existing = await db
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.id, id))
+          .limit(1);
         if (!existing[0]) throw new Error("Product not found");
 
         const featuredState = await resolveHomepageFeaturedState(db, {
@@ -177,7 +189,11 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
       clearDataCache();
       if (insertId) return { id: insertId };
 
-      const rows = await db.select().from(productsTable).where(eq(productsTable.slug, data.slug)).limit(1);
+      const rows = await db
+        .select()
+        .from(productsTable)
+        .where(eq(productsTable.slug, data.slug))
+        .limit(1);
       return { id: rows[0]!.id };
     } catch (error) {
       if (isDuplicateKeyError(error)) {
@@ -192,7 +208,11 @@ export const toggleAdminProductHomepageFeatured = createServerFn({ method: "POST
   .handler(async ({ data }) => {
     requireAdmin();
     const db = getDb();
-    const rows = await db.select().from(productsTable).where(eq(productsTable.id, data.id)).limit(1);
+    const rows = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, data.id))
+      .limit(1);
     const product = rows[0];
     if (!product) throw new Error("Product not found");
 
@@ -228,7 +248,11 @@ export const toggleAdminProductActive = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     requireAdmin();
     const db = getDb();
-    const rows = await db.select().from(productsTable).where(eq(productsTable.id, data.id)).limit(1);
+    const rows = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, data.id))
+      .limit(1);
     const product = rows[0];
     if (!product) throw new Error("Product not found");
 
@@ -250,7 +274,11 @@ export const deleteAdminProduct = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     requireAdmin();
     const db = getDb();
-    const rows = await db.select().from(productsTable).where(eq(productsTable.id, data.id)).limit(1);
+    const rows = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, data.id))
+      .limit(1);
     const product = rows[0];
     if (!product) throw new Error("Product not found");
 

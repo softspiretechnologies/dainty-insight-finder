@@ -28,12 +28,7 @@ const customOrderSchema = z.object({
     .trim()
     .min(10, "Enter a valid phone or WhatsApp number")
     .regex(/^\+?[\d\s-]{10,}$/, "Enter a valid phone or WhatsApp number"),
-  email: z
-    .string()
-    .trim()
-    .email("Enter a valid email address")
-    .or(z.literal(""))
-    .optional(),
+  email: z.string().trim().email("Enter a valid email address").or(z.literal("")).optional(),
   service: z.enum(serviceOptions),
   eventType: z.string().trim().optional(),
   date: z
@@ -51,10 +46,7 @@ const customOrderSchema = z.object({
     ),
   budget: z.string().trim().optional(),
   location: z.string().trim().min(2, "Enter a delivery city or area"),
-  notes: z
-    .string()
-    .trim()
-    .min(10, "Add a short description so we can understand your brief"),
+  notes: z.string().trim().min(10, "Add a short description so we can understand your brief"),
 });
 
 type CustomOrderForm = z.infer<typeof customOrderSchema>;
@@ -62,14 +54,49 @@ type CustomOrderForm = z.infer<typeof customOrderSchema>;
 export const Route = createFileRoute("/custom")({
   head: () => ({
     meta: [
-      { title: "Custom Order — DaintyHand | Tell us what you have in mind" },
-      { name: "description", content: "Start a custom hamper, bouquet, invitation, engagement gift, save-the-date shoot or birthday surprise with Nafisa on WhatsApp." },
-      { property: "og:title", content: "Custom Order — DaintyHand" },
-      { property: "og:description", content: "Tell us what you have in mind — we'll continue the conversation on WhatsApp." },
+      { title: "Custom Order Hampers & Wedding Gifts | DaintyHand Kerala" },
+      {
+        name: "description",
+        content:
+          "Submit your brief for custom hampers, bouquets, invitations, or event styling. We craft bespoke gifts tailored to your budget and story.",
+      },
+      {
+        name: "keywords",
+        content:
+          "Custom Order Hampers Kerala, Bespoke Wedding Gifts, Personalised Hampers Malappuram, DaintyHand Order Brief",
+      },
+      { property: "og:title", content: "Custom Order Hampers & Wedding Gifts | DaintyHand Kerala" },
+      {
+        property: "og:description",
+        content:
+          "Submit your brief for custom hampers, bouquets, invitations, or event styling. We craft bespoke gifts tailored to your budget and story.",
+      },
+      { property: "og:url", content: siteUrl("/custom") },
       { property: "og:image", content: siteUrl("/og-image.jpg") },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [
-      { rel: "canonical", href: siteUrl("/custom") },
+    links: [{ rel: "canonical", href: siteUrl("/custom") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: siteUrl("/") },
+                {
+                  "@type": "ListItem",
+                  position: 2,
+                  name: "Custom Order",
+                  item: siteUrl("/custom"),
+                },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: CustomPage,
@@ -125,12 +152,15 @@ function CustomPage() {
     <PageShell>
       <section className="px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-12">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Custom Order</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+            Custom Order
+          </span>
           <h1 className="font-display text-4xl sm:text-5xl md:text-7xl tracking-tighter mt-4 mb-5 md:mb-6 text-balance">
             Tell us what you have <span className="italic text-primary">in mind.</span>
           </h1>
           <p className="text-sm text-muted leading-relaxed text-pretty max-w-lg mx-auto">
-            Fill this in and we'll continue the conversation on WhatsApp — no payment, no commitment until you're happy with the plan.
+            Fill this in and we'll continue the conversation on WhatsApp — no payment, no commitment
+            until you're happy with the plan.
           </p>
         </div>
       </section>
@@ -180,12 +210,11 @@ function CustomPage() {
             </select>
           </Field>
 
-          <Field label="Event type (wedding, birthday, engagement…)" error={errors.eventType?.message}>
-            <input
-              {...register("eventType")}
-              className={inputClass}
-              placeholder="Engagement"
-            />
+          <Field
+            label="Event type (wedding, birthday, engagement…)"
+            error={errors.eventType?.message}
+          >
+            <input {...register("eventType")} className={inputClass} placeholder="Engagement" />
           </Field>
 
           <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
@@ -194,20 +223,12 @@ function CustomPage() {
             </Field>
 
             <Field label="Budget range (optional)" error={errors.budget?.message}>
-              <input
-                {...register("budget")}
-                className={inputClass}
-                placeholder="₹2,000–5,000"
-              />
+              <input {...register("budget")} className={inputClass} placeholder="₹2,000–5,000" />
             </Field>
           </div>
 
           <Field label="Delivery location" error={errors.location?.message}>
-            <input
-              {...register("location")}
-              className={inputClass}
-              placeholder="City / area"
-            />
+            <input {...register("location")} className={inputClass} placeholder="City / area" />
           </Field>
 
           <Field label="Description / the brief" error={errors.notes?.message}>
@@ -220,7 +241,8 @@ function CustomPage() {
           </Field>
 
           <p className="text-[11px] text-muted">
-            Have reference images? Share them on WhatsApp once you continue — it's the easiest way to send pictures.
+            Have reference images? Share them on WhatsApp once you continue — it's the easiest way
+            to send pictures.
           </p>
 
           <div className="pt-4">

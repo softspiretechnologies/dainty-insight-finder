@@ -1,5 +1,14 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, LogOut, Menu, MessageSquareQuote, Package, Settings, Sparkles, Tags } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquareQuote,
+  Package,
+  Settings,
+  Sparkles,
+  Tags,
+} from "lucide-react";
 import { useState } from "react";
 
 import { logoutAdmin } from "@/lib/api/admin/auth";
@@ -12,7 +21,12 @@ const nav = [
   { to: "/admin/products", label: "Products", shortLabel: "Products", icon: Package },
   { to: "/admin/categories", label: "Categories", shortLabel: "Categories", icon: Tags },
   { to: "/admin/services", label: "Services", shortLabel: "Services", icon: Sparkles },
-  { to: "/admin/testimonials", label: "Testimonials", shortLabel: "Reviews", icon: MessageSquareQuote },
+  {
+    to: "/admin/testimonials",
+    label: "Testimonials",
+    shortLabel: "Reviews",
+    icon: MessageSquareQuote,
+  },
   { to: "/admin/settings", label: "Settings", shortLabel: "Settings", icon: Settings },
 ] as const;
 
@@ -78,7 +92,12 @@ export function AdminShell({
 
         <div className="mt-auto space-y-3">
           {userName ? <p className="text-xs text-muted px-1">Signed in as {userName}</p> : null}
-          <Button variant="outline" size="sm" className="w-full justify-start gap-2" onClick={handleLogout}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2"
+            onClick={handleLogout}
+          >
             <LogOut className="w-4 h-4" />
             Log out
           </Button>
@@ -91,10 +110,18 @@ export function AdminShell({
       {/* Mobile top bar */}
       <header className="md:hidden sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur px-4 py-3">
         <div className="min-w-0">
-          <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted">DaintyHand Admin</p>
+          <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted">
+            DaintyHand Admin
+          </p>
           <p className="font-display text-lg italic truncate">{currentPage?.label ?? "Admin"}</p>
         </div>
-        <Button variant="outline" size="icon" className="shrink-0 h-10 w-10" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+        <Button
+          variant="outline"
+          size="icon"
+          className="shrink-0 h-10 w-10"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
+        >
           <Menu className="w-5 h-5" />
         </Button>
       </header>

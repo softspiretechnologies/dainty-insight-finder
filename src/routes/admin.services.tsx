@@ -8,13 +8,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { AdminField, FormErrorBanner, FormSuccessBanner, invalidBoxClass } from "@/components/admin/AdminField";
+import {
+  AdminField,
+  FormErrorBanner,
+  FormSuccessBanner,
+  invalidBoxClass,
+} from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BulletTextarea } from "@/components/ui/bullet-textarea";
 import { adminServiceFormSchema, adminServicesPageFormSchema } from "@/lib/admin-schemas";
-import { invalidInputClass, scrollToFirstField, validateForm, type FieldErrors } from "@/lib/admin-validation";
+import {
+  invalidInputClass,
+  scrollToFirstField,
+  validateForm,
+  type FieldErrors,
+} from "@/lib/admin-validation";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { normalizeProductDetails } from "@/lib/product-details";
 import {
@@ -61,7 +71,9 @@ function AdminServicesPage() {
       <PageContentForm page={page} onSaved={() => router.invalidate()} />
 
       <section>
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">Service blocks</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
+          Service blocks
+        </p>
         <Accordion type="single" collapsible className="space-y-3">
           {services.map((service) => (
             <AccordionItem
@@ -109,7 +121,11 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
     setFormError(null);
     setSuccess(false);
 
-    const validation = validateForm(adminServicesPageFormSchema, { intro, footerTitle, footerBlurb });
+    const validation = validateForm(adminServicesPageFormSchema, {
+      intro,
+      footerTitle,
+      footerBlurb,
+    });
     if (!validation.ok) {
       setFieldErrors(validation.errors);
       scrollToFirstField(validation.errors);
@@ -131,10 +147,19 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="border border-border rounded-xl bg-surface/20 p-4 md:p-5 space-y-5">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="border border-border rounded-xl bg-surface/20 p-4 md:p-5 space-y-5"
+    >
       <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">Page content</p>
 
-      <AdminField label="Intro paragraph" htmlFor="services-intro" required error={fieldErrors.intro}>
+      <AdminField
+        label="Intro paragraph"
+        htmlFor="services-intro"
+        required
+        error={fieldErrors.intro}
+      >
         <Textarea
           id="services-intro"
           value={intro}
@@ -147,7 +172,12 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
         />
       </AdminField>
 
-      <AdminField label="Footer heading" htmlFor="services-footer-title" required error={fieldErrors.footerTitle}>
+      <AdminField
+        label="Footer heading"
+        htmlFor="services-footer-title"
+        required
+        error={fieldErrors.footerTitle}
+      >
         <Input
           id="services-footer-title"
           value={footerTitle}
@@ -159,7 +189,12 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
         />
       </AdminField>
 
-      <AdminField label="Footer text" htmlFor="services-footer-blurb" required error={fieldErrors.footerBlurb}>
+      <AdminField
+        label="Footer text"
+        htmlFor="services-footer-blurb"
+        required
+        error={fieldErrors.footerBlurb}
+      >
         <Textarea
           id="services-footer-blurb"
           value={footerBlurb}
@@ -239,7 +274,14 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
     setSuccess(false);
     setFormError(null);
     setFieldErrors({});
-  }, [service.id, service.title, service.blurb, service.bullets, service.sortOrder, service.imagePath]);
+  }, [
+    service.id,
+    service.title,
+    service.blurb,
+    service.bullets,
+    service.sortOrder,
+    service.imagePath,
+  ]);
 
   const isDirty = useMemo(
     () =>
@@ -292,11 +334,22 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
           Service image<span className="text-destructive ml-0.5">*</span>
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
-          <div className={cn("w-full sm:w-48 aspect-4/3 overflow-hidden rounded-lg border bg-surface shrink-0", invalidBoxClass(fieldErrors.image))}>
+          <div
+            className={cn(
+              "w-full sm:w-48 aspect-4/3 overflow-hidden rounded-lg border bg-surface shrink-0",
+              invalidBoxClass(fieldErrors.image),
+            )}
+          >
             {previewSrc ? (
-              <img src={previewSrc} alt={`${title} preview`} className="w-full h-full object-cover" />
+              <img
+                src={previewSrc}
+                alt={`${title} preview`}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className="w-full h-full grid place-items-center text-xs text-muted">No image</div>
+              <div className="w-full h-full grid place-items-center text-xs text-muted">
+                No image
+              </div>
             )}
           </div>
           <div className="flex-1 w-full space-y-2">
@@ -337,7 +390,12 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
         />
       </AdminField>
 
-      <AdminField label="Description" htmlFor={`${service.id}-blurb`} required error={fieldErrors.blurb}>
+      <AdminField
+        label="Description"
+        htmlFor={`${service.id}-blurb`}
+        required
+        error={fieldErrors.blurb}
+      >
         <Textarea
           id={`${service.id}-blurb`}
           value={blurb}
@@ -369,7 +427,12 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
         />
       </AdminField>
 
-      <AdminField label="Sort order" htmlFor={`${service.id}-sort`} required error={fieldErrors.sortOrder}>
+      <AdminField
+        label="Sort order"
+        htmlFor={`${service.id}-sort`}
+        required
+        error={fieldErrors.sortOrder}
+      >
         <Input
           id={`${service.id}-sort`}
           type="number"
@@ -386,8 +449,14 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
       {formError ? <FormErrorBanner message={formError} /> : null}
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1">
-        <Button type="submit" className="w-full sm:w-auto h-11 min-w-[130px]" disabled={loading || (!isDirty && !success)}>
-          {loading ? "Saving…" : success && !isDirty ? (
+        <Button
+          type="submit"
+          className="w-full sm:w-auto h-11 min-w-[130px]"
+          disabled={loading || (!isDirty && !success)}
+        >
+          {loading ? (
+            "Saving…"
+          ) : success && !isDirty ? (
             <span className="inline-flex items-center gap-2">
               <Check className="w-4 h-4" />
               Saved

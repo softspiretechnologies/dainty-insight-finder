@@ -6,12 +6,7 @@ import type { CatalogCategory, SiteSettingsData } from "@/types/catalog";
 
 /* ─── conversation tree ─────────────────────────────────────── */
 
-type Screen =
-  | "home"
-  | "browse"
-  | "custom"
-  | "howItWorks"
-  | "delivery";
+type Screen = "home" | "browse" | "custom" | "howItWorks" | "delivery";
 
 interface BotMessage {
   text: string;
@@ -27,27 +22,29 @@ const screens: Record<Screen, { messages: BotMessage[]; back?: Screen }> = {
   },
   browse: {
     messages: [
-      { text: "We handcraft 8 types of pieces — pick one to explore or view the full catalog.", isBot: true },
+      {
+        text: "We handcraft 8 types of pieces — pick one to explore or view the full catalog.",
+        isBot: true,
+      },
     ],
     back: "home",
   },
   custom: {
     messages: [
       { text: "Every piece is made to order, fully customised around your occasion.", isBot: true },
-      { text: `Share your idea on WhatsApp — ${site.founder} will reply with mood boards, materials & a quote within 24 hours.`, isBot: true },
+      {
+        text: `Share your idea on WhatsApp — ${site.founder} will reply with mood boards, materials & a quote within 24 hours.`,
+        isBot: true,
+      },
     ],
     back: "home",
   },
   howItWorks: {
-    messages: [
-      { text: "Our process is simple and personal:", isBot: true },
-    ],
+    messages: [{ text: "Our process is simple and personal:", isBot: true }],
     back: "home",
   },
   delivery: {
-    messages: [
-      { text: "We deliver everywhere — here's how:", isBot: true },
-    ],
+    messages: [{ text: "We deliver everywhere — here's how:", isBot: true }],
     back: "home",
   },
 };
@@ -113,7 +110,10 @@ export function FloatingWhatsApp({
               </div>
             </div>
             <button
-              onClick={() => { setOpen(false); setScreen("home"); /* reset only on explicit close */ }}
+              onClick={() => {
+                setOpen(false);
+                setScreen("home"); /* reset only on explicit close */
+              }}
               className="text-background/60 hover:text-background transition-colors"
               aria-label="Close chat"
             >
@@ -123,7 +123,6 @@ export function FloatingWhatsApp({
 
           {/* Body */}
           <div ref={bodyRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-surface/40">
-
             {/* Bot messages */}
             {screens[screen].messages.map((m, i) => (
               <div key={i} className="flex gap-2 items-end">
@@ -166,8 +165,13 @@ export function FloatingWhatsApp({
             {screen === "howItWorks" && (
               <div className="ml-8 space-y-2">
                 {steps.map((s) => (
-                  <div key={s.n} className="bg-background border border-border rounded-xl px-3 py-2.5 text-[11px]">
-                    <span className="font-mono text-[9px] text-primary block mb-0.5">Step {s.n}</span>
+                  <div
+                    key={s.n}
+                    className="bg-background border border-border rounded-xl px-3 py-2.5 text-[11px]"
+                  >
+                    <span className="font-mono text-[9px] text-primary block mb-0.5">
+                      Step {s.n}
+                    </span>
                     <p className="font-semibold leading-tight">{s.t}</p>
                     <p className="text-muted mt-0.5 leading-relaxed">{s.d}</p>
                   </div>
@@ -186,7 +190,10 @@ export function FloatingWhatsApp({
             {screen === "delivery" && (
               <div className="ml-8 space-y-1.5">
                 {deliveryZones.map((z) => (
-                  <div key={z.place} className="bg-background border border-border rounded-xl px-3 py-2.5 text-[11px]">
+                  <div
+                    key={z.place}
+                    className="bg-background border border-border rounded-xl px-3 py-2.5 text-[11px]"
+                  >
                     <p className="font-semibold leading-tight">{z.place}</p>
                     <p className="text-muted mt-0.5">{z.note}</p>
                   </div>
@@ -274,10 +281,11 @@ export function FloatingWhatsApp({
         aria-label={open ? "Close chat" : `Chat with ${founder} on WhatsApp`}
         className="fixed right-4 md:right-8 md:bottom-8! z-50 grid place-items-center size-12 bg-foreground text-background rounded-full shadow-lg hover:bg-primary hover:scale-[1.02] transition-all"
       >
-        {open
-          ? <X className="size-5" strokeWidth={1.5} />
-          : <MessageCircle className="size-5" strokeWidth={1.5} />
-        }
+        {open ? (
+          <X className="size-5" strokeWidth={1.5} />
+        ) : (
+          <MessageCircle className="size-5" strokeWidth={1.5} />
+        )}
       </button>
     </>
   );
