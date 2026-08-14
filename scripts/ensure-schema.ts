@@ -3,6 +3,55 @@ import mysql from "mysql2/promise";
 import "./load-env.ts";
 
 const statements = [
+  `CREATE TABLE IF NOT EXISTS \`admin_users\` (
+    \`id\` int AUTO_INCREMENT NOT NULL,
+    \`email\` varchar(256) NOT NULL,
+    \`password_hash\` varchar(256) NOT NULL,
+    \`name\` varchar(128) NOT NULL,
+    \`session_version\` int NOT NULL DEFAULT 0,
+    CONSTRAINT \`admin_users_id\` PRIMARY KEY(\`id\`),
+    CONSTRAINT \`admin_users_email_unique\` UNIQUE(\`email\`)
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`categories\` (
+    \`id\` varchar(32) NOT NULL,
+    \`label\` varchar(128) NOT NULL,
+    \`blurb\` text NOT NULL,
+    \`image_path\` varchar(512) NOT NULL DEFAULT '',
+    \`sort_order\` int NOT NULL DEFAULT 0,
+    CONSTRAINT \`categories_id\` PRIMARY KEY(\`id\`)
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`products\` (
+    \`id\` int AUTO_INCREMENT NOT NULL,
+    \`slug\` varchar(128) NOT NULL,
+    \`name\` varchar(256) NOT NULL,
+    \`category_id\` varchar(32) NOT NULL,
+    \`blurb\` text NOT NULL,
+    \`description\` text NOT NULL,
+    \`details\` json NOT NULL,
+    \`image_path\` varchar(512) NOT NULL DEFAULT '',
+    \`price_from\` varchar(64),
+    \`is_active\` boolean NOT NULL DEFAULT true,
+    \`featured_on_homepage\` boolean NOT NULL DEFAULT false,
+    \`homepage_sort_order\` int NOT NULL DEFAULT 0,
+    \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT \`products_id\` PRIMARY KEY(\`id\`),
+    CONSTRAINT \`products_slug_unique\` UNIQUE(\`slug\`)
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`site_settings\` (
+    \`id\` int NOT NULL DEFAULT 1,
+    \`whatsapp_number\` varchar(32) NOT NULL,
+    \`email\` varchar(256) NOT NULL,
+    \`instagram_url\` varchar(512) NOT NULL,
+    \`instagram_handle\` varchar(64) NOT NULL,
+    \`founder\` varchar(128) NOT NULL,
+    \`location\` varchar(256) NOT NULL,
+    \`services_intro\` text NOT NULL DEFAULT ('') ,
+    \`services_footer_title\` varchar(256) NOT NULL DEFAULT ('') ,
+    \`services_footer_blurb\` text NOT NULL DEFAULT ('') ,
+    \`testimonials_heading\` varchar(256) NOT NULL DEFAULT ('') ,
+    CONSTRAINT \`site_settings_id\` PRIMARY KEY(\`id\`)
+  )`,
   `CREATE TABLE IF NOT EXISTS \`blog_posts\` (
     \`id\` int AUTO_INCREMENT NOT NULL,
     \`title\` varchar(256) NOT NULL,
