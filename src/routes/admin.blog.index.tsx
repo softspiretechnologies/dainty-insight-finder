@@ -39,12 +39,12 @@ function AdminBlogPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Blog</h1>
           <p className="text-sm text-muted mt-1">Create and publish journal posts.</p>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full shrink-0 sm:w-auto">
           <Link to="/admin/blog/$postId" params={{ postId: "new" }}>
             <Plus className="w-4 h-4 mr-2" /> New post
           </Link>
@@ -63,19 +63,19 @@ function AdminBlogPage() {
           {posts.map((post) => (
             <article key={post.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-medium truncate">{post.title}</h2>
-                  <span className="text-[9px] uppercase tracking-wider border border-border rounded-full px-2 py-0.5 text-muted">
+                <div className="flex min-w-0 items-center gap-2">
+                  <h2 className="min-w-0 truncate font-medium">{post.title}</h2>
+                  <span className="shrink-0 text-[9px] uppercase tracking-wider border border-border rounded-full px-2 py-0.5 text-muted">
                     {post.isPublished ? "Published" : "Draft"}
                   </span>
                 </div>
-                <p className="text-xs text-muted mt-1">/blog/{post.slug}</p>
+                <p className="truncate text-xs text-muted mt-1">/blog/{post.slug}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  className="h-11"
                   onClick={() => togglePublished(post.id, !post.isPublished)}
                 >
                   {post.isPublished ? "Unpublish" : "Publish"}

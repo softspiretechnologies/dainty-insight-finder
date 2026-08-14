@@ -21,7 +21,7 @@ export function AdminField({
   const errorId = `${htmlFor}-error`;
 
   return (
-    <div className="space-y-2" id={`field-${htmlFor}`}>
+    <div className="min-w-0 space-y-2" id={`field-${htmlFor}`}>
       <Label htmlFor={htmlFor}>
         {label}
         {required ? <span className="text-destructive ml-0.5">*</span> : null}
@@ -33,12 +33,12 @@ export function AdminField({
         {children}
       </div>
       {hint && !error ? (
-        <p id={`${htmlFor}-hint`} className="text-xs text-muted">
+        <p id={`${htmlFor}-hint`} className="break-words text-xs text-muted">
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p id={errorId} className="text-sm text-destructive" role="alert">
+        <p id={errorId} className="break-words text-sm text-destructive" role="alert">
           {error}
         </p>
       ) : null}
@@ -49,7 +49,7 @@ export function AdminField({
 export function FormErrorBanner({ message }: { message: string }) {
   return (
     <div
-      className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+      className="break-words rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
       role="alert"
     >
       {message}
@@ -60,7 +60,7 @@ export function FormErrorBanner({ message }: { message: string }) {
 export function FormSuccessBanner({ message }: { message: string }) {
   return (
     <div
-      className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+      className="break-words rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
       role="status"
     >
       {message}

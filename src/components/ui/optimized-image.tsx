@@ -31,7 +31,8 @@ export function OptimizedImage({
 }
 
 /** Responsive `sizes` for 2-col mobile / 3-col desktop catalog grids. */
-export const catalogGridSizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 384px";
+export const catalogGridSizes =
+  "(max-width: 359px) 100vw, (max-width: 640px) 50vw, (max-width: 1024px) 50vw, 384px";
 
 /** Responsive `sizes` for full-width product hero on small screens. */
 export const productHeroSizes = "(max-width: 1024px) 100vw, 55vw";

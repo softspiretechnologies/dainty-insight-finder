@@ -97,9 +97,9 @@ export function AdminShell({
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
+    <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 shrink-0 border-r border-border bg-surface/40 p-5 flex-col gap-8">
+      <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface/40 p-5 flex-col gap-8">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">DaintyHand</p>
           <p className="font-display text-xl italic mt-1">Admin</p>
@@ -129,7 +129,14 @@ export function AdminShell({
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur px-4 py-3">
+      <header
+        className="lg:hidden sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur px-4 py-3"
+        style={{
+          paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))",
+          paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+          paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
+        }}
+      >
         <div className="min-w-0">
           <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted">
             DaintyHand Admin
@@ -139,7 +146,7 @@ export function AdminShell({
         <Button
           variant="outline"
           size="icon"
-          className="shrink-0 h-10 w-10"
+          className="shrink-0 h-11 w-11"
           onClick={() => setMenuOpen(true)}
           aria-label="Open menu"
         >
@@ -170,20 +177,28 @@ export function AdminShell({
         </SheetContent>
       </Sheet>
 
-      <main className="flex-1 min-w-0 p-4 pb-24 md:p-10 md:pb-10">{children}</main>
+      <main className="flex-1 min-w-0 max-w-full p-4 pb-28 sm:p-6 sm:pb-28 lg:p-10 lg:pb-10">
+        {children}
+      </main>
 
       {/* Mobile bottom nav */}
       <nav
-        className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur"
+        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}
       >
-        <div className="flex overflow-x-auto overscroll-x-contain px-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div
+          className="flex overflow-x-auto overscroll-x-contain px-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{
+            paddingLeft: "max(0.25rem, env(safe-area-inset-left, 0px))",
+            paddingRight: "max(0.25rem, env(safe-area-inset-right, 0px))",
+          }}
+        >
           {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeOptions={item.exact ? { exact: true } : undefined}
-              className="flex min-w-[4.5rem] shrink-0 flex-col items-center justify-center gap-0.5 px-2 py-2 text-[10px] text-muted transition-colors [&.active]:text-foreground"
+              className="flex min-h-12 min-w-[4.5rem] shrink-0 flex-col items-center justify-center gap-0.5 px-2 py-2 text-[10px] text-muted transition-colors [&.active]:text-foreground"
             >
               <item.icon className="w-5 h-5" />
               <span className="whitespace-nowrap">{item.shortLabel}</span>

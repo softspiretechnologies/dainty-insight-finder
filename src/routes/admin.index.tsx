@@ -69,7 +69,7 @@ function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3">
         <StatCard
           label="Products"
           value={String(productCount)}
@@ -127,7 +127,7 @@ function AdminDashboard() {
           href="https://web.whatsapp.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest border border-border rounded-full px-4 py-2.5 hover:border-foreground transition-colors shrink-0"
+          className="inline-flex min-h-11 w-full sm:w-auto items-center justify-center gap-2 text-xs font-semibold uppercase tracking-widest border border-border rounded-full px-4 py-2.5 hover:border-foreground transition-colors shrink-0"
         >
           Open WhatsApp
           <ArrowRight className="w-3 h-3" />

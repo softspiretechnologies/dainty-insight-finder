@@ -307,6 +307,7 @@ function AdminSettingsPage() {
               autoComplete="current-password"
               value={currentPassword}
               onChange={(event) => setCurrentPassword(event.target.value)}
+              className="h-11"
             />
           </AdminField>
           <AdminField
@@ -321,6 +322,7 @@ function AdminSettingsPage() {
               autoComplete="new-password"
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
+              className="h-11"
             />
           </AdminField>
           <AdminField label="Confirm new password" htmlFor="confirmPassword" required>
@@ -330,18 +332,29 @@ function AdminSettingsPage() {
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
+              className="h-11"
             />
           </AdminField>
           {accountError ? <FormErrorBanner message={accountError} /> : null}
-          <Button type="submit" disabled={accountLoading}>
+          <Button type="submit" disabled={accountLoading} className="w-full sm:w-auto">
             {accountLoading ? "Changing…" : "Change password"}
           </Button>
         </form>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button type="button" variant="outline" onClick={() => endSession(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => endSession(false)}
+          >
             Log out current session
           </Button>
-          <Button type="button" variant="outline" onClick={() => endSession(true)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => endSession(true)}
+          >
             Log out all sessions
           </Button>
         </div>

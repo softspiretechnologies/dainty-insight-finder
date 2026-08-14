@@ -95,18 +95,27 @@ export function FloatingWhatsApp({
       {/* Chat panel */}
       {open && (
         <div
-          className="fixed bottom-20 right-4 md:right-8 z-50 w-[min(340px,calc(100vw-2rem))] rounded-2xl border border-border bg-background shadow-2xl flex flex-col overflow-hidden"
-          style={{ maxHeight: "min(520px, calc(100dvh - 6rem))" }}
+          role="dialog"
+          aria-label="DaintyHand WhatsApp assistant"
+          data-testid="whatsapp-panel"
+          className="fixed left-[max(1rem,env(safe-area-inset-left,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] sm:left-auto sm:w-[340px] md:right-[max(2rem,env(safe-area-inset-right,0px))] z-50 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-background shadow-2xl flex flex-col overflow-hidden"
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
+            maxHeight:
+              "min(520px, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 6rem))",
+          }}
         >
           {/* Header */}
           <div className="bg-foreground text-background px-4 py-3 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="size-8 rounded-full bg-primary grid place-items-center">
                 <MessageCircle className="size-4" strokeWidth={1.5} />
               </div>
-              <div>
-                <p className="text-[12px] font-semibold leading-none">{site.name}</p>
-                <p className="text-[10px] text-background/60 mt-0.5">Usually replies quickly</p>
+              <div className="min-w-0">
+                <p className="truncate text-[12px] font-semibold leading-none">{site.name}</p>
+                <p className="truncate text-[10px] text-background/60 mt-0.5">
+                  Usually replies quickly
+                </p>
               </div>
             </div>
             <button
@@ -114,7 +123,7 @@ export function FloatingWhatsApp({
                 setOpen(false);
                 setScreen("home"); /* reset only on explicit close */
               }}
-              className="text-background/60 hover:text-background transition-colors"
+              className="-my-2 -mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-full text-background/60 hover:bg-background/10 hover:text-background transition-colors"
               aria-label="Close chat"
             >
               <X className="size-4" />
@@ -122,7 +131,11 @@ export function FloatingWhatsApp({
           </div>
 
           {/* Body */}
-          <div ref={bodyRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-surface/40">
+          <div
+            ref={bodyRef}
+            data-testid="whatsapp-panel-body"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3 bg-surface/40"
+          >
             {/* Bot messages */}
             {screens[screen].messages.map((m, i) => (
               <div key={i} className="flex gap-2 items-end">
@@ -132,7 +145,7 @@ export function FloatingWhatsApp({
                   </div>
                 )}
                 {i > 0 && <div className="size-6 shrink-0" />}
-                <div className="bg-background border border-border rounded-2xl rounded-bl-sm px-3 py-2 text-[12px] leading-relaxed max-w-[85%]">
+                <div className="max-w-[85%] break-words bg-background border border-border rounded-2xl rounded-bl-sm px-3 py-2 text-[12px] leading-relaxed">
                   {m.text.replace("${site.founder}", founder)}
                 </div>
               </div>
@@ -147,7 +160,7 @@ export function FloatingWhatsApp({
                     to="/catalog"
                     search={{ category: c.id }}
                     onClick={() => setOpen(false)}
-                    className="bg-background border border-border rounded-xl px-3 py-2.5 text-[11px] font-medium hover:border-foreground hover:bg-surface transition-colors text-left leading-tight"
+                    className="flex min-h-11 min-w-0 items-center break-words bg-background border border-border rounded-xl px-3 py-2.5 text-[11px] font-medium hover:border-foreground hover:bg-surface transition-colors text-left leading-tight"
                   >
                     {c.label}
                   </Link>
@@ -155,7 +168,7 @@ export function FloatingWhatsApp({
                 <Link
                   to="/catalog"
                   onClick={() => setOpen(false)}
-                  className="col-span-2 bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors"
+                  className="col-span-2 flex min-h-11 items-center justify-center break-words bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors"
                 >
                   View full catalog →
                 </Link>
@@ -180,7 +193,7 @@ export function FloatingWhatsApp({
                   href={waLink(`Hi ${founder}, I'd like to start an order.`)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors"
+                  className="flex min-h-11 w-full items-center justify-center break-words bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors"
                 >
                   Start now on WhatsApp →
                 </a>
@@ -202,7 +215,7 @@ export function FloatingWhatsApp({
                   href={waLink(`Hi ${founder}, I'd like to enquire about delivery to my location.`)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors mt-2"
+                  className="flex min-h-11 w-full items-center justify-center break-words bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors mt-2"
                 >
                   Ask about delivery →
                 </a>
@@ -214,7 +227,7 @@ export function FloatingWhatsApp({
                 <Link
                   to="/custom"
                   onClick={() => setOpen(false)}
-                  className="block w-full bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors"
+                  className="flex min-h-11 w-full items-center justify-center break-words bg-foreground text-background rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-primary transition-colors"
                 >
                   Fill custom order form →
                 </Link>
@@ -222,7 +235,7 @@ export function FloatingWhatsApp({
                   href={waLink(`Hi ${founder}, I'd like to start a custom order.`)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full border border-foreground rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-surface transition-colors"
+                  className="flex min-h-11 w-full items-center justify-center break-words border border-foreground rounded-xl px-3 py-2.5 text-[11px] font-semibold text-center hover:bg-surface transition-colors"
                 >
                   Message directly on WhatsApp →
                 </a>
@@ -245,7 +258,7 @@ export function FloatingWhatsApp({
                   <button
                     key={opt.s}
                     onClick={() => go(opt.s)}
-                    className="flex items-center justify-between gap-1 border border-border rounded-xl px-3 py-2 text-[11px] font-medium hover:border-foreground hover:bg-surface transition-colors text-left"
+                    className="flex min-h-11 min-w-0 items-center justify-between gap-1 border border-border rounded-xl px-3 py-2 text-[11px] font-medium hover:border-foreground hover:bg-surface transition-colors text-left"
                   >
                     {opt.label}
                     <ChevronRight className="size-3 shrink-0 text-muted" />
@@ -255,7 +268,7 @@ export function FloatingWhatsApp({
                   href={waLink(`Hi ${founder}, I'd like to enquire.`)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-1 bg-foreground text-background border border-foreground rounded-xl px-3 py-2 text-[11px] font-semibold hover:bg-primary transition-colors"
+                  className="flex min-h-11 min-w-0 items-center justify-between gap-1 bg-foreground text-background border border-foreground rounded-xl px-3 py-2 text-[11px] font-semibold hover:bg-primary transition-colors"
                 >
                   Chat on WhatsApp
                   <ChevronRight className="size-3 shrink-0" />
@@ -264,7 +277,7 @@ export function FloatingWhatsApp({
             ) : (
               <button
                 onClick={back}
-                className="flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground transition-colors"
+                className="flex min-h-11 items-center gap-1.5 text-[11px] text-muted hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="size-3" />
                 Back
@@ -279,7 +292,8 @@ export function FloatingWhatsApp({
         onClick={() => setOpen((o) => !o)}
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
         aria-label={open ? "Close chat" : `Chat with ${founder} on WhatsApp`}
-        className="fixed right-4 md:right-8 md:bottom-8! z-50 grid place-items-center size-12 bg-foreground text-background rounded-full shadow-lg hover:bg-primary hover:scale-[1.02] transition-all"
+        data-testid="whatsapp-toggle"
+        className="fixed right-[max(1rem,env(safe-area-inset-right,0px))] md:right-[max(2rem,env(safe-area-inset-right,0px))] z-50 grid place-items-center size-12 bg-foreground text-background rounded-full shadow-lg hover:bg-primary hover:scale-[1.02] transition-all"
       >
         {open ? (
           <X className="size-5" strokeWidth={1.5} />

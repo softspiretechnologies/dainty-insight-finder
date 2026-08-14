@@ -16,7 +16,13 @@ export function PageShell({ children }: { children: ReactNode }) {
         Skip to main content
       </a>
       <SiteHeader />
-      <main id="main-content">{children}</main>
+      <main
+        id="main-content"
+        className="min-w-0 max-w-full lg:pb-0!"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}
+      >
+        {children}
+      </main>
       <SiteFooter />
       <FloatingWhatsApp categories={categories} siteSettings={siteSettings} />
     </div>

@@ -174,7 +174,7 @@ function AdminProductsPage() {
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none">
             {STATUS_FILTERS.map((option) => (
               <FilterChip
                 key={option.id}
@@ -186,7 +186,7 @@ function AdminProductsPage() {
             ))}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none">
             {sortedCategories.map((category) => {
               const active = selectedCategories.has(category.id);
               return (
@@ -228,7 +228,7 @@ function AdminProductsPage() {
 
       {/* Mobile card list */}
       {filtered.length > 0 && (
-        <div className="md:hidden space-y-3">
+        <div className="xl:hidden space-y-3" data-testid="product-card-list">
           {filtered.map((product) => (
             <article
               key={product.id}
@@ -267,11 +267,11 @@ function AdminProductsPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2 px-4 pb-4">
+              <div className="flex flex-wrap gap-2 px-4 pb-4">
                 <Button
                   variant="outline"
                   className={cn(
-                    "h-10 px-3.5 shrink-0",
+                    "h-11 min-w-11 px-3.5 shrink-0",
                     product.isActive
                       ? "text-emerald-700 border-emerald-300/60 bg-emerald-50 hover:bg-emerald-100"
                       : "text-muted hover:text-foreground hover:border-border",
@@ -296,7 +296,7 @@ function AdminProductsPage() {
                 <Button
                   variant="outline"
                   className={cn(
-                    "h-10 px-3.5 shrink-0",
+                    "h-11 min-w-11 px-3.5 shrink-0",
                     product.featuredOnHomepage
                       ? "text-primary border-primary/40 bg-primary/5 hover:bg-primary/10"
                       : "text-muted hover:text-primary hover:border-primary/40",
@@ -324,7 +324,7 @@ function AdminProductsPage() {
                     />
                   )}
                 </Button>
-                <Button variant="outline" className="flex-1 h-10 text-sm" asChild>
+                <Button variant="outline" className="min-w-[7rem] flex-1 h-11 text-sm" asChild>
                   <Link to="/admin/products/$productId" params={{ productId: String(product.id) }}>
                     <Pencil className="w-3.5 h-3.5 mr-2" />
                     Edit
@@ -332,7 +332,7 @@ function AdminProductsPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-10 px-3.5 text-destructive hover:text-destructive hover:border-destructive/50"
+                  className="h-11 min-w-11 px-3.5 text-destructive hover:text-destructive hover:border-destructive/50"
                   disabled={deletingId === product.id}
                   onClick={() => handleDelete(product.id, product.name)}
                   aria-label={`Delete ${product.name}`}
@@ -351,8 +351,11 @@ function AdminProductsPage() {
 
       {/* Desktop table */}
       {filtered.length > 0 && (
-        <div className="hidden md:block border border-border rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div
+          className="hidden xl:block max-w-full overflow-x-auto border border-border rounded-xl"
+          data-testid="product-table"
+        >
+          <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-surface/40 border-b border-border">
               <tr>
                 <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted w-16">
@@ -534,7 +537,7 @@ function FilterChip({
       type="button"
       onClick={onSelect}
       className={cn(
-        "inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap",
+        "inline-flex min-h-10 shrink-0 items-center rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap",
         active
           ? "bg-foreground text-background border-foreground"
           : "bg-background text-muted border-border hover:text-foreground hover:border-foreground",
@@ -570,7 +573,7 @@ function CategoryChip({
         onClick={onSelect}
         disabled={active}
         className={cn(
-          "whitespace-nowrap py-2 pl-3",
+          "min-h-10 whitespace-nowrap py-2 pl-3",
           active ? "pr-1 cursor-default" : "pr-3 hover:text-foreground hover:border-foreground",
         )}
       >
@@ -580,7 +583,7 @@ function CategoryChip({
         <button
           type="button"
           onClick={onRemove}
-          className="mr-1.5 grid h-5 w-5 place-items-center rounded-full hover:bg-background/20"
+          className="mr-0.5 grid h-10 w-10 place-items-center rounded-full hover:bg-background/20"
           aria-label={`Remove ${String(children)} filter`}
         >
           <X className="w-3 h-3" />

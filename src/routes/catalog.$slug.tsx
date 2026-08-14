@@ -132,11 +132,11 @@ function ProductPage() {
               />
             </div>
 
-            <div className="lg:sticky lg:top-24">
+            <div className="min-w-0 lg:sticky lg:top-24">
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
                 {category?.label}
               </span>
-              <h1 className="font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-3 mb-5 md:mb-6 leading-[0.95] text-balance">
+              <h1 className="break-words font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-3 mb-5 md:mb-6 leading-[0.95] text-balance">
                 {product.name}
               </h1>
               <p className="text-sm text-muted leading-relaxed mb-8 md:mb-10 text-pretty whitespace-pre-line">
@@ -147,7 +147,7 @@ function ProductPage() {
                 {details.map((d) => (
                   <li key={d} className="flex gap-3 text-sm">
                     <span className="font-mono text-[10px] text-muted pt-1">·</span>
-                    <span>{d}</span>
+                    <span className="min-w-0 break-words">{d}</span>
                   </li>
                 ))}
               </ul>
@@ -190,7 +190,7 @@ function ProductPage() {
                     source_page: "product",
                   })
                 }
-                className="inline-flex w-full sm:w-auto items-center justify-center gap-4 bg-foreground text-background px-6 sm:px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
+                className="inline-flex min-h-11 w-full sm:w-auto min-w-0 items-center justify-center gap-3 break-words bg-foreground text-background px-5 sm:px-8 py-4 rounded-full text-center text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
               >
                 Discuss this design on WhatsApp
                 <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
@@ -200,23 +200,23 @@ function ProductPage() {
                 made.
               </p>
 
-              <div className="mt-8 pt-6 border-t border-border flex flex-wrap gap-4 text-xs">
+              <div className="mt-8 min-w-0 pt-6 border-t border-border flex flex-wrap gap-4 text-xs">
                 <Link
                   to="/catalog"
                   search={{ category: product.category }}
-                  className="text-muted hover:text-primary transition-colors underline underline-offset-4"
+                  className="min-w-0 break-words text-muted hover:text-primary transition-colors underline underline-offset-4"
                 >
                   More from {category?.label} →
                 </Link>
                 <Link
                   to="/services"
-                  className="text-muted hover:text-primary transition-colors underline underline-offset-4"
+                  className="min-w-0 break-words text-muted hover:text-primary transition-colors underline underline-offset-4"
                 >
                   Explore Celebration Shoots &amp; Styling →
                 </Link>
                 <Link
                   to="/blog"
-                  className="text-muted hover:text-primary transition-colors underline underline-offset-4"
+                  className="min-w-0 break-words text-muted hover:text-primary transition-colors underline underline-offset-4"
                 >
                   Read Wedding &amp; Gifting Guides →
                 </Link>

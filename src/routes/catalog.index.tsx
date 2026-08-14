@@ -12,6 +12,7 @@ import { useSiteContact } from "@/hooks/useSiteContact";
 import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
+import { getPaginationItems, type PaginationItem } from "@/lib/pagination";
 
 const PAGE_SIZE = 12;
 
@@ -161,7 +162,7 @@ function CatalogPage() {
       </section>
 
       <section className="px-5 md:px-6 border-y border-border">
-        <div className="max-w-7xl mx-auto flex gap-1.5 md:gap-2 py-3 md:py-6 overflow-x-auto md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="max-w-7xl mx-auto flex gap-1.5 md:gap-2 py-3 md:py-6 overflow-x-auto overscroll-x-contain md:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {sortedCategories.map((category) => {
             const active = selectedCategories.has(category.id);
             return (
@@ -179,9 +180,9 @@ function CatalogPage() {
       </section>
 
       <section className="px-5 md:px-6 py-10 md:py-16">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-8 gap-y-10 md:gap-y-16">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-8 gap-y-10 md:gap-y-16">
           {visible.map((p, index) => (
-            <article key={p.slug} className="group flex flex-col">
+            <article key={p.slug} className="group flex min-w-0 max-w-full flex-col">
               <Link to="/catalog/$slug" params={{ slug: p.slug }} className="block">
                 <div className="aspect-[4/5] overflow-hidden bg-surface mb-3 md:mb-5">
                   <OptimizedImage
@@ -200,11 +201,11 @@ function CatalogPage() {
                   {categories.find((c) => c.id === p.category)?.label}
                 </span>
                 <Link to="/catalog/$slug" params={{ slug: p.slug }}>
-                  <h3 className="font-display text-base sm:text-xl italic leading-tight mt-1.5 hover:text-primary transition-colors">
+                  <h3 className="break-words font-display text-base sm:text-xl italic leading-tight mt-1.5 hover:text-primary transition-colors">
                     {p.name}
                   </h3>
                 </Link>
-                <p className="text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">
+                <p className="break-words text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">
                   {p.blurb}
                 </p>
                 <div className="mt-3">
@@ -226,38 +227,41 @@ function CatalogPage() {
         ) : null}
 
         {totalPages > 1 && (
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 mt-10 md:mt-14">
+          <nav
+            className="max-w-7xl mx-auto flex max-w-full items-center justify-center gap-1.5 sm:gap-2 mt-10 md:mt-14"
+            aria-label="Catalog pagination"
+          >
             <button
               onClick={() => handlePage(Math.max(1, safePage - 1))}
               disabled={safePage === 1}
-              className="grid place-items-center w-9 h-9 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="grid place-items-center w-11 h-11 shrink-0 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
               aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => handlePage(p)}
-                className={`grid place-items-center w-9 h-9 rounded-full text-[11px] font-medium transition-colors ${
-                  p === safePage
-                    ? "bg-foreground text-background"
-                    : "border border-border text-muted hover:border-foreground hover:text-foreground"
-                }`}
-                aria-label={`Page ${p}`}
-              >
-                {p}
-              </button>
-            ))}
+            <div className="flex min-w-0 items-center gap-1 sm:hidden">
+              <PaginationItems
+                items={getPaginationItems(safePage, totalPages, 0)}
+                currentPage={safePage}
+                onSelect={handlePage}
+              />
+            </div>
+            <div className="hidden min-w-0 items-center gap-2 sm:flex">
+              <PaginationItems
+                items={getPaginationItems(safePage, totalPages, 1)}
+                currentPage={safePage}
+                onSelect={handlePage}
+              />
+            </div>
             <button
               onClick={() => handlePage(Math.min(totalPages, safePage + 1))}
               disabled={safePage === totalPages}
-              className="grid place-items-center w-9 h-9 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="grid place-items-center w-11 h-11 shrink-0 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
               aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-          </div>
+          </nav>
         )}
       </section>
 
@@ -281,6 +285,43 @@ function CatalogPage() {
         </div>
       </section>
     </PageShell>
+  );
+}
+
+function PaginationItems({
+  items,
+  currentPage,
+  onSelect,
+}: {
+  items: PaginationItem[];
+  currentPage: number;
+  onSelect: (page: number) => void;
+}) {
+  return items.map((item, index) =>
+    item === "ellipsis" ? (
+      <span
+        key={`ellipsis-${index}`}
+        className="grid h-11 w-5 shrink-0 place-items-center text-xs text-muted"
+        aria-hidden="true"
+      >
+        …
+      </span>
+    ) : (
+      <button
+        key={item}
+        type="button"
+        onClick={() => onSelect(item)}
+        className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-[11px] font-medium transition-colors ${
+          item === currentPage
+            ? "bg-foreground text-background"
+            : "border border-border text-muted hover:border-foreground hover:text-foreground"
+        }`}
+        aria-label={`Page ${item}`}
+        aria-current={item === currentPage ? "page" : undefined}
+      >
+        {item}
+      </button>
+    ),
   );
 }
 
@@ -309,7 +350,7 @@ function CategoryChip({
         onClick={onSelect}
         disabled={active}
         className={cn(
-          "whitespace-nowrap py-1.5 md:py-2 pl-3 md:pl-4",
+          "min-h-10 whitespace-nowrap py-2 pl-3 md:pl-4",
           active ? "pr-1 cursor-default" : "pr-3 md:pr-4 hover:text-foreground",
         )}
       >
@@ -319,7 +360,7 @@ function CategoryChip({
         <button
           type="button"
           onClick={onRemove}
-          className="mr-1.5 grid h-5 w-5 place-items-center rounded-full hover:bg-background/20"
+          className="mr-0.5 grid h-10 w-10 place-items-center rounded-full hover:bg-background/20"
           aria-label={`Remove ${String(children)} filter`}
         >
           <X className="w-3 h-3" />

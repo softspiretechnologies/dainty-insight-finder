@@ -92,7 +92,7 @@ function BlogPostPage() {
             ← Back to Journal
           </Link>
 
-          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted mb-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted mb-4">
             <span className="text-primary">{post.category}</span>
             <span>·</span>
             <span>{post.date}</span>
@@ -100,16 +100,16 @@ function BlogPostPage() {
             <span>{post.readTime}</span>
           </div>
 
-          <h1 className="font-display text-3xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] mb-8 text-balance">
+          <h1 className="break-words font-display text-3xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] mb-8 text-balance">
             {post.title}
           </h1>
 
-          <div className="border-t border-b border-border py-4 mb-10 flex items-center justify-between text-xs text-muted">
+          <div className="border-t border-b border-border py-4 mb-10 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-muted">
             <span>Written by {post.author}</span>
             <span>Handcrafted in Perinthalmanna, Kerala</span>
           </div>
 
-          <div className="space-y-6 text-sm sm:text-base text-foreground/90 leading-relaxed font-body">
+          <div className="space-y-6 break-words text-sm sm:text-base text-foreground/90 leading-relaxed font-body">
             {post.content.map((paragraph, index) => (
               <p key={index}>{paragraph}</p>
             ))}

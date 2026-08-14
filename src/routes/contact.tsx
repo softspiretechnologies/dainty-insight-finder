@@ -95,7 +95,7 @@ function ContactPage() {
                 WhatsApp
               </span>
               <div>
-                <p className="font-display text-2xl md:text-3xl italic text-primary mb-2">
+                <p className="break-words font-display text-2xl md:text-3xl italic text-primary mb-2">
                   Chat with {site.founder}
                 </p>
                 <p className="text-[11px] text-background/60 uppercase tracking-[0.2em]">
@@ -116,7 +116,7 @@ function ContactPage() {
                 Instagram
               </span>
               <div>
-                <p className="font-display text-2xl md:text-3xl italic group-hover:text-primary transition-colors mb-2">
+                <p className="break-words font-display text-2xl md:text-3xl italic group-hover:text-primary transition-colors mb-2">
                   {site.instagramHandle}
                 </p>
                 <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
@@ -134,7 +134,7 @@ function ContactPage() {
                 Email
               </span>
               <div>
-                <p className="font-display text-xl md:text-2xl italic group-hover:text-primary transition-colors mb-2">
+                <p className="break-all font-display text-xl md:text-2xl italic group-hover:text-primary transition-colors mb-2">
                   {site.email}
                 </p>
                 <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
@@ -149,7 +149,9 @@ function ContactPage() {
                 Studio
               </span>
               <div>
-                <p className="font-display text-xl md:text-2xl italic mb-2">{site.location}</p>
+                <p className="break-words font-display text-xl md:text-2xl italic mb-2">
+                  {site.location}
+                </p>
                 <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
                   By appointment only
                 </p>

@@ -77,12 +77,12 @@ function BlogIndexPage() {
               className="bg-surface/50 border border-border rounded-sm p-6 flex flex-col justify-between group hover:border-foreground/30 transition-all"
             >
               <div>
-                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-muted mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted mb-4">
                   <span className="text-primary">{post.category}</span>
                   <span>{post.readTime}</span>
                 </div>
                 <Link to="/blog/$slug" params={{ slug: post.slug }}>
-                  <h2 className="font-display text-xl sm:text-2xl italic leading-tight mb-3 group-hover:text-primary transition-colors">
+                  <h2 className="break-words font-display text-xl sm:text-2xl italic leading-tight mb-3 group-hover:text-primary transition-colors">
                     {post.title}
                   </h2>
                 </Link>
@@ -91,7 +91,7 @@ function BlogIndexPage() {
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-between">
+              <div className="pt-4 border-t border-border flex flex-wrap items-center justify-between gap-3">
                 <span className="font-mono text-[10px] text-muted">{post.date}</span>
                 <Link
                   to="/blog/$slug"

@@ -174,20 +174,20 @@ export async function getProductBySlug(slug: string): Promise<CatalogProduct | u
     return staticProducts.find((p) => p.slug === slug);
   }
 
-  return getCached(`product:${slug}`, () =>
-    withDbFallback(
-      "getProductBySlug",
-      async () => {
-        const db = getDb();
-        const rows = await db
-          .select()
-          .from(productsTable)
-          .where(and(eq(productsTable.slug, slug), eq(productsTable.isActive, true)))
-          .limit(1);
-        return rows[0] ? mapProduct(rows[0]) : undefined;
-      },
-      () => staticProducts.find((p) => p.slug === slug),
-    ),
+  // Product visibility changes must take effect immediately. An in-memory cache
+  // cannot be invalidated reliably across multiple server workers/module graphs.
+  return withDbFallback(
+    "getProductBySlug",
+    async () => {
+      const db = getDb();
+      const rows = await db
+        .select()
+        .from(productsTable)
+        .where(and(eq(productsTable.slug, slug), eq(productsTable.isActive, true)))
+        .limit(1);
+      return rows[0] ? mapProduct(rows[0]) : undefined;
+    },
+    () => staticProducts.find((p) => p.slug === slug),
   );
 }
 
