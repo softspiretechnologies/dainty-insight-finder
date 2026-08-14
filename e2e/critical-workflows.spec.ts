@@ -10,8 +10,14 @@ const fixture = path.resolve(
   "../src/assets/gallery-1.jpg",
 );
 
+async function waitForHydration(page: Page) {
+  await expect(page.locator('html[data-hydrated="true"]')).toHaveCount(1);
+}
+
 async function login(page: Page) {
   await page.goto("/admin/login");
+  await waitForHydration(page);
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
   await page.getByLabel("Email address").fill(adminEmail);
   await page.getByLabel("Password").fill(adminPassword);
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -22,10 +28,14 @@ test("admin authentication rejects invalid credentials and revokes the current s
   page,
 }) => {
   await page.goto("/admin/login");
+  await waitForHydration(page);
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
   await page.getByLabel("Email address").fill(adminEmail);
   await page.getByLabel("Password").fill("incorrect-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("alert")).toContainText("Invalid email or password");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Invalid email or password" }),
+  ).toBeVisible();
 
   await login(page);
   await expect(page.getByRole("heading", { name: /Dashboard/i })).toBeVisible();
@@ -51,6 +61,7 @@ test("admin can create, edit, and hide a product", async ({ page }) => {
 
   await login(page);
   await page.goto("/admin/products/new");
+  await waitForHydration(page);
   await page.getByLabel("Product name").fill(originalName);
   await page.getByLabel("Category").selectOption("hampers");
   await page.getByLabel("Short blurb").fill("Created by isolated E2E test data");
@@ -66,6 +77,7 @@ test("admin can create, edit, and hide a product", async ({ page }) => {
   await expect(page.getByRole("heading", { name: originalName })).toBeVisible();
 
   await page.goto("/admin/products");
+  await waitForHydration(page);
   await page
     .locator("tr")
     .filter({ hasText: originalName })
@@ -77,6 +89,7 @@ test("admin can create, edit, and hide a product", async ({ page }) => {
   await expect(page.getByRole("heading", { name: editedName })).toBeVisible();
 
   await page.goto("/admin/products");
+  await waitForHydration(page);
   await page
     .locator("tr")
     .filter({ hasText: editedName })
@@ -90,6 +103,7 @@ test("admin can create, edit, and hide a product", async ({ page }) => {
 
 test("catalog filters and opens a product", async ({ page }) => {
   await page.goto("/catalog");
+  await waitForHydration(page);
   await page.getByRole("button", { name: "Hampers" }).click();
   await expect(page).toHaveURL(/category=hampers/);
   await page.locator("article a").first().click();

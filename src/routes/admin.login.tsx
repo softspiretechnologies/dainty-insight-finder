@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
 
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
@@ -25,6 +25,11 @@ function AdminLoginPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
@@ -77,6 +82,7 @@ function AdminLoginPage() {
         <form
           onSubmit={handleSubmit}
           noValidate
+          data-hydrated={hydrated ? "true" : "false"}
           className="border border-border rounded-2xl p-6 sm:p-7 bg-surface/30 space-y-4"
         >
           <AdminField label="Email address" htmlFor="email" required error={fieldErrors.email}>
@@ -111,7 +117,7 @@ function AdminLoginPage() {
 
           {formError ? <FormErrorBanner message={formError} /> : null}
 
-          <Button type="submit" className="w-full h-11" disabled={loading}>
+          <Button type="submit" className="w-full h-11" disabled={!hydrated || loading}>
             {loading ? (
               <span className="inline-flex items-center gap-2">
                 <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
