@@ -6,17 +6,11 @@ import { getDb } from "@/db/index.server";
 import { siteSettings, testimonials as testimonialsTable } from "@/db/schema";
 import { defaultTestimonialsHeading } from "@/data/testimonials-seed";
 import { testimonialInputSchema, testimonialsSectionInputSchema } from "@/lib/admin-schemas";
-import { getAdminSession } from "@/lib/auth.server";
+import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 
-function requireAdmin() {
-  const session = getAdminSession();
-  if (!session) throw new Error("Unauthorized");
-  return session;
-}
-
 export const listAdminTestimonialsData = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdmin();
+  await requireAdmin();
   const db = getDb();
   const [rows, settingsRows] = await Promise.all([
     db.select().from(testimonialsTable).orderBy(asc(testimonialsTable.sortOrder)),
@@ -34,7 +28,7 @@ export const listAdminTestimonialsData = createServerFn({ method: "GET" }).handl
 export const saveAdminTestimonial = createServerFn({ method: "POST" })
   .validator(testimonialInputSchema)
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const values = {
       quote: data.quote.trim(),
@@ -67,7 +61,7 @@ export const saveAdminTestimonial = createServerFn({ method: "POST" })
 export const deleteAdminTestimonial = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int().positive() }))
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     await db.delete(testimonialsTable).where(eq(testimonialsTable.id, data.id));
     clearDataCache();
@@ -77,7 +71,7 @@ export const deleteAdminTestimonial = createServerFn({ method: "POST" })
 export const saveAdminTestimonialsSection = createServerFn({ method: "POST" })
   .validator(testimonialsSectionInputSchema)
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const rows = await db.select().from(siteSettings).limit(1);
     const values = { testimonialsHeading: data.heading.trim() };

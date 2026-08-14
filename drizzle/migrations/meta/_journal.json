@@ -29,6 +29,20 @@
       "when": 1781407200000,
       "tag": "0003_add_product_homepage_featured",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1781410000000,
+      "tag": "0005_add_admin_session_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1781411000000,
+      "tag": "0006_add_admin_login_attempts",
+      "breakpoints": true
     }
   ]
 }

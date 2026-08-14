@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { resolveUploadFile } from "@/lib/uploads.server";
+import { isSafeRelativeUploadPath } from "@/lib/uploads-path";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/uploads/$")({
     handlers: {
       GET: async ({ params }) => {
         const relative = params._splat?.replace(/^\/+/, "");
-        if (!relative || relative.includes("..")) {
+        if (!relative || !isSafeRelativeUploadPath(relative)) {
           return new Response("Not found", { status: 404 });
         }
 

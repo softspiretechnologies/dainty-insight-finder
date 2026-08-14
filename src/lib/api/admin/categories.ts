@@ -5,18 +5,12 @@ import { getDb } from "@/db/index.server";
 import { categories as categoriesTable } from "@/db/schema";
 import { isValidUploadPath } from "@/lib/admin-upload-path";
 import { categoryInputSchema } from "@/lib/admin-schemas";
-import { getAdminSession } from "@/lib/auth.server";
+import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
 
-function requireAdmin() {
-  const session = getAdminSession();
-  if (!session) throw new Error("Unauthorized");
-  return session;
-}
-
 export const listAdminCategories = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdmin();
+  await requireAdmin();
   const db = getDb();
   return db.select().from(categoriesTable).orderBy(categoriesTable.sortOrder);
 });
@@ -24,7 +18,7 @@ export const listAdminCategories = createServerFn({ method: "GET" }).handler(asy
 export const saveAdminCategory = createServerFn({ method: "POST" })
   .validator(categoryInputSchema)
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
 
     let imagePath = "";
     if (data.existingImagePath) {

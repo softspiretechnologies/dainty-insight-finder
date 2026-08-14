@@ -7,22 +7,16 @@ import { defaultServicesPageContent, seedServices } from "@/data/services-seed";
 import { isValidUploadPath } from "@/lib/admin-upload-path";
 import { serviceInputSchema, servicesPageInputSchema } from "@/lib/admin-schemas";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
-import { getAdminSession } from "@/lib/auth.server";
+import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
-
-function requireAdmin() {
-  const session = getAdminSession();
-  if (!session) throw new Error("Unauthorized");
-  return session;
-}
 
 function parseBullets(raw: string) {
   return raw.split("\n").map(stripBulletPrefix).filter(Boolean);
 }
 
 export const listAdminServicesData = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdmin();
+  await requireAdmin();
   const db = getDb();
   const [serviceRows, settingsRows] = await Promise.all([
     db.select().from(servicesTable).orderBy(asc(servicesTable.sortOrder)),
@@ -56,7 +50,7 @@ export const listAdminServicesData = createServerFn({ method: "GET" }).handler(a
 export const saveAdminService = createServerFn({ method: "POST" })
   .validator(serviceInputSchema)
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
 
     let imagePath = "";
     if (data.existingImagePath) {
@@ -109,7 +103,7 @@ export const saveAdminService = createServerFn({ method: "POST" })
 export const saveAdminServicesPage = createServerFn({ method: "POST" })
   .validator(servicesPageInputSchema)
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const rows = await db.select().from(siteSettings).limit(1);
 

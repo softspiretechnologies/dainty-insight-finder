@@ -21,6 +21,17 @@ const statements = [
     \`sort_order\` int NOT NULL DEFAULT 0,
     CONSTRAINT \`testimonials_id\` PRIMARY KEY(\`id\`)
   )`,
+  `CREATE TABLE IF NOT EXISTS \`admin_login_attempts\` (
+    \`id\` int AUTO_INCREMENT NOT NULL,
+    \`scope\` varchar(16) NOT NULL,
+    \`attempt_key\` varchar(320) NOT NULL,
+    \`failure_count\` int NOT NULL DEFAULT 0,
+    \`window_started_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    \`locked_until\` timestamp NULL,
+    \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT \`admin_login_attempts_id\` PRIMARY KEY(\`id\`),
+    CONSTRAINT \`admin_login_attempts_scope_key\` UNIQUE(\`scope\`, \`attempt_key\`)
+  )`,
 ];
 
 const siteSettingsColumns: Array<{ name: string; ddl: string }> = [
@@ -54,6 +65,13 @@ const productColumns: Array<{ name: string; ddl: string }> = [
   {
     name: "homepage_sort_order",
     ddl: "ALTER TABLE `products` ADD `homepage_sort_order` int NOT NULL DEFAULT 0",
+  },
+];
+
+const adminUserColumns: Array<{ name: string; ddl: string }> = [
+  {
+    name: "session_version",
+    ddl: "ALTER TABLE `admin_users` ADD `session_version` int NOT NULL DEFAULT 0",
   },
 ];
 
@@ -91,6 +109,13 @@ async function main() {
       if (!(await columnExists(conn, "products", column.name))) {
         await conn.query(column.ddl);
         console.log(`Added products.${column.name}`);
+      }
+    }
+
+    for (const column of adminUserColumns) {
+      if (!(await columnExists(conn, "admin_users", column.name))) {
+        await conn.query(column.ddl);
+        console.log(`Added admin_users.${column.name}`);
       }
     }
   } finally {

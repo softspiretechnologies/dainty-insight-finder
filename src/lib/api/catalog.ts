@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { products as productsTable } from "@/db/schema";
-import { getAdminSession } from "@/lib/auth.server";
+import { requireAdmin } from "@/lib/auth.server";
 import {
   getCategories,
   getFeaturedHomepageProducts,
@@ -15,12 +15,6 @@ import {
   getSiteSettings,
   getTestimonialsSection,
 } from "@/lib/data.server";
-
-function requireAdmin() {
-  const session = getAdminSession();
-  if (!session) throw new Error("Unauthorized");
-  return session;
-}
 
 export const getRootPageData = createServerFn({ method: "GET" }).handler(async () => {
   const [categories, siteSettings] = await Promise.all([getCategories(), getSiteSettings()]);
@@ -40,7 +34,7 @@ export const getSitemapProducts = createServerFn({ method: "GET" }).handler(asyn
 );
 
 export const getAdminDashboardData = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdmin();
+  await requireAdmin();
   const db = getDb();
   const [row] = await db.select({ value: count() }).from(productsTable);
   return {

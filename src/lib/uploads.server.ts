@@ -3,6 +3,18 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { getServerConfig } from "@/lib/config.server";
+import {
+  assertValidImageUpload,
+  EXT_BY_MIME,
+  sanitizeUploadFilename,
+} from "@/lib/upload-validation";
+import {
+  bundledUploadsReadRoots,
+  isPathInsideRoot,
+  isSafeRelativeUploadPath,
+  resolveHostingerUploadsDir,
+  resolvePersistentUploadsDir,
+} from "@/lib/uploads-path";
 
 function getAppRoot() {
   const cwd = process.cwd();
@@ -13,36 +25,17 @@ function getAppRoot() {
   return cwd;
 }
 
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BYTES = 5 * 1024 * 1024;
-
-const EXT_BY_MIME: Record<string, string> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-};
-
-function hostingerDomainUploadsDir(cwd = process.cwd()) {
-  const marker = `${path.sep}hbuilds${path.sep}`;
-  const idx = cwd.indexOf(marker);
-  if (idx !== -1) return path.join(cwd.slice(0, idx), "uploads");
-  if (path.basename(cwd) === "nodejs") return path.join(cwd, "..", "uploads");
-  return null;
-}
-
 function uploadsWriteRoot() {
   const { uploadsDir } = getServerConfig();
-  if (uploadsDir) return uploadsDir;
-  return hostingerDomainUploadsDir() ?? path.join(process.cwd(), "..", "uploads");
+  return resolvePersistentUploadsDir(process.cwd(), uploadsDir);
 }
 
 function uploadsReadRoots() {
   const cwd = process.cwd();
   const roots = [
     uploadsWriteRoot(),
-    hostingerDomainUploadsDir(cwd),
-    path.join(cwd, "dist", "public", "uploads"),
-    path.join(cwd, "public", "uploads"),
+    resolveHostingerUploadsDir(cwd),
+    ...bundledUploadsReadRoots(cwd),
   ].filter((dir): dir is string => Boolean(dir));
 
   const seen = new Set<string>();
@@ -54,45 +47,16 @@ function uploadsReadRoots() {
   });
 }
 
-function sanitizeFilename(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9.-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
-}
-
 export function resolveUploadFile(relativePath: string) {
+  if (!isSafeRelativeUploadPath(relativePath)) return null;
+
   const relative = relativePath.replace(/^\/+/, "");
   for (const root of uploadsReadRoots()) {
     const filePath = path.join(root, relative);
-    const resolvedRoot = path.resolve(root);
-    if (!path.resolve(filePath).startsWith(resolvedRoot + path.sep)) continue;
+    if (!isPathInsideRoot(filePath, root)) continue;
     if (existsSync(filePath)) return filePath;
   }
   return null;
-}
-
-function validateImageBuffer(buffer: Buffer, mime: string) {
-  if (mime === "image/jpeg" && buffer[0] === 0xff && buffer[1] === 0xd8) return;
-  if (
-    mime === "image/png" &&
-    buffer[0] === 0x89 &&
-    buffer[1] === 0x50 &&
-    buffer[2] === 0x4e &&
-    buffer[3] === 0x47
-  )
-    return;
-  if (
-    mime === "image/webp" &&
-    buffer.length >= 12 &&
-    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
-    buffer.subarray(8, 12).toString("ascii") === "WEBP"
-  ) {
-    return;
-  }
-  throw new Error("File content does not match the declared image type");
 }
 
 async function mirrorUploadToPublicBundle(
@@ -113,18 +77,11 @@ export async function saveUploadedImageFromPayload(
   payload: { name: string; type: string; data: string },
   subdir: "products" | "categories" | "services",
 ) {
-  if (!ALLOWED_TYPES.has(payload.type)) {
-    throw new Error("Only JPEG, PNG and WebP images are allowed");
-  }
-
-  const buffer = Buffer.from(payload.data, "base64");
-  if (buffer.length > MAX_BYTES) {
-    throw new Error("Image must be 5 MB or smaller");
-  }
-  validateImageBuffer(buffer, payload.type);
+  const buffer = assertValidImageUpload(payload);
 
   const ext = EXT_BY_MIME[payload.type] ?? ".jpg";
-  const base = sanitizeFilename(path.basename(payload.name, path.extname(payload.name))) || "image";
+  const base =
+    sanitizeUploadFilename(path.basename(payload.name, path.extname(payload.name))) || "image";
   const filename = `${base}-${Date.now()}${ext}`;
   const dir = path.join(uploadsWriteRoot(), subdir);
   await mkdir(dir, { recursive: true });

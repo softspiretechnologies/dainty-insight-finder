@@ -1,25 +1,18 @@
 import path from "node:path";
 
+import {
+  buildUploadsDir as resolveBuildUploadsDir,
+  resolvePersistentUploadsDir,
+} from "../../src/lib/uploads-path";
+
 /** Build-time / seed target (bundled into dist/public/uploads). */
 export function buildUploadsDir() {
-  return path.join(process.cwd(), "public", "uploads");
-}
-
-function hostingerDomainUploadsDir(cwd = process.cwd()) {
-  const marker = `${path.sep}hbuilds${path.sep}`;
-  const idx = cwd.indexOf(marker);
-  if (idx !== -1) return path.join(cwd.slice(0, idx), "uploads");
-  if (path.basename(cwd) === "nodejs") return path.join(cwd, "..", "uploads");
-  return null;
+  return resolveBuildUploadsDir(process.cwd());
 }
 
 /** Persistent disk path for runtime admin uploads (survives redeploy). */
 export function persistentUploadsDir() {
-  const fromEnv = process.env.UPLOADS_DIR?.trim();
-  if (fromEnv) return fromEnv;
-
-  // Hostinger runs from …/hbuilds/current/nodejs — uploads live at the domain root.
-  return hostingerDomainUploadsDir() ?? path.join(process.cwd(), "..", "uploads");
+  return resolvePersistentUploadsDir(process.cwd(), process.env.UPLOADS_DIR);
 }
 
 export function allUploadTargets() {

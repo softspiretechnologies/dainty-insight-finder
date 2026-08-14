@@ -1,10 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 
 import { loginSchema } from "@/lib/admin-schemas";
 import {
   checkLoginRateLimit,
   clearLoginAttempts,
+  cleanupExpiredLoginAttempts,
+  getLoginClientIp,
   recordLoginFailure,
 } from "@/lib/admin-rate-limit.server";
 import {
@@ -17,20 +18,25 @@ import {
 export const loginAdmin = createServerFn({ method: "POST" })
   .validator(loginSchema)
   .handler(async ({ data }) => {
-    const rateLimitError = checkLoginRateLimit(data.email);
+    const ip = getLoginClientIp();
+    const rateLimitError = await checkLoginRateLimit(ip, data.email);
     if (rateLimitError) {
       return { ok: false as const, error: rateLimitError };
     }
 
     const session = await verifyAdminCredentials(data.email, data.password);
     if (!session) {
-      recordLoginFailure(data.email);
+      await recordLoginFailure(ip, data.email);
       return { ok: false as const, error: "Invalid email or password" };
     }
 
-    clearLoginAttempts(data.email);
+    await clearLoginAttempts(ip, data.email);
+    void cleanupExpiredLoginAttempts();
     setAdminSession(session);
-    return { ok: true as const, user: session };
+    return {
+      ok: true as const,
+      user: { userId: session.userId, email: session.email, name: session.name },
+    };
   });
 
 export const logoutAdmin = createServerFn({ method: "POST" }).handler(async () => {

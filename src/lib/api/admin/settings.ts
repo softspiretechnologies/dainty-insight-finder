@@ -4,19 +4,13 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/db/index.server";
 import { siteSettings } from "@/db/schema";
 import { settingsSchema } from "@/lib/admin-schemas";
-import { getAdminSession } from "@/lib/auth.server";
+import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 import { defaultServicesPageContent } from "@/data/services-seed";
 import { defaultTestimonialsHeading } from "@/data/testimonials-seed";
 
-function requireAdmin() {
-  const session = getAdminSession();
-  if (!session) throw new Error("Unauthorized");
-  return session;
-}
-
 export const getAdminSettings = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdmin();
+  await requireAdmin();
   const db = getDb();
   const rows = await db.select().from(siteSettings).limit(1);
   return rows[0] ?? null;
@@ -25,7 +19,7 @@ export const getAdminSettings = createServerFn({ method: "GET" }).handler(async 
 export const saveAdminSettings = createServerFn({ method: "POST" })
   .validator(settingsSchema)
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const rows = await db.select().from(siteSettings).limit(1);
 

@@ -1,4 +1,13 @@
-import { boolean, int, json, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  boolean,
+  int,
+  json,
+  mysqlTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 export const categories = mysqlTable("categories", {
   id: varchar("id", { length: 32 }).primaryKey(),
@@ -62,4 +71,21 @@ export const adminUsers = mysqlTable("admin_users", {
   email: varchar("email", { length: 256 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 256 }).notNull(),
   name: varchar("name", { length: 128 }).notNull(),
+  sessionVersion: int("session_version").notNull().default(0),
 });
+
+export const adminLoginAttempts = mysqlTable(
+  "admin_login_attempts",
+  {
+    id: int("id").primaryKey().autoincrement(),
+    scope: varchar("scope", { length: 16 }).notNull(),
+    attemptKey: varchar("attempt_key", { length: 320 }).notNull(),
+    failureCount: int("failure_count").notNull().default(0),
+    windowStartedAt: timestamp("window_started_at").notNull().defaultNow(),
+    lockedUntil: timestamp("locked_until"),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  },
+  (table) => ({
+    scopeKey: uniqueIndex("admin_login_attempts_scope_key").on(table.scope, table.attemptKey),
+  }),
+);

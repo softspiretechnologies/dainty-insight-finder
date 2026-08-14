@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
@@ -7,22 +7,19 @@ import { products as productsTable } from "@/db/schema";
 import { isValidUploadPath } from "@/lib/admin-upload-path";
 import { productInputSchema } from "@/lib/admin-schemas";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
-import { getAdminSession } from "@/lib/auth.server";
+import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
+import {
+  assertHomepageFeaturedCount,
+  featuredDisabledState,
+  wantsHomepageFeature,
+} from "@/lib/homepage-featured";
 import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
 import type { CategoryId } from "@/types/catalog";
-
-function requireAdmin() {
-  const session = getAdminSession();
-  if (!session) throw new Error("Unauthorized");
-  return session;
-}
 
 function parseDetails(raw: string) {
   return raw.split("\n").map(stripBulletPrefix).filter(Boolean);
 }
-
-const MAX_HOMEPAGE_FEATURED = 6;
 
 function isDuplicateKeyError(error: unknown) {
   return error instanceof Error && /duplicate|unique/i.test(error.message);
@@ -44,15 +41,11 @@ async function assertHomepageFeaturedLimit(
         : eq(productsTable.featuredOnHomepage, true),
     );
 
-  if (rows.length >= MAX_HOMEPAGE_FEATURED) {
-    throw new Error(
-      `Maximum ${MAX_HOMEPAGE_FEATURED} products can be featured on the homepage. Unfeature another product first.`,
-    );
-  }
+  assertHomepageFeaturedCount(rows.length);
 }
 
 export const listAdminProducts = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdmin();
+  await requireAdmin();
   const db = getDb();
   return db.select().from(productsTable).orderBy(productsTable.name);
 });
@@ -60,7 +53,7 @@ export const listAdminProducts = createServerFn({ method: "GET" }).handler(async
 export const getAdminProduct = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.number().int().positive() }))
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const rows = await db
       .select()
@@ -82,8 +75,8 @@ async function resolveHomepageFeaturedState(
 ) {
   const { isActive, featuredOnHomepage, excludeId, previousFeatured, previousSortOrder } = options;
 
-  if (!isActive || !featuredOnHomepage) {
-    return { featuredOnHomepage: false, homepageSortOrder: 0 };
+  if (!wantsHomepageFeature(isActive, featuredOnHomepage)) {
+    return featuredDisabledState();
   }
 
   await assertHomepageFeaturedLimit(db, true, excludeId);
@@ -105,7 +98,7 @@ async function resolveHomepageFeaturedState(
 export const saveAdminProduct = createServerFn({ method: "POST" })
   .validator(productInputSchema)
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
 
     const id = data.id === "new" ? undefined : data.id;
 
@@ -206,7 +199,7 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
 export const toggleAdminProductHomepageFeatured = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int().positive(), featured: z.boolean() }))
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const rows = await db
       .select()
@@ -246,7 +239,7 @@ export const toggleAdminProductHomepageFeatured = createServerFn({ method: "POST
 export const toggleAdminProductActive = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int().positive(), active: z.boolean() }))
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const rows = await db
       .select()
@@ -261,7 +254,7 @@ export const toggleAdminProductActive = createServerFn({ method: "POST" })
     } else {
       await db
         .update(productsTable)
-        .set({ isActive: false, featuredOnHomepage: false, homepageSortOrder: 0 })
+        .set({ isActive: false, ...featuredDisabledState() })
         .where(eq(productsTable.id, data.id));
     }
 
@@ -272,7 +265,7 @@ export const toggleAdminProductActive = createServerFn({ method: "POST" })
 export const deleteAdminProduct = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int().positive() }))
   .handler(async ({ data }) => {
-    requireAdmin();
+    await requireAdmin();
     const db = getDb();
     const rows = await db
       .select()
