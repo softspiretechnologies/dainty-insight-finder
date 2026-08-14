@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { cloneElement, isValidElement, type ReactNode } from "react";
 
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,16 @@ export function AdminField({
   children: ReactNode;
 }) {
   const errorId = `${htmlFor}-error`;
+  const descriptionId = error ? errorId : hint ? `${htmlFor}-hint` : undefined;
+  const control = isValidElement<{
+    "aria-describedby"?: string;
+    "aria-invalid"?: boolean | "true" | "false";
+  }>(children)
+    ? cloneElement(children, {
+        "aria-invalid": error ? true : children.props["aria-invalid"],
+        "aria-describedby": descriptionId ?? children.props["aria-describedby"],
+      })
+    : children;
 
   return (
     <div className="min-w-0 space-y-2" id={`field-${htmlFor}`}>
@@ -26,12 +36,7 @@ export function AdminField({
         {label}
         {required ? <span className="text-destructive ml-0.5">*</span> : null}
       </Label>
-      <div
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : hint ? `${htmlFor}-hint` : undefined}
-      >
-        {children}
-      </div>
+      <div>{control}</div>
       {hint && !error ? (
         <p id={`${htmlFor}-hint`} className="break-words text-xs text-muted">
           {hint}

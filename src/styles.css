@@ -17,8 +17,10 @@
 @theme {
   --color-background: #fdfbf7;
   --color-foreground: #2d2926;
-  --color-primary: #c17f6a;
-  --color-muted: #2d292699;
+  --color-primary: #985344;
+  --color-primary-foreground: #fdfbf7;
+  --color-accent-on-dark: #d49a86;
+  --color-muted: #68635f;
   --color-border: #2d292614;
   --color-surface: #f3efe7;
   --font-display: "Playfair Display", ui-serif, Georgia, serif;
@@ -84,7 +86,7 @@
     input,
     select,
     textarea {
-      font-size: 16px;
+      font-size: 16px !important;
     }
   }
 }

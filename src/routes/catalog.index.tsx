@@ -350,7 +350,7 @@ function CategoryChip({
         onClick={onSelect}
         disabled={active}
         className={cn(
-          "min-h-10 whitespace-nowrap py-2 pl-3 md:pl-4",
+          "min-h-11 whitespace-nowrap py-2 pl-3 md:pl-4",
           active ? "pr-1 cursor-default" : "pr-3 md:pr-4 hover:text-foreground",
         )}
       >
@@ -360,7 +360,7 @@ function CategoryChip({
         <button
           type="button"
           onClick={onRemove}
-          className="mr-0.5 grid h-10 w-10 place-items-center rounded-full hover:bg-background/20"
+          className="mr-0.5 grid h-11 w-11 place-items-center rounded-full hover:bg-background/20"
           aria-label={`Remove ${String(children)} filter`}
         >
           <X className="w-3 h-3" />

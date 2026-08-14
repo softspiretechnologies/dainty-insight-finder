@@ -28,7 +28,57 @@ The application sends `nosniff`, a strict-origin referrer policy, a restrictive 
 
 ## Browser tests
 
-Playwright refuses remote targets and requires a database name containing `test` or `e2e`. CI provides an ephemeral MySQL service, seeds it, and runs Chromium. Never set its `DATABASE_URL` to the production database.
+Playwright refuses remote targets and requires a database name containing `test` or `e2e`. CI provides an ephemeral MySQL service, seeds it, and runs the broad Chromium suite plus a scoped WebKit matrix. Never set its `DATABASE_URL` to the production database.
+
+- `npm run test:e2e`: Chromium critical/responsive/accessibility coverage, desktop WebKit accessibility and critical paths, and focused iPhone 13/iPad Pro 11 WebKit coverage.
+- `npm run test:e2e:chromium`: Chromium only.
+- `npm run test:e2e:webkit`: the scoped desktop/iPhone/iPad WebKit projects only.
+- `npm run test:visual`: opt-in Chromium visual regression. This requires committed baselines generated on the same OS/browser environment and is intentionally not a default CI gate.
+
+The visual suite uses seeded E2E data, reduced motion, loaded local fonts, and named representative viewports. Update baselines intentionally with:
+
+```bash
+VISUAL_REGRESSION=1 npx playwright test e2e/visual.spec.ts \
+  --project=visual-chromium --update-snapshots
+```
+
+WebKit is a strong Safari-engine check, but it does not replace testing on physical iPhone/iPad hardware. Before a major launch, verify the public Sheet, WhatsApp panel, admin bottom navigation, date input, and form keyboard behavior on current iOS Safari.
+
+## Lighthouse procedure
+
+Run Lighthouse against a production build or the deployed HTTPS origin, primarily with mobile emulation. Scores from local development mode are not representative.
+
+```bash
+npm run build
+npm run start
+npx lighthouse http://127.0.0.1:3000/ --preset=perf \
+  --only-categories=performance,accessibility,best-practices,seo \
+  --view
+```
+
+Repeat for `/catalog` and one `/catalog/:slug` URL. On the deployed origin, replace the local URL with HTTPS. Treat Accessibility, Best Practices, and SEO scores below 95 as release-review items. Monitor Performance and Core Web Vitals, but do not make the shared CI job fail on Lighthouse until the runner and serving environment are deterministic.
+
+## Performance and asset notes
+
+- Public catalog images render through `OptimizedImage` with explicit dimensions/aspect ratios, route-specific `sizes`, lazy loading by default, and one high-priority image on the main catalog surfaces.
+- Runtime admin uploads generate WebP variants up to the source width (640/960/1440 where useful). The stored largest WebP path allows `srcset` generation. Small bundled seed images are already only 30–68 KB and at most 640 px wide, so generating duplicate widths would not provide a useful responsive set.
+- The largest bundled editorial image is about 128 KB. No multi-megabyte public image is shipped. Below-fold galleries remain lazy.
+- Fontsource imports are limited to the five used faces: Playfair Display 700 normal/600 italic, Inter 400/500, and JetBrains Mono 400. Fontsource's Unicode-range CSS lets the browser fetch only required subsets.
+- Root data is requested once and reused through router context. Public list/settings/services/testimonial reads use a short server cache; product visibility-sensitive detail reads go to MySQL.
+
+Use a production Lighthouse trace before changing hydration or splitting bundles further; the current audit did not identify a safe, design-neutral removal of public JavaScript.
+
+## Process-local cache consistency
+
+`src/lib/cache.server.ts` is an in-memory cache and therefore belongs to one Node process only. All product, category, settings, service, and testimonial admin mutations call `clearDataCache()` in the process handling the mutation. Blog reads are uncached. Product detail intentionally bypasses the cache so hidden/deleted products and edits use current database truth.
+
+Another Node worker cannot receive that in-memory invalidation. The default TTL is therefore capped at 10 seconds, limiting temporary staleness for public lists, homepage featured products, services, testimonials, and site settings without adding external infrastructure. This is acceptable for a single Hostinger Node process and bounded for a small multi-worker setup. If the deployment later adds many long-lived workers and needs immediate cross-worker list consistency, reassess with a shared invalidation mechanism; do not introduce Redis solely for the current topology.
+
+## Mobile viewport and safe-area risk
+
+Sheets and the WhatsApp panel use `100dvh`; fixed edge controls account for the relevant `safe-area-inset-*` values. Small-screen inputs are forced to at least 16 px to avoid iOS focus zoom. Error and 404 actions stack at narrow widths, and the server fallback error page handles long reference IDs.
+
+Automated WebKit covers 390×844, 844×390, 932×430, iPad portrait/landscape, and desktop Safari profiles. The remaining uncertainty is the physical iOS on-screen keyboard, browser chrome collapsing/expanding, device-specific notches, and Hostinger/network timing. Avoid JavaScript viewport-height hacks unless a repeatable physical-device defect is observed.
 
 ## Backups
 

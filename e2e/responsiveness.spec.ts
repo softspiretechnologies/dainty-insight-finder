@@ -117,6 +117,54 @@ test("public navigation remains accessible on phone, tablet and desktop", async 
   ).toBeVisible();
 });
 
+test("public mobile header follows a usable keyboard tab order", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await visitAndCheck(page, "/");
+
+  const skipLink = page.getByRole("link", { name: "Skip to main content" });
+  const logo = page.getByRole("link", { name: "DaintyHand", exact: true });
+  const menuButton = page.getByRole("button", { name: "Open menu" });
+  await skipLink.focus();
+  await page.keyboard.press("Tab");
+  await expect(logo).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(menuButton).toBeFocused();
+});
+
+test("custom order controls and submit remain keyboard reachable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await visitAndCheck(page, "/custom");
+
+  const submit = page.getByRole("button", { name: "Continue on WhatsApp" });
+  const fields = [
+    page.getByLabel("Full name"),
+    page.getByLabel("Phone / WhatsApp"),
+    page.getByLabel("Email (optional)"),
+    page.getByLabel("Service required"),
+    page.getByLabel("Event type (wedding, birthday, engagement…)"),
+    page.getByLabel("Event date"),
+    page.getByLabel("Budget range (optional)"),
+    page.getByLabel("Delivery location"),
+    page.getByLabel("Description / the brief"),
+    submit,
+  ];
+  await fields[0].focus();
+  for (const field of fields.slice(1)) {
+    for (let step = 0; step < 6; step += 1) {
+      await page.keyboard.press("Tab");
+      if (await field.evaluate((element) => element === document.activeElement)) break;
+    }
+    await expect(field).toBeFocused();
+  }
+
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Please enter your full name")).toBeVisible();
+  await expect(page.getByLabel("Full name")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByLabel("Full name")).toHaveAttribute("aria-describedby", "name-error");
+  await page.keyboard.press("Tab");
+  await expect(page.locator(":focus")).toBeVisible();
+});
+
 test("floating WhatsApp panel stays inside phone and landscape viewports", async ({ page }) => {
   for (const viewport of [
     requiredViewports[0],
@@ -196,4 +244,28 @@ test("the desktop product table appears only with sufficient width", async ({ pa
   await visitAndCheck(page, "/admin/products");
   await expect(page.getByTestId("product-card-list")).toBeHidden();
   await expect(page.getByTestId("product-table")).toBeVisible();
+});
+
+test("primary mobile controls retain practical touch targets", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await visitAndCheck(page, "/catalog");
+
+  const category = page.getByRole("button", { name: "Custom Hampers" });
+  await expect(category).toBeVisible();
+  expect((await category.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await category.click();
+  const removeCategory = page.getByRole("button", { name: "Remove Custom Hampers filter" });
+  expect((await removeCategory.boundingBox())!.width).toBeGreaterThanOrEqual(44);
+  expect((await removeCategory.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+
+  await login(page);
+  await visitAndCheck(page, "/admin/products");
+  const firstCard = page.getByTestId("product-card-list").locator("article").first();
+  const cardActions = firstCard.locator("button");
+  for (let index = 0; index < Math.min(await cardActions.count(), 3); index += 1) {
+    const box = await cardActions.nth(index).boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+  }
 });

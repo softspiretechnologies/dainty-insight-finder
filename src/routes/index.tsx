@@ -462,7 +462,9 @@ function Index() {
               },
             ].map((s, i) => (
               <div key={s.t} className="bg-foreground p-7 md:p-10 border-border">
-                <span className="font-mono text-[10px] text-primary block mb-5">Step 0{i + 1}</span>
+                <span className="font-mono text-[10px] text-accent-on-dark block mb-5">
+                  Step 0{i + 1}
+                </span>
                 <h3 className="font-display italic text-xl md:text-2xl mb-3 leading-tight">
                   {s.t}
                 </h3>
@@ -664,7 +666,7 @@ function Index() {
             Ready to begin?
           </span>
           <h2 className="font-display text-[2.5rem] sm:text-6xl md:text-7xl italic leading-[0.9] tracking-tighter mb-10 md:mb-14 text-balance">
-            Every gift starts with <span className="text-primary">your story.</span>
+            Every gift starts with <span className="text-accent-on-dark">your story.</span>
           </h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <a

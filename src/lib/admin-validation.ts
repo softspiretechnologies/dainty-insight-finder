@@ -25,13 +25,13 @@ export function scrollToFirstField(errors: FieldErrors) {
   if (!firstKey) return;
   const el = document.getElementById(`field-${firstKey}`);
   el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  if (
+  const control =
     el instanceof HTMLInputElement ||
     el instanceof HTMLTextAreaElement ||
     el instanceof HTMLSelectElement
-  ) {
-    el.focus();
-  }
+      ? el
+      : el?.querySelector<HTMLElement>("input, select, textarea, button, [tabindex]");
+  control?.focus();
 }
 
 export function invalidInputClass(error?: string) {

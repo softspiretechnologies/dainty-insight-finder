@@ -10,7 +10,7 @@ import {
   Tags,
   FileText,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { logoutAdmin } from "@/lib/api/admin/auth";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,12 @@ export function AdminShell({
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const handleMenuOpenChange = (open: boolean) => {
+    setMenuOpen(open);
+    if (!open) requestAnimationFrame(() => menuTriggerRef.current?.focus());
+  };
 
   const handleLogout = async () => {
     await logoutAdmin();
@@ -144,6 +150,7 @@ export function AdminShell({
           <p className="font-display text-lg italic truncate">{currentPage?.label ?? "Admin"}</p>
         </div>
         <Button
+          ref={menuTriggerRef}
           variant="outline"
           size="icon"
           className="shrink-0 h-11 w-11"
@@ -154,7 +161,7 @@ export function AdminShell({
         </Button>
       </header>
 
-      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+      <Sheet open={menuOpen} onOpenChange={handleMenuOpenChange}>
         <SheetContent side="right" className="w-[min(100%,20rem)] p-5">
           <SheetHeader className="text-left mb-6">
             <SheetTitle className="font-display italic font-normal text-2xl">Menu</SheetTitle>

@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL || "http://127.0.0.1:4173";
 const databaseUrl = process.env.DATABASE_URL;
+const visualRegressionEnabled = process.env.VISUAL_REGRESSION === "1";
 
 if (process.env.E2E_BASE_URL && !/^https?:\/\/(127\.0\.0\.1|localhost)(?::|\/|$)/.test(baseURL)) {
   throw new Error(
@@ -29,7 +30,37 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      testIgnore: [/visual\.spec\.ts/, /webkit\.spec\.ts/],
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "webkit-desktop",
+      testMatch: [/accessibility\.spec\.ts/, /webkit\.spec\.ts/],
+      use: { ...devices["Desktop Safari"] },
+    },
+    {
+      name: "webkit-iphone",
+      testMatch: /webkit\.spec\.ts/,
+      use: { ...devices["iPhone 13"] },
+    },
+    {
+      name: "webkit-ipad",
+      testMatch: /webkit\.spec\.ts/,
+      use: { ...devices["iPad Pro 11"] },
+    },
+    ...(visualRegressionEnabled
+      ? [
+          {
+            name: "visual-chromium",
+            testMatch: /visual\.spec\.ts/,
+            use: { ...devices["Desktop Chrome"] },
+          },
+        ]
+      : []),
+  ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {

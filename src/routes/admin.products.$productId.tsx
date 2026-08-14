@@ -327,17 +327,16 @@ function AdminProductEditPage() {
               Product image<span className="text-destructive ml-0.5">*</span>
             </p>
 
-            <div
+            <button
+              type="button"
               className={cn(
-                "aspect-4/5 rounded-xl border border-dashed overflow-hidden bg-surface cursor-pointer hover:border-foreground/40 transition-colors relative group",
+                "aspect-4/5 w-full rounded-xl border border-dashed overflow-hidden bg-surface cursor-pointer hover:border-foreground/40 transition-colors relative group",
                 fieldErrors.image ? "border-destructive ring-1 ring-destructive" : "border-border",
               )}
               onClick={() => fileInputRef.current?.click()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
               aria-label="Upload product image"
               aria-invalid={fieldErrors.image ? true : undefined}
+              aria-describedby={fieldErrors.image ? "image-error" : undefined}
             >
               {previewSrc ? (
                 <>
@@ -361,11 +360,14 @@ function AdminProductEditPage() {
                   <p className="text-xs text-muted">JPEG, PNG or WebP · max 5 MB</p>
                 </div>
               )}
-            </div>
+            </button>
 
             <input
               ref={fileInputRef}
               type="file"
+              aria-label="Product image"
+              aria-invalid={fieldErrors.image ? true : undefined}
+              aria-describedby={fieldErrors.image ? "image-error" : undefined}
               accept="image/jpeg,image/png,image/webp"
               className="sr-only"
               onChange={(e) => {
@@ -385,7 +387,7 @@ function AdminProductEditPage() {
             </Button>
 
             {fieldErrors.image ? (
-              <p className="text-sm text-destructive" role="alert">
+              <p id="image-error" className="text-sm text-destructive" role="alert">
                 {fieldErrors.image}
               </p>
             ) : null}

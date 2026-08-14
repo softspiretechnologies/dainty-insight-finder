@@ -19,6 +19,10 @@ async function login(page: Page) {
   await page.goto("/admin/login");
   await waitForHydration(page);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByLabel("Email address")).toBeFocused();
+  await expect(page.getByLabel("Email address")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByLabel("Email address")).toHaveAttribute("aria-describedby", "email-error");
   await page.getByLabel("Email address").fill(adminEmail);
   await page.getByLabel("Password").fill(adminPassword);
   await page.getByRole("button", { name: "Sign in" }).click();

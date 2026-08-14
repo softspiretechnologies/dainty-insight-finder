@@ -234,7 +234,7 @@ function AdminProductsPage() {
               key={product.id}
               className={cn(
                 "border border-border rounded-xl overflow-hidden bg-surface/20",
-                !product.isActive && "opacity-60",
+                !product.isActive && "bg-surface/50",
               )}
             >
               <div className="flex gap-4 p-4">
@@ -384,7 +384,7 @@ function AdminProductsPage() {
                   key={product.id}
                   className={cn(
                     "hover:bg-surface/20 transition-colors",
-                    !product.isActive && "opacity-60",
+                    !product.isActive && "bg-surface/50",
                   )}
                 >
                   <td className="px-4 py-3">
@@ -537,7 +537,7 @@ function FilterChip({
       type="button"
       onClick={onSelect}
       className={cn(
-        "inline-flex min-h-10 shrink-0 items-center rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap",
+        "inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.18em] font-medium transition-colors whitespace-nowrap",
         active
           ? "bg-foreground text-background border-foreground"
           : "bg-background text-muted border-border hover:text-foreground hover:border-foreground",
@@ -573,7 +573,7 @@ function CategoryChip({
         onClick={onSelect}
         disabled={active}
         className={cn(
-          "min-h-10 whitespace-nowrap py-2 pl-3",
+          "min-h-11 whitespace-nowrap py-2 pl-3",
           active ? "pr-1 cursor-default" : "pr-3 hover:text-foreground hover:border-foreground",
         )}
       >
@@ -583,7 +583,7 @@ function CategoryChip({
         <button
           type="button"
           onClick={onRemove}
-          className="mr-0.5 grid h-10 w-10 place-items-center rounded-full hover:bg-background/20"
+          className="mr-0.5 grid h-11 w-11 place-items-center rounded-full hover:bg-background/20"
           aria-label={`Remove ${String(children)} filter`}
         >
           <X className="w-3 h-3" />

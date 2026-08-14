@@ -1,4 +1,6 @@
-const DEFAULT_TTL_MS = 60_000;
+// This cache is intentionally process-local. Keep the TTL short so another
+// Node worker cannot serve stale admin-edited public content for long.
+const DEFAULT_TTL_MS = 10_000;
 
 type CacheEntry = { value: unknown; expires: number };
 

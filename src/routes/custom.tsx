@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { cloneElement, isValidElement } from "react";
 import { PageShell } from "@/components/site/PageShell";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
@@ -274,13 +275,30 @@ function Field({
   error?: string;
   children: React.ReactNode;
 }) {
+  const controlName = isValidElement<{ name?: string }>(children) ? children.props.name : undefined;
+  const errorId = controlName ? `${controlName}-error` : undefined;
+  const control = isValidElement<{
+    name?: string;
+    "aria-describedby"?: string;
+    "aria-invalid"?: boolean | "true" | "false";
+  }>(children)
+    ? cloneElement(children, {
+        "aria-invalid": error ? true : children.props["aria-invalid"],
+        "aria-describedby": errorId ?? children.props["aria-describedby"],
+      })
+    : children;
+
   return (
     <label className="block">
       <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted block mb-2">
         {label}
       </span>
-      {children}
-      {error ? <p className="text-[11px] text-destructive mt-1">{error}</p> : null}
+      {control}
+      {error ? (
+        <p id={errorId} className="text-[11px] text-destructive mt-1" role="alert">
+          {error}
+        </p>
+      ) : null}
     </label>
   );
 }

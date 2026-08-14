@@ -95,7 +95,7 @@ function ContactPage() {
                 WhatsApp
               </span>
               <div>
-                <p className="break-words font-display text-2xl md:text-3xl italic text-primary mb-2">
+                <p className="break-words font-display text-2xl md:text-3xl italic text-accent-on-dark mb-2">
                   Chat with {site.founder}
                 </p>
                 <p className="text-[11px] text-background/60 uppercase tracking-[0.2em]">
@@ -218,7 +218,7 @@ function ContactPage() {
               Ready to begin?
             </span>
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl italic leading-tight text-balance">
-              Start with a <span className="text-primary">message.</span>
+              Start with a <span className="text-accent-on-dark">message.</span>
             </h2>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
