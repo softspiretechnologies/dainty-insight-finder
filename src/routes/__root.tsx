@@ -112,6 +112,7 @@ export const Route = createRootRouteWithContext<{
           "Custom hampers, bouquets, invitations and celebration services handcrafted with care and shipped across India & worldwide.",
       },
       { property: "og:image", content: siteUrl("/og-image.jpg") },
+      { property: "og:image:type", content: "image/jpeg" },
       { property: "og:image:width", content: "1080" },
       { property: "og:image:height", content: "1080" },
       { property: "og:image:alt", content: "DaintyHand logo" },

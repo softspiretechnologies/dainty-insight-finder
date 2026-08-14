@@ -9,8 +9,14 @@ export function PageShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-body">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-background rounded-full font-mono text-xs uppercase tracking-widest"
+      >
+        Skip to main content
+      </a>
       <SiteHeader />
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
       <SiteFooter />
       <FloatingWhatsApp categories={categories} siteSettings={siteSettings} />
     </div>
