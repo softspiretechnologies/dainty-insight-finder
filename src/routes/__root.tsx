@@ -95,6 +95,7 @@ export const Route = createRootRouteWithContext<{
           "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide.",
       },
       { name: "author", content: "DaintyHand" },
+      { property: "og:site_name", content: "DaintyHand" },
       { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
       {
         property: "og:description",
@@ -119,12 +120,33 @@ export const Route = createRootRouteWithContext<{
       { name: "application-name", content: "DaintyHand" },
       { name: "apple-mobile-web-app-title", content: "DaintyHand" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "geo.region", content: "IN-KL" },
+      { name: "geo.placename", content: "Perinthalmanna" },
+      { name: "geo.position", content: "10.9752;76.2238" },
+      { name: "ICBM", content: "10.9752, 76.2238" },
     ],
     links: [
       { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "32x32" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "stylesheet", href: appCss },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "DaintyHand",
+          alternateName: ["DaintyHand Studio", "DaintyHand Gifting Kerala"],
+          url: siteUrl("/"),
+          publisher: {
+            "@type": "Organization",
+            name: "DaintyHand",
+            logo: siteUrl("/og-image.jpg"),
+          },
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,

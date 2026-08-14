@@ -64,32 +64,83 @@ export const Route = createFileRoute("/")({
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
-          "@type": "LocalBusiness",
-          name: "DaintyHand",
-          description:
-            "Handcrafted gifts, wedding essentials and celebration studio based in Perinthalmanna, Kerala — shipping across India & worldwide.",
-          image: siteUrl("/og-image.jpg"),
-          url: siteUrl("/"),
-          telephone: formatTelephone(loaderData?.siteSettings.whatsappNumber ?? ""),
-          email: loaderData?.siteSettings.email ?? site.email,
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: "Perinthalmanna",
-            addressLocality: "Perinthalmanna",
-            addressRegion: "Kerala",
-            postalCode: "679322",
-            addressCountry: "IN",
-          },
-          geo: {
-            "@type": "GeoCoordinates",
-            latitude: "10.9752",
-            longitude: "76.2238",
-          },
-          priceRange: "₹₹",
-          areaServed: ["Perinthalmanna", "Malappuram", "Kozhikode", "Kerala", "India", "Worldwide"],
-          openingHours: "Mo-Sa 10:00-19:00",
-          sameAs: ["https://www.instagram.com/dainty.handd/"],
-          founder: { "@type": "Person", name: loaderData?.siteSettings.founder ?? site.founder },
+          "@graph": [
+            {
+              "@type": "LocalBusiness",
+              name: "DaintyHand",
+              description:
+                "Handcrafted gifts, wedding essentials and celebration studio based in Perinthalmanna, Kerala — shipping across India & worldwide.",
+              image: siteUrl("/og-image.jpg"),
+              url: siteUrl("/"),
+              telephone: formatTelephone(loaderData?.siteSettings.whatsappNumber ?? ""),
+              email: loaderData?.siteSettings.email ?? site.email,
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Perinthalmanna",
+                addressLocality: "Perinthalmanna",
+                addressRegion: "Kerala",
+                postalCode: "679322",
+                addressCountry: "IN",
+              },
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: "10.9752",
+                longitude: "76.2238",
+              },
+              priceRange: "₹₹",
+              areaServed: [
+                "Perinthalmanna",
+                "Malappuram",
+                "Kozhikode",
+                "Kerala",
+                "India",
+                "Worldwide",
+              ],
+              openingHours: "Mo-Sa 10:00-19:00",
+              sameAs: ["https://www.instagram.com/dainty.handd/"],
+              founder: {
+                "@type": "Person",
+                name: loaderData?.siteSettings.founder ?? site.founder,
+              },
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                {
+                  "@type": "Question",
+                  name: "How do I order a custom hamper or Nikah invitation suite?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "Browse our catalog or journal, pick what inspires you, and tap 'Enquire on WhatsApp' or fill out our custom order brief. Nafisa will discuss colors, theme, budget, and packaging with you directly before anything is handcrafted.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "Do you ship custom gift hampers across Kerala, India, and internationally?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "Yes! We offer direct local hand-delivery in Perinthalmanna and Malappuram, express courier delivery across all states in India, and international shipping for overseas Nikahs and weddings.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "What celebration services does DaintyHand offer in Kerala?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "We offer Save The Date couple shoots (with edited 30–60s reels), private proposal setups, surprise birthday room decor, couple portrait sessions, and memory reels across Malappuram, Kozhikode, and all of Kerala.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "Can hampers, ring trays, and cards be personalized with names and custom dates?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "Consciously crafted to order. Every hamper, ring tray, wax seal, acrylic frame, and invitation card is fully customizable with names, dates, colors, floral preferences, and personal notes.",
+                  },
+                },
+              ],
+            },
+          ],
         }),
       },
     ],
@@ -551,6 +602,56 @@ function Index() {
                   </div>
                 </figcaption>
               </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ Section ───────────────────────────────────────── */}
+      <section className="py-16 md:py-24 px-5 md:px-6 border-t border-border bg-surface/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+              Frequently Asked Questions
+            </span>
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tighter mt-3 italic">
+              Everything you need to know.
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "How do I order a custom hamper or Nikah invitation suite?",
+                a: "Browse our catalog or journal, pick what inspires you, and tap 'Enquire on WhatsApp' or fill out our custom order brief. Nafisa will discuss colors, theme, budget, and packaging with you directly before anything is handcrafted.",
+              },
+              {
+                q: "Do you ship custom gift hampers across Kerala, India, and internationally?",
+                a: "Yes! We offer direct local hand-delivery in Perinthalmanna and Malappuram, express courier delivery across all states in India, and international shipping for overseas Nikahs and weddings.",
+              },
+              {
+                q: "What celebration services does DaintyHand offer in Kerala?",
+                a: "We offer Save The Date couple shoots (with edited 30–60s reels), private proposal setups, surprise birthday room decor, couple portrait sessions, and memory reels across Malappuram, Kozhikode, and all of Kerala.",
+              },
+              {
+                q: "Can hampers, ring trays, and cards be personalized with names and custom dates?",
+                a: "Consciously crafted to order. Every hamper, ring tray, wax seal, acrylic frame, and invitation card is fully customizable with names, dates, colors, floral preferences, and personal notes.",
+              },
+            ].map((faq, i) => (
+              <details
+                key={i}
+                className="group bg-background border border-border rounded-sm p-6 cursor-pointer"
+              >
+                <summary className="font-display italic text-lg sm:text-xl flex items-center justify-between list-none select-none">
+                  <span>{faq.q}</span>
+                  <span className="font-mono text-xs text-muted group-open:rotate-45 transition-transform duration-200 ml-4">
+                    +
+                  </span>
+                </summary>
+                <p className="text-xs sm:text-sm text-muted leading-relaxed mt-4 pt-4 border-t border-border">
+                  {faq.a}
+                </p>
+              </details>
             ))}
           </div>
         </div>
