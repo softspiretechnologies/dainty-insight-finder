@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 
+import { AdminLaunchSplash } from "@/components/admin/AdminLaunchSplash";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { getSessionAdmin } from "@/lib/api/admin/auth";
 import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
@@ -45,13 +46,17 @@ function AdminLayout() {
   const { newEnquiryCount } = Route.useLoaderData();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  if (pathname === "/admin/login") {
-    return <Outlet />;
-  }
-
   return (
-    <AdminShell userName={session?.name} newEnquiryCount={newEnquiryCount}>
-      <Outlet />
-    </AdminShell>
+    <>
+      {/* Installed-app brand moment only; does not remount on child route changes. */}
+      <AdminLaunchSplash />
+      {pathname === "/admin/login" ? (
+        <Outlet />
+      ) : (
+        <AdminShell userName={session?.name} newEnquiryCount={newEnquiryCount}>
+          <Outlet />
+        </AdminShell>
+      )}
+    </>
   );
 }

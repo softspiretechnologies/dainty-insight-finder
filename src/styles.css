@@ -58,6 +58,43 @@
   transform-origin: left;
 }
 
+/* Installed Admin Home Screen launch brand (AdminLaunchSplash) */
+@keyframes admin-launch-brand {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes admin-launch-overlay-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.admin-launch-brand {
+  animation: admin-launch-brand 420ms var(--ease-out-expo) both;
+}
+
+.admin-launch-overlay-exit {
+  animation: admin-launch-overlay-exit 200ms ease-out both;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-launch-brand,
+  .admin-launch-overlay-exit {
+    animation: none;
+  }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
