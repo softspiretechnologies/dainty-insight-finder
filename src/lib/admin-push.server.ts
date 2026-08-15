@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createECDH, createHash } from "node:crypto";
 import { and, count, eq } from "drizzle-orm";
 import webpush from "web-push";
 
@@ -6,9 +6,12 @@ import { getDb, isDatabaseConfigured } from "@/db/index.server";
 import { adminPushSubscriptions, enquiries } from "@/db/schema";
 import {
   adminPushSubscriptionInputSchema,
+  extractPushDeliveryDiagnostic,
+  friendlyTestPushErrorMessage,
   sanitizeAdminNotificationUrl,
   type AdminNotificationPayload,
   type AdminPushSubscriptionInput,
+  type PushDeliveryDiagnostic,
 } from "@/lib/admin-push";
 import { logError, logInfo } from "@/lib/logger.server";
 
@@ -21,6 +24,56 @@ export type WebPushVapidConfig = {
   subject: string;
 };
 
+function decodeVapidBase64Url(value: string): Buffer | null {
+  try {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.includes("=")) return null;
+    if (!/^[A-Za-z0-9_-]+$/.test(trimmed)) return null;
+    const buf = Buffer.from(trimmed, "base64url");
+    return buf.length > 0 ? buf : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Confirm public/private VAPID keys are a matching P-256 pair.
+ * Never logs or returns key material.
+ */
+export function validateVapidKeyPair(
+  publicKey: string,
+  privateKey: string,
+): { ok: true } | { ok: false; reason: "invalid_format" | "length" | "mismatch" } {
+  const pub = decodeVapidBase64Url(publicKey);
+  const priv = decodeVapidBase64Url(privateKey);
+  if (!pub || !priv) return { ok: false, reason: "invalid_format" };
+  if (priv.length !== 32) return { ok: false, reason: "length" };
+  if (pub.length !== 65 || pub[0] !== 0x04) return { ok: false, reason: "length" };
+
+  try {
+    const ecdh = createECDH("prime256v1");
+    ecdh.setPrivateKey(priv);
+    const derived = ecdh.getPublicKey(null, "uncompressed");
+    if (derived.length !== 65 || Buffer.compare(derived, pub) !== 0) {
+      return { ok: false, reason: "mismatch" };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "invalid_format" };
+  }
+}
+
+export function isValidVapidSubject(subject: string): boolean {
+  const trimmed = subject.trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "mailto:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 /** Optional Web Push config — missing env must never fail app boot. */
 export function getWebPushVapidConfig(
   env: NodeJS.ProcessEnv = process.env,
@@ -29,8 +82,30 @@ export function getWebPushVapidConfig(
   const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim();
   const subject = env.WEB_PUSH_VAPID_SUBJECT?.trim();
   if (!publicKey || !privateKey || !subject) return null;
-  if (!/^mailto:.+@.+/i.test(subject) && !/^https:\/\//i.test(subject)) return null;
+  if (!isValidVapidSubject(subject)) return null;
   return { publicKey, privateKey, subject };
+}
+
+export function assessWebPushVapidConfig(env: NodeJS.ProcessEnv = process.env): {
+  configured: boolean;
+  pairValid: boolean | null;
+  subjectValid: boolean;
+  publicKey?: string;
+} {
+  const publicKey = env.WEB_PUSH_VAPID_PUBLIC_KEY?.trim();
+  const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim();
+  const subject = env.WEB_PUSH_VAPID_SUBJECT?.trim() ?? "";
+  const subjectValid = isValidVapidSubject(subject);
+  if (!publicKey || !privateKey || !subjectValid) {
+    return { configured: false, pairValid: null, subjectValid };
+  }
+  const pair = validateVapidKeyPair(publicKey, privateKey);
+  return {
+    configured: true,
+    pairValid: pair.ok,
+    subjectValid: true,
+    publicKey,
+  };
 }
 
 export function hashPushEndpoint(endpoint: string): string {
@@ -38,11 +113,7 @@ export function hashPushEndpoint(endpoint: string): string {
 }
 
 export function isStalePushSubscriptionError(error: unknown): boolean {
-  const statusCode =
-    typeof error === "object" && error !== null && "statusCode" in error
-      ? Number((error as { statusCode?: unknown }).statusCode)
-      : NaN;
-  return statusCode === 404 || statusCode === 410;
+  return extractPushDeliveryDiagnostic(error).category === "stale_subscription";
 }
 
 export type PushTransport = {
@@ -70,11 +141,15 @@ export async function countNewEnquiries(): Promise<number> {
 }
 
 export function getAdminPushStatusPayload() {
-  const vapid = getWebPushVapidConfig();
-  if (!vapid) {
-    return { configured: false as const };
+  const assessment = assessWebPushVapidConfig();
+  if (!assessment.configured || !assessment.publicKey) {
+    return { configured: false as const, vapidPairValid: null as boolean | null };
   }
-  return { configured: true as const, vapidPublicKey: vapid.publicKey };
+  return {
+    configured: true as const,
+    vapidPublicKey: assessment.publicKey,
+    vapidPairValid: assessment.pairValid,
+  };
 }
 
 export async function saveAdminPushSubscriptionForUser(
@@ -176,6 +251,8 @@ export type SendAdminNotificationResult = {
   successCount: number;
   failureCount: number;
   staleCount: number;
+  /** SAFE per-device failure diagnostics (no endpoints/keys). */
+  failures: PushDeliveryDiagnostic[];
 };
 
 /**
@@ -191,6 +268,7 @@ export async function sendAdminNotification(
     successCount: 0,
     failureCount: 0,
     staleCount: 0,
+    failures: [],
   };
 
   try {
@@ -242,6 +320,7 @@ export async function sendAdminNotification(
     const transport = options?.transport ?? defaultTransport();
     const payloadJson = JSON.stringify(payload);
     const staleHashes: string[] = [];
+    const failures: PushDeliveryDiagnostic[] = [];
 
     const settled = await Promise.allSettled(
       rows.map(async (row) => {
@@ -264,11 +343,22 @@ export async function sendAdminNotification(
           );
           return { ok: true as const };
         } catch (error) {
-          if (isStalePushSubscriptionError(error)) {
+          const diagnostic = extractPushDeliveryDiagnostic(error, {
+            endpointForProviderInference: row.endpoint,
+          });
+          logError("admin_push.delivery_failed", new Error("Push delivery failed"), {
+            notificationType: input.type,
+            statusCode: diagnostic.statusCode,
+            provider: diagnostic.provider,
+            reason: diagnostic.reason,
+            category: diagnostic.category,
+            code: diagnostic.code,
+          });
+          if (diagnostic.category === "stale_subscription") {
             staleHashes.push(row.endpointHash);
-            return { ok: false as const, stale: true as const };
+            return { ok: false as const, stale: true as const, diagnostic };
           }
-          return { ok: false as const, stale: false as const };
+          return { ok: false as const, stale: false as const, diagnostic };
         }
       }),
     );
@@ -282,8 +372,13 @@ export async function sendAdminNotification(
       } else if (result.status === "fulfilled" && result.value.stale) {
         staleCount += 1;
         failureCount += 1;
+        if (result.value.diagnostic) failures.push(result.value.diagnostic);
+      } else if (result.status === "fulfilled") {
+        failureCount += 1;
+        if (result.value.diagnostic) failures.push(result.value.diagnostic);
       } else {
         failureCount += 1;
+        failures.push(extractPushDeliveryDiagnostic(result.reason));
       }
     }
 
@@ -313,6 +408,7 @@ export async function sendAdminNotification(
       successCount,
       failureCount,
       staleCount,
+      failures,
     };
   } catch (error) {
     logError("admin_push.send_failed", error, { notificationType: input.type });
@@ -341,13 +437,29 @@ export async function notifyAdminsOfNewEnquiry(enquiryId: number): Promise<void>
   }
 }
 
+export type AdminPushTestResult =
+  | { ok: true }
+  | {
+      ok: false;
+      error: string;
+      diagnostic?: PushDeliveryDiagnostic;
+    };
+
 export async function sendAdminTestNotification(
   adminUserId: number,
   endpoint: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const vapid = getWebPushVapidConfig();
-  if (!vapid) {
+): Promise<AdminPushTestResult> {
+  const assessment = assessWebPushVapidConfig();
+  if (!assessment.configured) {
     return { ok: false, error: "Push notifications are not configured for this deployment." };
+  }
+  if (assessment.pairValid === false) {
+    return {
+      ok: false,
+      error:
+        "Push provider rejected the server notification credentials. Check the configured VAPID key pair.",
+      diagnostic: { category: "vapid_auth", reason: "VAPID public/private keys do not match" },
+    };
   }
 
   const trimmed = typeof endpoint === "string" ? endpoint.trim() : "";
@@ -369,7 +481,12 @@ export async function sendAdminTestNotification(
     return { ok: false, error: "No push subscription found for this device." };
   }
   if (result.successCount === 0) {
-    return { ok: false, error: "Test notification could not be delivered." };
+    const diagnostic = result.failures[0] ?? { category: "unknown" as const };
+    return {
+      ok: false,
+      error: friendlyTestPushErrorMessage(diagnostic),
+      diagnostic,
+    };
   }
   return { ok: true };
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { PushDeliveryDiagnostic } from "@/lib/admin-push";
 import {
   enableAdminPushOnDevice,
   getAdminPushBrowserSnapshot,
@@ -19,11 +20,16 @@ import {
 type UiState = {
   configured: boolean;
   vapidPublicKey?: string;
+  vapidPairValid: boolean | null;
   browser: AdminPushBrowserSnapshot["browser"];
   permission: AdminPushBrowserSnapshot["permission"];
   enabledOnDevice: boolean;
   statusLabel: string;
 };
+
+type ActionResult =
+  | { ok: true }
+  | { ok: false; error: string; diagnostic?: PushDeliveryDiagnostic };
 
 function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
   if (state.browser === "needs_install") {
@@ -34,6 +40,9 @@ function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
   }
   if (!state.configured) {
     return "Push notifications are not configured for this deployment";
+  }
+  if (state.vapidPairValid === false) {
+    return "Push VAPID keys are configured but do not form a matching pair";
   }
   if (state.permission === "denied") {
     return "Notifications are blocked on this device";
@@ -49,6 +58,7 @@ export function AdminPushNotificationsSettings() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [diagnostic, setDiagnostic] = useState<PushDeliveryDiagnostic | null>(null);
 
   const refresh = async () => {
     const [status, browser] = await Promise.all([
@@ -58,9 +68,14 @@ export function AdminPushNotificationsSettings() {
     const configured = Boolean(status.configured);
     const vapidPublicKey =
       status.configured && "vapidPublicKey" in status ? status.vapidPublicKey : undefined;
+    const vapidPairValid =
+      status.configured && "vapidPairValid" in status
+        ? (status.vapidPairValid as boolean | null)
+        : null;
     const next: UiState = {
       configured,
       vapidPublicKey,
+      vapidPairValid,
       browser: browser.browser,
       permission: browser.permission,
       enabledOnDevice: Boolean(browser.localSubscription?.endpoint),
@@ -95,14 +110,16 @@ export function AdminPushNotificationsSettings() {
     };
   }, []);
 
-  const run = async (action: () => Promise<{ ok: true } | { ok: false; error: string }>) => {
+  const run = async (action: () => Promise<ActionResult>) => {
     setBusy(true);
     setError(null);
     setMessage(null);
+    setDiagnostic(null);
     try {
       const result = await action();
       if (!result.ok) {
         setError(result.error);
+        if (result.diagnostic) setDiagnostic(result.diagnostic);
       } else {
         setMessage("Done.");
       }
@@ -127,6 +144,7 @@ export function AdminPushNotificationsSettings() {
 
   const showEnable =
     state.configured &&
+    state.vapidPairValid !== false &&
     state.browser === "available" &&
     !state.enabledOnDevice &&
     state.permission !== "denied";
@@ -167,6 +185,13 @@ export function AdminPushNotificationsSettings() {
         </p>
       ) : null}
 
+      {state.configured && state.vapidPairValid === false ? (
+        <p className="text-sm text-muted">
+          The configured VAPID public and private keys do not form a matching pair. Fix the
+          Hostinger env values (do not casually regenerate production keys).
+        </p>
+      ) : null}
+
       {state.permission === "denied" ? (
         <p className="text-sm text-muted">
           Notifications are blocked on this device. You can enable them later in your device/browser
@@ -198,7 +223,7 @@ export function AdminPushNotificationsSettings() {
           </Button>
         ) : null}
 
-        {state.enabledOnDevice ? (
+        {state.enabledOnDevice && state.vapidPairValid !== false ? (
           <>
             <Button
               type="button"
@@ -246,6 +271,9 @@ export function AdminPushNotificationsSettings() {
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {diagnostic?.statusCode ? (
+        <p className="text-xs font-mono text-muted">Diagnostic: HTTP {diagnostic.statusCode}</p>
+      ) : null}
       {message && !error ? <p className="text-sm text-muted">{message}</p> : null}
     </section>
   );

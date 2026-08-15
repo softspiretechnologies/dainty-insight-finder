@@ -1,6 +1,7 @@
 import {
   detectAdminPushBrowserSupport,
   sanitizeAdminNotificationUrl,
+  subscriptionMatchesVapidPublicKey,
   syncAdminAppBadge,
   vapidPublicKeyToUint8Array,
   type AdminPushSupportState,
@@ -74,6 +75,71 @@ export async function getAdminPushBrowserSnapshot(): Promise<AdminPushBrowserSna
   };
 }
 
+type SubscriptionLike = {
+  options?: { applicationServerKey?: BufferSource | null };
+  unsubscribe: () => Promise<boolean>;
+  toJSON: () => PushSubscriptionJSON;
+};
+
+/**
+ * Reuse an existing PushSubscription only when its applicationServerKey matches
+ * the current VAPID public key. Otherwise unsubscribe and create a fresh one.
+ * Call only from an explicit Enable action.
+ */
+export async function resolveSubscriptionForCurrentVapidKey(options: {
+  vapidPublicKey: string;
+  getSubscription: () => Promise<SubscriptionLike | null>;
+  subscribe: (applicationServerKey: Uint8Array) => Promise<{ toJSON: () => PushSubscriptionJSON }>;
+}): Promise<
+  | { ok: true; subscription: { endpoint: string; keys: { p256dh: string; auth: string } } }
+  | { ok: false; error: string }
+> {
+  let subscription = await options.getSubscription();
+
+  if (subscription) {
+    const matches = subscriptionMatchesVapidPublicKey(
+      subscription.options?.applicationServerKey,
+      options.vapidPublicKey,
+    );
+    if (matches === false) {
+      try {
+        await subscription.unsubscribe();
+      } catch {
+        // Continue — subscribe may still succeed.
+      }
+      subscription = null;
+    }
+  }
+
+  if (!subscription) {
+    const created = await options.subscribe(vapidPublicKeyToUint8Array(options.vapidPublicKey));
+    const json = created.toJSON();
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+      return { ok: false, error: "Could not read the push subscription from this browser." };
+    }
+    return {
+      ok: true,
+      subscription: {
+        endpoint: json.endpoint,
+        keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+      },
+    };
+  }
+
+  const json = subscription.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    return { ok: false, error: "Could not read the push subscription from this browser." };
+  }
+
+  return {
+    ok: true,
+    subscription: {
+      endpoint: json.endpoint,
+      keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+    },
+  };
+}
+
 /**
  * Enable notifications — must only be called from a direct user gesture.
  * Returns the subscription JSON for the caller to persist via Admin server APIs.
@@ -118,26 +184,18 @@ export async function enableAdminPushOnDevice(
   try {
     const registration = await registerAdminPushServiceWorker();
     await navigator.serviceWorker.ready;
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidPublicKeyToUint8Array(vapidPublicKey),
-      });
-    }
-
-    const json = subscription.toJSON();
-    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-      return { ok: false, error: "Could not read the push subscription from this browser." };
-    }
-
-    return {
-      ok: true,
-      subscription: {
-        endpoint: json.endpoint,
-        keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+    return resolveSubscriptionForCurrentVapidKey({
+      vapidPublicKey,
+      getSubscription: async () => {
+        const sub = await registration.pushManager.getSubscription();
+        return sub as SubscriptionLike | null;
       },
-    };
+      subscribe: (applicationServerKey) =>
+        registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey as BufferSource,
+        }),
+    });
   } catch {
     return { ok: false, error: "Could not enable notifications on this device." };
   }

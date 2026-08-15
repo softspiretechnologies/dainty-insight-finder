@@ -26,7 +26,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "generate:vapid-keys": "node scripts/generate-vapid-keys.mjs"
+    "generate:vapid-keys": "node scripts/generate-vapid-keys.mjs",
+    "validate:vapid-keys": "node scripts/validate-vapid-keys.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
