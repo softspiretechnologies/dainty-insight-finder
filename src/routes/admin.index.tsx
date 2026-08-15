@@ -1,19 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Package,
-  Tags,
-  Settings,
-  MessageCircle,
-  ArrowRight,
-  TrendingUp,
-  Sparkles,
-  MessageSquareQuote,
-  Inbox,
-} from "lucide-react";
+import { ArrowRight, Package, Settings } from "lucide-react";
 
 import { getAdminDashboardData } from "@/lib/api/catalog";
 import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
-import { ENQUIRY_STATUS_LABELS, enquiryInterestLabel } from "@/lib/enquiries";
+import { formatAdminDateTime } from "@/lib/admin-format";
+import {
+  ENQUIRY_STATUS_LABELS,
+  enquiryInterestLabel,
+  enquirySourceLabel,
+  type EnquiryStatus,
+} from "@/lib/enquiries";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
   loader: async () => {
@@ -28,104 +25,42 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminDashboard() {
   const { productCount, enquiries } = Route.useLoaderData();
-
-  const quickLinks = [
-    {
-      to: "/admin/enquiries",
-      icon: Inbox,
-      label: "Enquiries",
-      desc: "Review new leads and follow up",
-      accent: "bg-amber-50 text-amber-700 border-amber-200",
-    },
-    {
-      to: "/admin/products",
-      icon: Package,
-      label: "Products",
-      desc: "Add, edit or remove catalog items",
-      accent: "bg-orange-50 text-orange-700 border-orange-200",
-    },
-    {
-      to: "/admin/categories",
-      icon: Tags,
-      label: "Categories",
-      desc: "Update labels, blurbs and images",
-      accent: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    },
-    {
-      to: "/admin/services",
-      icon: Sparkles,
-      label: "Services",
-      desc: "Edit the celebration services page",
-      accent: "bg-violet-50 text-violet-700 border-violet-200",
-    },
-    {
-      to: "/admin/testimonials",
-      icon: MessageSquareQuote,
-      label: "Testimonials",
-      desc: "Manage homepage customer quotes",
-      accent: "bg-rose-50 text-rose-700 border-rose-200",
-    },
-    {
-      to: "/admin/settings",
-      icon: Settings,
-      label: "Settings",
-      desc: "WhatsApp, email & contact info",
-      accent: "bg-sky-50 text-sky-700 border-sky-200",
-    },
-  ] as const;
+  const newCount = enquiries.new;
 
   return (
     <div className="max-w-3xl space-y-8 md:space-y-10">
       <div>
-        <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted mt-1.5">
-          Manage enquiries, catalog, and contact settings.
+        <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">
+          DaintyHand Admin
+        </h1>
+        <p className="text-sm text-muted mt-1.5">What needs your attention today.</p>
+      </div>
+
+      <section className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 sm:p-5">
+        <p className="font-display text-2xl sm:text-3xl italic">
+          {newCount === 0
+            ? "No new enquiries"
+            : newCount === 1
+              ? "1 new enquiry"
+              : `${newCount} new enquiries`}
         </p>
-      </div>
-
-      <div className="grid grid-cols-2 min-[400px]:grid-cols-4 gap-3">
-        <StatCard
-          label="New"
-          value={String(enquiries.new)}
-          icon={<Inbox className="w-4 h-4" />}
-          href="/admin/enquiries"
+        <p className="text-sm text-muted mt-1">
+          {newCount === 0
+            ? "You're up to date. New customer messages will show here."
+            : "Customers are waiting for a reply."}
+        </p>
+        <Link
+          to="/admin/enquiries"
           search={{ status: "new" }}
-        />
-        <StatCard
-          label="Contacted"
-          value={String(enquiries.contacted)}
-          icon={<MessageCircle className="w-4 h-4" />}
-          href="/admin/enquiries"
-          search={{ status: "contacted" }}
-        />
-        <StatCard
-          label="Quoted"
-          value={String(enquiries.quoted)}
-          icon={<TrendingUp className="w-4 h-4" />}
-          href="/admin/enquiries"
-          search={{ status: "quoted" }}
-        />
-        <StatCard
-          label="Confirmed"
-          value={String(enquiries.confirmed)}
-          icon={<Package className="w-4 h-4" />}
-          href="/admin/enquiries"
-          search={{ status: "confirmed" }}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
-        <StatCard
-          label="Products"
-          value={String(productCount)}
-          icon={<Package className="w-4 h-4" />}
-          href="/admin/products"
-        />
-        <StatCard label="Status" value="Live" icon={<TrendingUp className="w-4 h-4" />} badge />
-      </div>
+          className="inline-flex min-h-11 items-center justify-center gap-2 mt-4 rounded-full bg-foreground px-5 text-xs font-semibold uppercase tracking-widest text-background"
+        >
+          {newCount > 0 ? "View new enquiries" : "View enquiries"}
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </section>
 
       {enquiries.recent.length > 0 ? (
-        <div>
+        <section>
           <div className="flex items-center justify-between mb-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
               Recent enquiries
@@ -135,104 +70,148 @@ function AdminDashboard() {
             </Link>
           </div>
           <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
-            {enquiries.recent.map((enquiry) => (
-              <Link
-                key={enquiry.id}
-                to="/admin/enquiries/$enquiryId"
-                params={{ enquiryId: String(enquiry.id) }}
-                className="block p-3 sm:p-4 hover:bg-surface/50 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{enquiry.name}</p>
-                    <p className="text-xs text-muted mt-0.5 truncate">
-                      {enquiryInterestLabel(enquiry)} ·{" "}
-                      {ENQUIRY_STATUS_LABELS[
-                        enquiry.status as keyof typeof ENQUIRY_STATUS_LABELS
-                      ] ?? enquiry.status}
-                    </p>
+            {enquiries.recent.map((enquiry) => {
+              const isNew = enquiry.status === "new";
+              return (
+                <Link
+                  key={enquiry.id}
+                  to="/admin/enquiries/$enquiryId"
+                  params={{ enquiryId: String(enquiry.id) }}
+                  className={cn(
+                    "block p-3 sm:p-4 hover:bg-surface/50 transition-colors",
+                    isNew && "bg-amber-50/50",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-sm truncate">{enquiry.name}</p>
+                        <span
+                          className={cn(
+                            "text-[9px] uppercase tracking-wider border rounded-full px-2 py-0.5",
+                            isNew
+                              ? "bg-amber-50 text-amber-800 border-amber-200"
+                              : "border-border text-muted",
+                          )}
+                        >
+                          {ENQUIRY_STATUS_LABELS[enquiry.status as EnquiryStatus] ?? enquiry.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted mt-0.5 truncate">
+                        {enquiryInterestLabel(enquiry)}
+                        {!enquiry.productNameSnapshot && !enquiry.serviceTitleSnapshot
+                          ? null
+                          : ` · ${enquirySourceLabel(enquiry.source)}`}
+                      </p>
+                    </div>
+                    <time className="text-[10px] text-muted shrink-0">
+                      {formatAdminDateTime(enquiry.createdAt)}
+                    </time>
                   </div>
-                  <time className="text-[10px] text-muted font-mono shrink-0">
-                    {new Date(enquiry.createdAt).toLocaleDateString()}
-                  </time>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
-        </div>
+        </section>
       ) : null}
 
-      <div>
+      <section>
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
           Quick actions
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {quickLinks.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="group flex flex-col gap-3 rounded-xl border border-border bg-surface/30 p-4 hover:border-foreground/30 hover:bg-surface/60 transition-all"
-            >
-              <div
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${item.accent}`}
-              >
-                <item.icon className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm leading-snug">{item.label}</p>
-                <p className="text-xs text-muted mt-0.5 leading-relaxed">{item.desc}</p>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-muted group-hover:text-foreground group-hover:translate-x-0.5 transition-all mt-auto" />
-            </Link>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <QuickAction
+            to="/admin/products/$productId"
+            params={{ productId: "new" }}
+            icon={Package}
+            label="Add product"
+            desc="Create a new catalog item"
+          />
+          <QuickAction
+            to="/admin/products"
+            icon={Package}
+            label="View products"
+            desc={`${productCount} in catalog`}
+          />
+          <QuickAction
+            to="/admin/settings"
+            icon={Settings}
+            label="Edit website"
+            desc="Contact details & account"
+          />
         </div>
-      </div>
+      </section>
+
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <MiniStat
+          label="Contacted"
+          value={enquiries.contacted}
+          href="/admin/enquiries"
+          search="contacted"
+        />
+        <MiniStat label="Quoted" value={enquiries.quoted} href="/admin/enquiries" search="quoted" />
+        <MiniStat
+          label="Confirmed"
+          value={enquiries.confirmed}
+          href="/admin/enquiries"
+          search="confirmed"
+        />
+        <MiniStat label="All leads" value={enquiries.all} href="/admin/enquiries" search="all" />
+      </section>
     </div>
   );
 }
 
-function StatCard({
+function QuickAction({
+  to,
+  params,
+  icon: Icon,
+  label,
+  desc,
+}: {
+  to: "/admin/products" | "/admin/products/$productId" | "/admin/settings";
+  params?: { productId: string };
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  desc: string;
+}) {
+  return (
+    <Link
+      to={to}
+      params={params}
+      className="group flex flex-col gap-3 rounded-xl border border-border bg-surface/30 p-4 hover:border-foreground/30 hover:bg-surface/60 transition-all min-h-11"
+    >
+      <div className="w-9 h-9 rounded-lg border border-border flex items-center justify-center">
+        <Icon className="w-4 h-4" />
+      </div>
+      <div>
+        <p className="font-medium text-sm">{label}</p>
+        <p className="text-xs text-muted mt-0.5">{desc}</p>
+      </div>
+      <ArrowRight className="w-3.5 h-3.5 text-muted group-hover:translate-x-0.5 transition-transform mt-auto" />
+    </Link>
+  );
+}
+
+function MiniStat({
   label,
   value,
-  icon,
   href,
   search,
-  badge,
 }: {
   label: string;
-  value: string;
-  icon: React.ReactNode;
-  href?: "/admin/enquiries" | "/admin/products";
-  search?: { status?: "new" | "contacted" | "quoted" | "confirmed" | "lost" | "all" };
-  badge?: boolean;
+  value: number;
+  href: "/admin/enquiries";
+  search: "all" | "contacted" | "quoted" | "confirmed";
 }) {
-  const content = (
-    <div className="border border-border rounded-xl p-3 sm:p-5 bg-surface/30 flex flex-col gap-2 hover:bg-surface/60 transition-colors h-full">
-      <div className="text-muted">{icon}</div>
-      <div>
-        <p className="font-display text-2xl sm:text-3xl leading-none">
-          {badge ? (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
-              {value}
-            </span>
-          ) : (
-            value
-          )}
-        </p>
-        <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted mt-1">
-          {label}
-        </p>
-      </div>
-    </div>
+  return (
+    <Link
+      to={href}
+      search={{ status: search }}
+      className="rounded-xl border border-border bg-surface/20 p-3 hover:bg-surface/50 transition-colors"
+    >
+      <p className="font-display text-2xl leading-none">{value}</p>
+      <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted mt-1">{label}</p>
+    </Link>
   );
-
-  if (href) {
-    return (
-      <Link to={href} search={search} className="block">
-        {content}
-      </Link>
-    );
-  }
-  return content;
 }

@@ -1,7 +1,19 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Package, Search, X, Star, Eye, EyeOff } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Package,
+  Search,
+  X,
+  Star,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormErrorBanner } from "@/components/admin/AdminField";
@@ -27,7 +39,7 @@ type StatusFilter = "all" | "active" | "hidden" | "featured";
 
 const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
   { id: "all", label: "All" },
-  { id: "active", label: "Active" },
+  { id: "active", label: "Visible" },
   { id: "hidden", label: "Hidden" },
   { id: "featured", label: "Homepage" },
 ];
@@ -44,6 +56,8 @@ function AdminProductsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
 
   const categoryLabels = useMemo(
     () => new Map(categories.map((category) => [category.id, category.label])),
@@ -121,12 +135,13 @@ function AdminProductsPage() {
     }
   };
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    setDeletingId(id);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
     setDeleteError(null);
     try {
-      await deleteAdminProduct({ data: { id } });
+      await deleteAdminProduct({ data: { id: deleteTarget.id } });
+      setDeleteTarget(null);
       await router.invalidate();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Failed to delete product");
@@ -167,7 +182,7 @@ function AdminProductsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
             <Input
-              placeholder="Search by name, category or slug…"
+              placeholder="Search by name or category…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9 h-11"
@@ -262,16 +277,13 @@ function AdminProductsPage() {
                   {product.priceFrom && (
                     <p className="text-xs font-medium text-primary mt-1">{product.priceFrom}</p>
                   )}
-                  <p className="font-mono text-[10px] text-muted/70 mt-1 truncate">
-                    {product.slug}
-                  </p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 px-4 pb-4">
                 <Button
                   variant="outline"
                   className={cn(
-                    "h-11 min-w-11 px-3.5 shrink-0",
+                    "h-11 px-3.5 shrink-0 gap-1.5 text-xs",
                     product.isActive
                       ? "text-emerald-700 border-emerald-300/60 bg-emerald-50 hover:bg-emerald-100"
                       : "text-muted hover:text-foreground hover:border-border",
@@ -283,7 +295,6 @@ function AdminProductsPage() {
                       ? `Hide ${product.name} from the public site`
                       : `Show ${product.name} on the public site`
                   }
-                  title={product.isActive ? "Listed publicly" : "Hidden from site"}
                 >
                   {statusToggleId === product.id ? (
                     <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
@@ -292,11 +303,12 @@ function AdminProductsPage() {
                   ) : (
                     <EyeOff className="w-3.5 h-3.5" />
                   )}
+                  Visible
                 </Button>
                 <Button
                   variant="outline"
                   className={cn(
-                    "h-11 min-w-11 px-3.5 shrink-0",
+                    "h-11 px-3.5 shrink-0 gap-1.5 text-xs",
                     product.featuredOnHomepage
                       ? "text-primary border-primary/40 bg-primary/5 hover:bg-primary/10"
                       : "text-muted hover:text-primary hover:border-primary/40",
@@ -308,13 +320,6 @@ function AdminProductsPage() {
                       ? `Remove ${product.name} from homepage gallery`
                       : `Feature ${product.name} on homepage gallery`
                   }
-                  title={
-                    !product.isActive
-                      ? "Activate product to feature on homepage"
-                      : product.featuredOnHomepage
-                        ? "On homepage"
-                        : "Add to homepage"
-                  }
                 >
                   {featuredToggleId === product.id ? (
                     <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
@@ -323,26 +328,42 @@ function AdminProductsPage() {
                       className={cn("w-3.5 h-3.5", product.featuredOnHomepage && "fill-primary/30")}
                     />
                   )}
+                  Homepage
                 </Button>
-                <Button variant="outline" className="min-w-[7rem] flex-1 h-11 text-sm" asChild>
+                <Button variant="outline" className="min-w-[5.5rem] flex-1 h-11 text-sm" asChild>
                   <Link to="/admin/products/$productId" params={{ productId: String(product.id) }}>
                     <Pencil className="w-3.5 h-3.5 mr-2" />
                     Edit
                   </Link>
                 </Button>
-                <Button
-                  variant="outline"
-                  className="h-11 min-w-11 px-3.5 text-destructive hover:text-destructive hover:border-destructive/50"
-                  disabled={deletingId === product.id}
-                  onClick={() => handleDelete(product.id, product.name)}
-                  aria-label={`Delete ${product.name}`}
-                >
-                  {deletingId === product.id ? (
-                    <span className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
-                  )}
-                </Button>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="h-11 min-w-11 px-3.5"
+                    aria-label={`More actions for ${product.name}`}
+                    aria-expanded={menuOpenId === product.id}
+                    onClick={() =>
+                      setMenuOpenId((current) => (current === product.id ? null : product.id))
+                    }
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                  {menuOpenId === product.id ? (
+                    <div className="absolute right-0 bottom-12 z-20 min-w-40 rounded-lg border border-border bg-background p-1 shadow-lg">
+                      <button
+                        type="button"
+                        className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm text-destructive hover:bg-destructive/5"
+                        onClick={() => {
+                          setMenuOpenId(null);
+                          setDeleteTarget({ id: product.id, name: product.name });
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </article>
           ))}
@@ -366,9 +387,6 @@ function AdminProductsPage() {
                 </th>
                 <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
                   Category
-                </th>
-                <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted hidden lg:table-cell">
-                  Slug
                 </th>
                 <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted hidden lg:table-cell">
                   Price
@@ -413,12 +431,9 @@ function AdminProductsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-block font-mono text-[10px] uppercase tracking-wider border border-border rounded-full px-2.5 py-0.5 text-muted">
+                    <span className="inline-block text-xs border border-border rounded-full px-2.5 py-0.5 text-muted">
                       {categoryLabels.get(product.categoryId) ?? product.categoryId}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted hidden lg:table-cell max-w-[160px]">
-                    <span className="truncate block">{product.slug}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted hidden lg:table-cell">
                     {product.priceFrom ?? "—"}
@@ -502,7 +517,7 @@ function AdminProductsPage() {
                         size="sm"
                         className="h-8 px-3 text-destructive hover:text-destructive hover:border-destructive/50"
                         disabled={deletingId === product.id}
-                        onClick={() => handleDelete(product.id, product.name)}
+                        onClick={() => setDeleteTarget({ id: product.id, name: product.name })}
                         aria-label={`Delete ${product.name}`}
                       >
                         {deletingId === product.id ? (
@@ -519,6 +534,20 @@ function AdminProductsPage() {
           </table>
         </div>
       )}
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) setDeleteTarget(null);
+        }}
+        title={deleteTarget ? `Delete "${deleteTarget.name}"?` : "Delete product?"}
+        description="This product will be permanently removed."
+        confirmLabel="Delete product"
+        cancelLabel="Cancel"
+        destructive
+        loading={deletingId !== null}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

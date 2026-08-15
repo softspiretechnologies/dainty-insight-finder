@@ -114,5 +114,12 @@ describe("enquiryInterestLabel", () => {
         source: "service",
       }),
     ).toBe("Shoot");
+    expect(
+      enquiryInterestLabel({
+        productNameSnapshot: null,
+        serviceTitleSnapshot: null,
+        source: "contact",
+      }),
+    ).toBe("Contact page");
   });
 });

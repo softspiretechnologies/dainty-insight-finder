@@ -10,6 +10,7 @@ import {
   adminEnquiryListFilterSchema,
   adminEnquiryNotesSchema,
   adminEnquiryStatusSchema,
+  adminEnquiryUpdateSchema,
   serializeEnquiry,
   type EnquiryStatus,
 } from "@/lib/enquiries";
@@ -95,9 +96,26 @@ export const updateAdminEnquiryNotes = createServerFn({ method: "POST" })
     }
   });
 
+export const updateAdminEnquiry = createServerFn({ method: "POST" })
+  .validator(adminEnquiryUpdateSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    try {
+      await getDb()
+        .update(enquiries)
+        .set({ status: data.status, adminNotes: data.adminNotes })
+        .where(eq(enquiries.id, data.id));
+      return { ok: true as const };
+    } catch (error) {
+      logError("admin.enquiries.update_failed", error, { id: data.id });
+      throw new Error(TABLE_ERROR);
+    }
+  });
+
 export const getAdminEnquirySummary = createServerFn({ method: "GET" }).handler(async () => {
   await requireAdmin();
   const empty = {
+    all: 0,
     new: 0,
     contacted: 0,
     quoted: 0,
@@ -117,6 +135,8 @@ export const getAdminEnquirySummary = createServerFn({ method: "GET" }).handler(
         summary[row.status as EnquiryStatus] = Number(row.value);
       }
     }
+    summary.all =
+      summary.new + summary.contacted + summary.quoted + summary.confirmed + summary.lost;
     const recentRows = await db
       .select()
       .from(enquiries)

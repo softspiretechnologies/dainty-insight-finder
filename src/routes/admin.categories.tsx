@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Check, ExternalLink, ImagePlus, Tags } from "lucide-react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Check, ExternalLink, ImagePlus, Tags } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 
 import {
   Accordion,
@@ -8,15 +8,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  AdminField,
-  FormErrorBanner,
-  FormSuccessBanner,
-  invalidBoxClass,
-} from "@/components/admin/AdminField";
+import { AdminField, FormErrorBanner, invalidBoxClass } from "@/components/admin/AdminField";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { canMoveItem } from "@/lib/admin-reorder";
 import { adminCategoryFormSchema } from "@/lib/admin-schemas";
 import {
   invalidInputClass,
@@ -25,7 +23,11 @@ import {
   type FieldErrors,
 } from "@/lib/admin-validation";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
-import { listAdminCategories, saveAdminCategory } from "@/lib/api/admin/categories";
+import {
+  listAdminCategories,
+  moveAdminCategory,
+  saveAdminCategory,
+} from "@/lib/api/admin/categories";
 import { cn } from "@/lib/utils";
 import type { CategoryId } from "@/types/catalog";
 
@@ -48,6 +50,37 @@ type CategoryRow = {
 function AdminCategoriesPage() {
   const { categories } = Route.useLoaderData();
   const router = useRouter();
+  const [dirtyById, setDirtyById] = useState<Record<string, boolean>>({});
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
+
+  const sortable = useMemo(
+    () => categories.map((category) => ({ id: category.id, sortOrder: category.sortOrder })),
+    [categories],
+  );
+  const pageDirty = Object.values(dirtyById).some(Boolean);
+  useUnsavedChangesGuard(pageDirty);
+
+  const handleDirtyChange = useCallback((id: string, dirty: boolean) => {
+    setDirtyById((prev) => {
+      if (Boolean(prev[id]) === dirty) return prev;
+      return { ...prev, [id]: dirty };
+    });
+  }, []);
+
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (pageDirty || movingId) return;
+    setMoveError(null);
+    setMovingId(id);
+    try {
+      await moveAdminCategory({ data: { id, direction } });
+      await router.invalidate();
+    } catch (err) {
+      setMoveError(err instanceof Error ? err.message : "Failed to reorder category");
+    } finally {
+      setMovingId(null);
+    }
+  };
 
   return (
     <div className="max-w-3xl">
@@ -83,21 +116,64 @@ function AdminCategoriesPage() {
         </div>
       </section>
 
+      {moveError ? <FormErrorBanner message={moveError} /> : null}
+      {pageDirty ? (
+        <p className="text-xs text-muted mb-3">Save or discard edits before reordering.</p>
+      ) : null}
+
       <Accordion type="single" collapsible className="space-y-3">
-        {categories.map((category) => (
-          <AccordionItem
-            key={category.id}
-            value={category.id}
-            className="border border-border rounded-xl bg-surface/20 overflow-hidden"
-          >
-            <AccordionTrigger className="px-4 py-4 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border">
-              <CategorySummary category={category} />
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-5 pt-4">
-              <CategoryForm category={category} onSaved={() => router.invalidate()} />
-            </AccordionContent>
-          </AccordionItem>
-        ))}
+        {categories.map((category) => {
+          const canUp = canMoveItem(sortable, category.id, "up");
+          const canDown = canMoveItem(sortable, category.id, "down");
+          const isMoving = movingId === category.id;
+
+          return (
+            <AccordionItem
+              key={category.id}
+              value={category.id}
+              className="border border-border rounded-xl bg-surface/20 overflow-hidden"
+            >
+              <div className="flex items-stretch gap-1">
+                <AccordionTrigger className="flex-1 px-4 py-4 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border">
+                  <CategorySummary category={category} />
+                </AccordionTrigger>
+                <div className="flex flex-col justify-center gap-1 py-2 pr-3 shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    disabled={!canUp || pageDirty || Boolean(movingId)}
+                    aria-label={`Move ${category.label} up`}
+                    onClick={() => handleMove(category.id, "up")}
+                  >
+                    <ArrowUp className="w-3.5 h-3.5 mr-1" />
+                    {isMoving ? "…" : "Move up"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    disabled={!canDown || pageDirty || Boolean(movingId)}
+                    aria-label={`Move ${category.label} down`}
+                    onClick={() => handleMove(category.id, "down")}
+                  >
+                    <ArrowDown className="w-3.5 h-3.5 mr-1" />
+                    Move down
+                  </Button>
+                </div>
+              </div>
+              <AccordionContent className="px-4 pb-5 pt-4">
+                <CategoryForm
+                  category={category}
+                  onSaved={() => router.invalidate()}
+                  onDirtyChange={handleDirtyChange}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
       </Accordion>
     </div>
   );
@@ -113,17 +189,23 @@ function CategorySummary({ category }: { category: CategoryRow }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-medium text-sm leading-snug">{category.label}</p>
-        <p className="text-xs text-muted mt-0.5 line-clamp-1">{category.blurb}</p>
-        <p className="font-mono text-[10px] text-muted/80 mt-1">{category.id}</p>
+        {category.blurb ? (
+          <p className="text-xs text-muted mt-0.5 line-clamp-1">{category.blurb}</p>
+        ) : null}
       </div>
-      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted border border-border rounded-full px-2 py-0.5">
-        #{category.sortOrder}
-      </span>
     </div>
   );
 }
 
-function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: () => void }) {
+function CategoryForm({
+  category,
+  onSaved,
+  onDirtyChange,
+}: {
+  category: CategoryRow;
+  onSaved: () => void;
+  onDirtyChange: (id: string, dirty: boolean) => void;
+}) {
   const fileInputId = useId();
   const [label, setLabel] = useState(category.label);
   const [blurb, setBlurb] = useState(category.blurb);
@@ -132,7 +214,7 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [success, setSuccess] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const previewSrc = previewUrl ?? category.imagePath;
@@ -152,7 +234,7 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
     setBlurb(category.blurb);
     setSortOrder(String(category.sortOrder));
     setImageFile(null);
-    setSuccess(false);
+    setSavedMessage(null);
     setFormError(null);
     setFieldErrors({});
   }, [category.id, category.label, category.blurb, category.sortOrder, category.imagePath]);
@@ -167,18 +249,22 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
   };
 
   const isDirty = useMemo(
-    () =>
-      label !== category.label ||
-      blurb !== category.blurb ||
-      sortOrder !== String(category.sortOrder) ||
-      imageFile !== null,
-    [label, blurb, sortOrder, imageFile, category],
+    () => label !== category.label || blurb !== category.blurb || imageFile !== null,
+    [label, blurb, imageFile, category],
   );
+
+  useEffect(() => {
+    onDirtyChange(category.id, isDirty && !loading);
+  }, [category.id, isDirty, loading, onDirtyChange]);
+
+  useEffect(() => {
+    return () => onDirtyChange(category.id, false);
+  }, [category.id, onDirtyChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSuccess(false);
+    setSavedMessage(null);
 
     const validation = validateForm(adminCategoryFormSchema, {
       label,
@@ -205,7 +291,7 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
         },
       });
       setImageFile(null);
-      setSuccess(true);
+      setSavedMessage("Saved");
       onSaved();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save category");
@@ -248,7 +334,7 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
               className="sr-only"
               onChange={(e) => {
                 setImageFile(e.target.files?.[0] ?? null);
-                setSuccess(false);
+                setSavedMessage(null);
                 clearFieldError("image");
               }}
             />
@@ -270,7 +356,7 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
       </div>
 
       <AdminField
-        label="Display label"
+        label="Category name"
         htmlFor={`${category.id}-label`}
         required
         error={fieldErrors.label}
@@ -280,7 +366,7 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
           value={label}
           onChange={(e) => {
             setLabel(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
             clearFieldError("label");
           }}
           className={`h-11 ${invalidInputClass(fieldErrors.label)}`}
@@ -299,31 +385,11 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
           value={blurb}
           onChange={(e) => {
             setBlurb(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
             clearFieldError("blurb");
           }}
           rows={3}
           className={cn("resize-none", invalidInputClass(fieldErrors.blurb))}
-        />
-      </AdminField>
-
-      <AdminField
-        label="Sort order"
-        htmlFor={`${category.id}-sort`}
-        required
-        error={fieldErrors.sortOrder}
-      >
-        <Input
-          id={`${category.id}-sort`}
-          type="number"
-          min={0}
-          value={sortOrder}
-          onChange={(e) => {
-            setSortOrder(e.target.value);
-            setSuccess(false);
-            clearFieldError("sortOrder");
-          }}
-          className={`h-11 max-w-[8rem] ${invalidInputClass(fieldErrors.sortOrder)}`}
         />
       </AdminField>
 
@@ -333,14 +399,14 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
         <Button
           type="submit"
           className="w-full sm:w-auto h-11 min-w-[130px]"
-          disabled={loading || (!isDirty && !success)}
+          disabled={loading || (!isDirty && !savedMessage)}
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
               <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
               Saving…
             </span>
-          ) : success && !isDirty ? (
+          ) : savedMessage && !isDirty ? (
             <span className="inline-flex items-center gap-2">
               <Check className="w-4 h-4" />
               Saved
@@ -349,6 +415,8 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
             "Save changes"
           )}
         </Button>
+
+        <AdminSaveStatus message={!isDirty ? savedMessage : null} />
 
         <Button variant="outline" className="w-full sm:w-auto h-11" asChild>
           <Link
@@ -361,12 +429,6 @@ function CategoryForm({ category, onSaved }: { category: CategoryRow; onSaved: (
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </Button>
-
-        {isDirty && !loading ? (
-          <span className={cn("text-xs text-muted sm:ml-auto", "sm:order-last")}>
-            Unsaved changes
-          </span>
-        ) : null}
       </div>
     </form>
   );

@@ -1,15 +1,17 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Inbox } from "lucide-react";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Inbox, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { FormErrorBanner } from "@/components/admin/AdminField";
 import { Input } from "@/components/ui/input";
-import { listAdminEnquiries } from "@/lib/api/admin/enquiries";
+import { getAdminEnquirySummary, listAdminEnquiries } from "@/lib/api/admin/enquiries";
+import { formatAdminDateTime } from "@/lib/admin-format";
 import {
   ENQUIRY_STATUSES,
   ENQUIRY_STATUS_LABELS,
   enquiryInterestLabel,
+  enquirySourceLabel,
   type EnquiryStatus,
 } from "@/lib/enquiries";
 import { cn } from "@/lib/utils";
@@ -22,10 +24,15 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/admin/enquiries/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => ({ status: search.status, q: search.q }),
-  loader: ({ deps }) =>
-    listAdminEnquiries({
-      data: { status: deps.status, q: deps.q || undefined },
-    }),
+  loader: async ({ deps }) => {
+    const [list, summary] = await Promise.all([
+      listAdminEnquiries({
+        data: { status: deps.status, q: deps.q || undefined },
+      }),
+      getAdminEnquirySummary(),
+    ]);
+    return { ...list, counts: summary };
+  },
   component: AdminEnquiriesPage,
 });
 
@@ -42,57 +49,82 @@ function AdminEnquiriesPage() {
   const data = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const router = useRouter();
   const [query, setQuery] = useState(search.q ?? "");
   const items = data?.enquiries ?? [];
   const loadError = data?.error;
+  const counts = data?.counts;
+
+  useEffect(() => {
+    setQuery(search.q ?? "");
+  }, [search.q]);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = query.trim();
+      const current = (search.q ?? "").trim();
+      if (next === current) return;
+      void navigate({
+        search: (prev) => ({ ...prev, q: next || undefined }),
+        replace: true,
+      });
+    }, 350);
+    return () => window.clearTimeout(handle);
+  }, [navigate, query, search.q]);
 
   const setStatus = (status: "all" | EnquiryStatus) => {
     void navigate({ search: (prev) => ({ ...prev, status }) });
   };
 
-  const submitSearch = (event: React.FormEvent) => {
-    event.preventDefault();
-    void navigate({ search: (prev) => ({ ...prev, q: query.trim() || undefined }) });
-    void router.invalidate();
+  const clearSearch = () => {
+    setQuery("");
+    void navigate({ search: (prev) => ({ ...prev, q: undefined }), replace: true });
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Enquiries</h1>
-        <p className="text-sm text-muted mt-1">Leads from the website — follow up on WhatsApp.</p>
+        <p className="text-sm text-muted mt-1">Customers who reached out from the website.</p>
       </div>
 
       {loadError ? <FormErrorBanner message={loadError} /> : null}
 
       <div className="flex flex-wrap gap-2">
-        <FilterChip active={search.status === "all"} onClick={() => setStatus("all")} label="All" />
+        <FilterChip
+          active={search.status === "all"}
+          onClick={() => setStatus("all")}
+          label={`All${counts ? ` ${counts.all}` : ""}`}
+        />
         {ENQUIRY_STATUSES.map((status) => (
           <FilterChip
             key={status}
             active={search.status === status}
             onClick={() => setStatus(status)}
-            label={ENQUIRY_STATUS_LABELS[status]}
+            label={`${ENQUIRY_STATUS_LABELS[status]}${counts ? ` ${counts[status]}` : ""}`}
           />
         ))}
       </div>
 
-      <form onSubmit={submitSearch} className="flex flex-col sm:flex-row gap-2">
+      <div className="relative sm:max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search name, phone, product…"
+          placeholder="Search enquiries…"
           aria-label="Search enquiries"
-          className="sm:max-w-sm"
+          className="pl-9 pr-11 h-11"
         />
-        <button
-          type="submit"
-          className="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-4 text-sm hover:border-foreground"
-        >
-          Search
-        </button>
-      </form>
+        {query ? (
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-md text-muted hover:text-foreground"
+            aria-label="Clear search"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        ) : null}
+      </div>
 
       {items.length === 0 && !loadError ? (
         <div className="border border-dashed border-border rounded-xl py-16 text-center">
@@ -128,23 +160,18 @@ function AdminEnquiriesPage() {
                       >
                         {ENQUIRY_STATUS_LABELS[enquiry.status as EnquiryStatus] ?? enquiry.status}
                       </span>
-                      {isNew ? (
-                        <span className="text-[9px] uppercase tracking-wider text-amber-700 font-semibold">
-                          New
-                        </span>
-                      ) : null}
                     </div>
-                    <p className="text-xs text-muted mt-1 break-all">{enquiry.phone}</p>
                     <p className="text-sm mt-2 min-w-0 break-words">
                       {enquiryInterestLabel(enquiry)}
-                      <span className="text-muted"> · {enquiry.source}</span>
                     </p>
-                    {enquiry.eventDate ? (
-                      <p className="text-xs text-muted mt-1">Event: {enquiry.eventDate}</p>
-                    ) : null}
+                    <p className="text-xs text-muted mt-1">
+                      {enquirySourceLabel(enquiry.source)}
+                      {enquiry.eventDate ? ` · Event ${enquiry.eventDate}` : ""}
+                    </p>
+                    <p className="text-xs text-muted mt-1 break-all">{enquiry.phone}</p>
                   </div>
-                  <time className="text-[11px] text-muted shrink-0 font-mono">
-                    {new Date(enquiry.createdAt).toLocaleString()}
+                  <time className="text-[11px] text-muted shrink-0">
+                    {formatAdminDateTime(enquiry.createdAt)}
                   </time>
                 </div>
               </Link>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Check, ExternalLink, ImagePlus, Sparkles } from "lucide-react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Check, ExternalLink, ImagePlus, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 
 import {
   Accordion,
@@ -8,16 +8,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  AdminField,
-  FormErrorBanner,
-  FormSuccessBanner,
-  invalidBoxClass,
-} from "@/components/admin/AdminField";
+import { AdminField, FormErrorBanner, invalidBoxClass } from "@/components/admin/AdminField";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BulletTextarea } from "@/components/ui/bullet-textarea";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { canMoveItem } from "@/lib/admin-reorder";
 import { adminServiceFormSchema, adminServicesPageFormSchema } from "@/lib/admin-schemas";
 import {
   invalidInputClass,
@@ -29,6 +27,7 @@ import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { normalizeProductDetails } from "@/lib/product-details";
 import {
   listAdminServicesData,
+  moveAdminService,
   saveAdminService,
   saveAdminServicesPage,
 } from "@/lib/api/admin/services";
@@ -58,6 +57,38 @@ type PageContent = {
 function AdminServicesPage() {
   const { services, page } = Route.useLoaderData();
   const router = useRouter();
+  const [pageFormDirty, setPageFormDirty] = useState(false);
+  const [dirtyById, setDirtyById] = useState<Record<string, boolean>>({});
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
+
+  const sortable = useMemo(
+    () => services.map((service) => ({ id: service.id, sortOrder: service.sortOrder })),
+    [services],
+  );
+  const pageDirty = pageFormDirty || Object.values(dirtyById).some(Boolean);
+  useUnsavedChangesGuard(pageDirty);
+
+  const handleDirtyChange = useCallback((id: string, dirty: boolean) => {
+    setDirtyById((prev) => {
+      if (Boolean(prev[id]) === dirty) return prev;
+      return { ...prev, [id]: dirty };
+    });
+  }, []);
+
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (pageDirty || movingId) return;
+    setMoveError(null);
+    setMovingId(id);
+    try {
+      await moveAdminService({ data: { id, direction } });
+      await router.invalidate();
+    } catch (err) {
+      setMoveError(err instanceof Error ? err.message : "Failed to reorder service");
+    } finally {
+      setMovingId(null);
+    }
+  };
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -68,47 +99,101 @@ function AdminServicesPage() {
         </p>
       </div>
 
-      <PageContentForm page={page} onSaved={() => router.invalidate()} />
+      <PageContentForm
+        page={page}
+        onSaved={() => router.invalidate()}
+        onDirtyChange={setPageFormDirty}
+      />
 
       <section>
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
           Service blocks
         </p>
+        {moveError ? <FormErrorBanner message={moveError} /> : null}
+        {pageDirty ? (
+          <p className="text-xs text-muted mb-3">Save or discard edits before reordering.</p>
+        ) : null}
         <Accordion type="single" collapsible className="space-y-3">
-          {services.map((service) => (
-            <AccordionItem
-              key={service.id}
-              value={service.id}
-              className="border border-border rounded-xl bg-surface/20 overflow-hidden"
-            >
-              <AccordionTrigger className="px-4 py-4 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border">
-                <ServiceSummary service={service} />
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-5 pt-4">
-                <ServiceForm service={service} onSaved={() => router.invalidate()} />
-              </AccordionContent>
-            </AccordionItem>
-          ))}
+          {services.map((service) => {
+            const canUp = canMoveItem(sortable, service.id, "up");
+            const canDown = canMoveItem(sortable, service.id, "down");
+            const isMoving = movingId === service.id;
+
+            return (
+              <AccordionItem
+                key={service.id}
+                value={service.id}
+                className="border border-border rounded-xl bg-surface/20 overflow-hidden"
+              >
+                <div className="flex items-stretch gap-1">
+                  <AccordionTrigger className="flex-1 px-4 py-4 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border">
+                    <ServiceSummary service={service} />
+                  </AccordionTrigger>
+                  <div className="flex flex-col justify-center gap-1 py-2 pr-3 shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      disabled={!canUp || pageDirty || Boolean(movingId)}
+                      aria-label={`Move ${service.title} up`}
+                      onClick={() => handleMove(service.id, "up")}
+                    >
+                      <ArrowUp className="w-3.5 h-3.5 mr-1" />
+                      {isMoving ? "…" : "Move up"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      disabled={!canDown || pageDirty || Boolean(movingId)}
+                      aria-label={`Move ${service.title} down`}
+                      onClick={() => handleMove(service.id, "down")}
+                    >
+                      <ArrowDown className="w-3.5 h-3.5 mr-1" />
+                      Move down
+                    </Button>
+                  </div>
+                </div>
+                <AccordionContent className="px-4 pb-5 pt-4">
+                  <ServiceForm
+                    service={service}
+                    onSaved={() => router.invalidate()}
+                    onDirtyChange={handleDirtyChange}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
         </Accordion>
       </section>
     </div>
   );
 }
 
-function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => void }) {
+function PageContentForm({
+  page,
+  onSaved,
+  onDirtyChange,
+}: {
+  page: PageContent;
+  onSaved: () => void;
+  onDirtyChange: (dirty: boolean) => void;
+}) {
   const [intro, setIntro] = useState(page.intro);
   const [footerTitle, setFooterTitle] = useState(page.footerTitle);
   const [footerBlurb, setFooterBlurb] = useState(page.footerBlurb);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [success, setSuccess] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setIntro(page.intro);
     setFooterTitle(page.footerTitle);
     setFooterBlurb(page.footerBlurb);
-    setSuccess(false);
+    setSavedMessage(null);
     setFormError(null);
     setFieldErrors({});
   }, [page.intro, page.footerTitle, page.footerBlurb]);
@@ -116,10 +201,18 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
   const isDirty =
     intro !== page.intro || footerTitle !== page.footerTitle || footerBlurb !== page.footerBlurb;
 
+  useEffect(() => {
+    onDirtyChange(isDirty && !loading);
+  }, [isDirty, loading, onDirtyChange]);
+
+  useEffect(() => {
+    return () => onDirtyChange(false);
+  }, [onDirtyChange]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSuccess(false);
+    setSavedMessage(null);
 
     const validation = validateForm(adminServicesPageFormSchema, {
       intro,
@@ -137,7 +230,7 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
 
     try {
       await saveAdminServicesPage({ data: validation.data });
-      setSuccess(true);
+      setSavedMessage("Saved");
       onSaved();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save page content");
@@ -165,7 +258,7 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
           value={intro}
           onChange={(e) => {
             setIntro(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           rows={3}
           className={cn("resize-none", invalidInputClass(fieldErrors.intro))}
@@ -183,7 +276,7 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
           value={footerTitle}
           onChange={(e) => {
             setFooterTitle(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           className={`h-11 ${invalidInputClass(fieldErrors.footerTitle)}`}
         />
@@ -200,7 +293,7 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
           value={footerBlurb}
           onChange={(e) => {
             setFooterBlurb(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           rows={3}
           className={cn("resize-none", invalidInputClass(fieldErrors.footerBlurb))}
@@ -208,11 +301,13 @@ function PageContentForm({ page, onSaved }: { page: PageContent; onSaved: () => 
       </AdminField>
 
       {formError ? <FormErrorBanner message={formError} /> : null}
-      {success && !isDirty ? <FormSuccessBanner message="Page content saved." /> : null}
 
-      <Button type="submit" className="h-11" disabled={loading || (!isDirty && !success)}>
-        {loading ? "Saving…" : success && !isDirty ? "Saved" : "Save page content"}
-      </Button>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <Button type="submit" className="h-11" disabled={loading || (!isDirty && !savedMessage)}>
+          {loading ? "Saving…" : savedMessage && !isDirty ? "Saved" : "Save page content"}
+        </Button>
+        <AdminSaveStatus message={!isDirty ? savedMessage : null} />
+      </div>
     </form>
   );
 }
@@ -233,14 +328,19 @@ function ServiceSummary({ service }: { service: ServiceRow }) {
         <p className="font-medium text-sm leading-snug">{service.title}</p>
         <p className="text-xs text-muted mt-0.5 line-clamp-1">{service.blurb}</p>
       </div>
-      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted border border-border rounded-full px-2 py-0.5">
-        #{service.sortOrder}
-      </span>
     </div>
   );
 }
 
-function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () => void }) {
+function ServiceForm({
+  service,
+  onSaved,
+  onDirtyChange,
+}: {
+  service: ServiceRow;
+  onSaved: () => void;
+  onDirtyChange: (id: string, dirty: boolean) => void;
+}) {
   const fileInputId = useId();
   const [title, setTitle] = useState(service.title);
   const [blurb, setBlurb] = useState(service.blurb);
@@ -250,10 +350,11 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [success, setSuccess] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const previewSrc = previewUrl ?? service.imagePath;
+  const initialBullets = normalizeProductDetails(service.bullets).join("\n");
 
   useEffect(() => {
     if (!imageFile) {
@@ -271,7 +372,7 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
     setBullets(normalizeProductDetails(service.bullets).join("\n"));
     setSortOrder(String(service.sortOrder));
     setImageFile(null);
-    setSuccess(false);
+    setSavedMessage(null);
     setFormError(null);
     setFieldErrors({});
   }, [
@@ -287,16 +388,23 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
     () =>
       title !== service.title ||
       blurb !== service.blurb ||
-      bullets !== normalizeProductDetails(service.bullets).join("\n") ||
-      sortOrder !== String(service.sortOrder) ||
+      bullets !== initialBullets ||
       imageFile !== null,
-    [title, blurb, bullets, sortOrder, imageFile, service],
+    [title, blurb, bullets, imageFile, service.title, service.blurb, initialBullets],
   );
+
+  useEffect(() => {
+    onDirtyChange(service.id, isDirty && !loading);
+  }, [service.id, isDirty, loading, onDirtyChange]);
+
+  useEffect(() => {
+    return () => onDirtyChange(service.id, false);
+  }, [service.id, onDirtyChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSuccess(false);
+    setSavedMessage(null);
 
     const validation = validateForm(adminServiceFormSchema, { title, blurb, bullets, sortOrder });
     if (!validation.ok) {
@@ -318,7 +426,7 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
         },
       });
       setImageFile(null);
-      setSuccess(true);
+      setSavedMessage("Saved");
       onSaved();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save service");
@@ -360,7 +468,7 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
               className="sr-only"
               onChange={(e) => {
                 setImageFile(e.target.files?.[0] ?? null);
-                setSuccess(false);
+                setSavedMessage(null);
               }}
             />
             <Button type="button" variant="outline" className="w-full sm:w-auto h-11" asChild>
@@ -384,7 +492,7 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           className={`h-11 ${invalidInputClass(fieldErrors.title)}`}
         />
@@ -401,7 +509,7 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
           value={blurb}
           onChange={(e) => {
             setBlurb(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           rows={4}
           className={cn("resize-none", invalidInputClass(fieldErrors.blurb))}
@@ -420,29 +528,10 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
           value={bullets}
           onChange={(value) => {
             setBullets(value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           rows={5}
           className={invalidInputClass(fieldErrors.bullets)}
-        />
-      </AdminField>
-
-      <AdminField
-        label="Sort order"
-        htmlFor={`${service.id}-sort`}
-        required
-        error={fieldErrors.sortOrder}
-      >
-        <Input
-          id={`${service.id}-sort`}
-          type="number"
-          min={0}
-          value={sortOrder}
-          onChange={(e) => {
-            setSortOrder(e.target.value);
-            setSuccess(false);
-          }}
-          className={`h-11 max-w-[8rem] ${invalidInputClass(fieldErrors.sortOrder)}`}
         />
       </AdminField>
 
@@ -452,11 +541,11 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
         <Button
           type="submit"
           className="w-full sm:w-auto h-11 min-w-[130px]"
-          disabled={loading || (!isDirty && !success)}
+          disabled={loading || (!isDirty && !savedMessage)}
         >
           {loading ? (
             "Saving…"
-          ) : success && !isDirty ? (
+          ) : savedMessage && !isDirty ? (
             <span className="inline-flex items-center gap-2">
               <Check className="w-4 h-4" />
               Saved
@@ -465,6 +554,8 @@ function ServiceForm({ service, onSaved }: { service: ServiceRow; onSaved: () =>
             "Save changes"
           )}
         </Button>
+
+        <AdminSaveStatus message={!isDirty ? savedMessage : null} />
 
         <Button variant="outline" className="w-full sm:w-auto h-11" asChild>
           <Link to="/services" target="_blank" className="inline-flex items-center gap-2">

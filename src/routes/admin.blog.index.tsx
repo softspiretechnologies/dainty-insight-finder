@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { FileText, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { deleteAdminBlogPost, listAdminBlogPosts, toggleAdminBlogPost } from "@/lib/api/admin/blog";
@@ -31,6 +32,8 @@ function AdminBlogPage() {
   const loadError = data?.error;
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
 
   const togglePublished = async (id: number, published: boolean) => {
     setError(null);
@@ -42,14 +45,18 @@ function AdminBlogPage() {
     }
   };
 
-  const remove = async (id: number, title: string) => {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
     setError(null);
     try {
-      await deleteAdminBlogPost({ data: { id } });
+      await deleteAdminBlogPost({ data: { id: deleteTarget.id } });
+      setDeleteTarget(null);
       await router.invalidate();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Failed to delete post");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -87,7 +94,7 @@ function AdminBlogPage() {
                     {post.isPublished ? "Published" : "Draft"}
                   </span>
                 </div>
-                <p className="truncate text-xs text-muted mt-1">/blog/{post.slug}</p>
+                <p className="truncate text-xs text-muted mt-1">Page: /blog/{post.slug}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -107,16 +114,35 @@ function AdminBlogPage() {
                   type="button"
                   variant="outline"
                   size="icon"
-                  aria-label="Delete post"
-                  onClick={() => remove(post.id, post.title)}
+                  aria-label={`Delete ${post.title}`}
+                  disabled={deletingId === post.id}
+                  onClick={() => setDeleteTarget({ id: post.id, title: post.title })}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  {deletingId === post.id ? (
+                    <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </article>
           ))}
         </div>
       ) : null}
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) setDeleteTarget(null);
+        }}
+        title={deleteTarget ? `Delete "${deleteTarget.title}"?` : "Delete post?"}
+        description="This post will be permanently removed."
+        confirmLabel="Delete post"
+        cancelLabel="Cancel"
+        destructive
+        loading={deletingId !== null}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Check, ExternalLink, MessageSquareQuote, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ExternalLink, MessageSquareQuote, Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Accordion,
@@ -8,10 +8,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { AdminField, FormErrorBanner, FormSuccessBanner } from "@/components/admin/AdminField";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import {
   adminTestimonialFormSchema,
   adminTestimonialsSectionFormSchema,
@@ -50,13 +53,32 @@ function AdminTestimonialsPage() {
   const [showNew, setShowNew] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [headingDirty, setHeadingDirty] = useState(false);
+  const [dirtyById, setDirtyById] = useState<Record<string, boolean>>({});
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Delete testimonial from "${name}"?`)) return;
-    setDeletingId(id);
+  const nextSortOrder = useMemo(() => {
+    if (testimonials.length === 0) return 0;
+    return Math.max(...testimonials.map((item) => item.sortOrder)) + 1;
+  }, [testimonials]);
+
+  const pageDirty = headingDirty || Object.values(dirtyById).some(Boolean);
+  useUnsavedChangesGuard(pageDirty);
+
+  const handleDirtyChange = useCallback((id: string, dirty: boolean) => {
+    setDirtyById((prev) => {
+      if (Boolean(prev[id]) === dirty) return prev;
+      return { ...prev, [id]: dirty };
+    });
+  }, []);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
     setDeleteError(null);
     try {
-      await deleteAdminTestimonial({ data: { id } });
+      await deleteAdminTestimonial({ data: { id: deleteTarget.id } });
+      setDeleteTarget(null);
       await router.invalidate();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Failed to delete testimonial");
@@ -82,7 +104,11 @@ function AdminTestimonialsPage() {
         </Button>
       </div>
 
-      <SectionHeadingForm heading={heading} onSaved={() => router.invalidate()} />
+      <SectionHeadingForm
+        heading={heading}
+        onDirtyChange={setHeadingDirty}
+        onSaved={() => router.invalidate()}
+      />
 
       {deleteError ? <FormErrorBanner message={deleteError} /> : null}
 
@@ -107,11 +133,17 @@ function AdminTestimonialsPage() {
             <p className="font-medium text-sm mb-4">New testimonial</p>
             <TestimonialForm
               testimonial={null}
+              defaultSortOrder={nextSortOrder}
+              onDirtyChange={(dirty) => handleDirtyChange("new", dirty)}
               onSaved={() => {
+                handleDirtyChange("new", false);
                 setShowNew(false);
                 router.invalidate();
               }}
-              onCancel={() => setShowNew(false)}
+              onCancel={() => {
+                handleDirtyChange("new", false);
+                setShowNew(false);
+              }}
             />
           </div>
         ) : null}
@@ -134,13 +166,19 @@ function AdminTestimonialsPage() {
                 <TestimonialSummary testimonial={testimonial} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-5 pt-4 space-y-4">
-                <TestimonialForm testimonial={testimonial} onSaved={() => router.invalidate()} />
+                <TestimonialForm
+                  testimonial={testimonial}
+                  onDirtyChange={(dirty) => handleDirtyChange(String(testimonial.id), dirty)}
+                  onSaved={() => router.invalidate()}
+                />
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full sm:w-auto h-10 text-destructive hover:text-destructive"
                   disabled={deletingId === testimonial.id}
-                  onClick={() => handleDelete(testimonial.id, testimonial.customerName)}
+                  onClick={() =>
+                    setDeleteTarget({ id: testimonial.id, name: testimonial.customerName })
+                  }
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   {deletingId === testimonial.id ? "Deleting…" : "Delete testimonial"}
@@ -150,30 +188,58 @@ function AdminTestimonialsPage() {
           ))}
         </Accordion>
       </section>
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) setDeleteTarget(null);
+        }}
+        title={
+          deleteTarget ? `Delete testimonial from "${deleteTarget.name}"?` : "Delete testimonial?"
+        }
+        description="This testimonial will be permanently removed."
+        confirmLabel="Delete testimonial"
+        cancelLabel="Cancel"
+        destructive
+        loading={deletingId !== null}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
 
-function SectionHeadingForm({ heading, onSaved }: { heading: string; onSaved: () => void }) {
+function SectionHeadingForm({
+  heading,
+  onDirtyChange,
+  onSaved,
+}: {
+  heading: string;
+  onDirtyChange: (dirty: boolean) => void;
+  onSaved: () => void;
+}) {
   const [value, setValue] = useState(heading);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [success, setSuccess] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setValue(heading);
-    setSuccess(false);
+    setSavedMessage(null);
     setFormError(null);
     setFieldErrors({});
   }, [heading]);
 
   const isDirty = value !== heading;
 
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSuccess(false);
+    setSavedMessage(null);
 
     const validation = validateForm(adminTestimonialsSectionFormSchema, { heading: value });
     if (!validation.ok) {
@@ -187,7 +253,7 @@ function SectionHeadingForm({ heading, onSaved }: { heading: string; onSaved: ()
 
     try {
       await saveAdminTestimonialsSection({ data: validation.data });
-      setSuccess(true);
+      setSavedMessage("Saved");
       onSaved();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save section heading");
@@ -216,16 +282,18 @@ function SectionHeadingForm({ heading, onSaved }: { heading: string; onSaved: ()
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           className={`h-11 ${invalidInputClass(fieldErrors.heading)}`}
         />
       </AdminField>
       {formError ? <FormErrorBanner message={formError} /> : null}
-      {success && !isDirty ? <FormSuccessBanner message="Section heading saved." /> : null}
-      <Button type="submit" className="h-11" disabled={loading || (!isDirty && !success)}>
-        {loading ? "Saving…" : success && !isDirty ? "Saved" : "Save heading"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" className="h-11" disabled={loading || !isDirty}>
+          {loading ? "Saving…" : "Save heading"}
+        </Button>
+        <AdminSaveStatus message={!isDirty ? savedMessage : null} />
+      </div>
     </form>
   );
 }
@@ -244,19 +312,20 @@ function TestimonialSummary({ testimonial }: { testimonial: TestimonialRow }) {
           {testimonial.customerName} · {testimonial.location}
         </p>
       </div>
-      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted border border-border rounded-full px-2 py-0.5">
-        #{testimonial.sortOrder}
-      </span>
     </div>
   );
 }
 
 function TestimonialForm({
   testimonial,
+  defaultSortOrder = 0,
+  onDirtyChange,
   onSaved,
   onCancel,
 }: {
   testimonial: TestimonialRow | null;
+  defaultSortOrder?: number;
+  onDirtyChange?: (dirty: boolean) => void;
   onSaved: () => void;
   onCancel?: () => void;
 }) {
@@ -264,19 +333,18 @@ function TestimonialForm({
   const [customerName, setCustomerName] = useState(testimonial?.customerName ?? "");
   const [location, setLocation] = useState(testimonial?.location ?? "");
   const [context, setContext] = useState(testimonial?.context ?? "");
-  const [sortOrder, setSortOrder] = useState(String(testimonial?.sortOrder ?? 0));
+  const sortOrder = testimonial?.sortOrder ?? defaultSortOrder;
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [success, setSuccess] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setQuote(testimonial?.quote ?? "");
     setCustomerName(testimonial?.customerName ?? "");
     setLocation(testimonial?.location ?? "");
     setContext(testimonial?.context ?? "");
-    setSortOrder(String(testimonial?.sortOrder ?? 0));
-    setSuccess(false);
+    setSavedMessage(null);
     setFormError(null);
     setFieldErrors({});
   }, [
@@ -285,26 +353,28 @@ function TestimonialForm({
     testimonial?.customerName,
     testimonial?.location,
     testimonial?.context,
-    testimonial?.sortOrder,
   ]);
 
   const isDirty = useMemo(() => {
     if (!testimonial) {
-      return quote || customerName || location || context || sortOrder !== "0";
+      return Boolean(quote || customerName || location || context);
     }
     return (
       quote !== testimonial.quote ||
       customerName !== testimonial.customerName ||
       location !== testimonial.location ||
-      context !== testimonial.context ||
-      sortOrder !== String(testimonial.sortOrder)
+      context !== testimonial.context
     );
-  }, [quote, customerName, location, context, sortOrder, testimonial]);
+  }, [quote, customerName, location, context, testimonial]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSuccess(false);
+    setSavedMessage(null);
 
     const validation = validateForm(adminTestimonialFormSchema, {
       quote,
@@ -330,7 +400,7 @@ function TestimonialForm({
           ...validation.data,
         },
       });
-      setSuccess(true);
+      setSavedMessage("Saved");
       onSaved();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save testimonial");
@@ -352,7 +422,7 @@ function TestimonialForm({
           value={quote}
           onChange={(e) => {
             setQuote(e.target.value);
-            setSuccess(false);
+            setSavedMessage(null);
           }}
           rows={4}
           className={cn("resize-none", invalidInputClass(fieldErrors.quote))}
@@ -371,7 +441,7 @@ function TestimonialForm({
             value={customerName}
             onChange={(e) => {
               setCustomerName(e.target.value);
-              setSuccess(false);
+              setSavedMessage(null);
             }}
             className={`h-11 ${invalidInputClass(fieldErrors.customerName)}`}
           />
@@ -388,78 +458,47 @@ function TestimonialForm({
             value={location}
             onChange={(e) => {
               setLocation(e.target.value);
-              setSuccess(false);
+              setSavedMessage(null);
             }}
             className={`h-11 ${invalidInputClass(fieldErrors.location)}`}
           />
         </AdminField>
       </div>
 
-      <div className="grid sm:grid-cols-[1fr_auto] gap-4">
-        <AdminField
-          label="Service or occasion"
-          htmlFor={`context-${testimonial?.id ?? "new"}`}
-          required
-          error={fieldErrors.context}
-        >
-          <Input
-            id={`context-${testimonial?.id ?? "new"}`}
-            value={context}
-            onChange={(e) => {
-              setContext(e.target.value);
-              setSuccess(false);
-            }}
-            placeholder="e.g. Engagement Hamper"
-            className={`h-11 ${invalidInputClass(fieldErrors.context)}`}
-          />
-        </AdminField>
-
-        <AdminField
-          label="Sort order"
-          htmlFor={`sort-${testimonial?.id ?? "new"}`}
-          required
-          error={fieldErrors.sortOrder}
-        >
-          <Input
-            id={`sort-${testimonial?.id ?? "new"}`}
-            type="number"
-            min={0}
-            value={sortOrder}
-            onChange={(e) => {
-              setSortOrder(e.target.value);
-              setSuccess(false);
-            }}
-            className={`h-11 w-full sm:w-24 ${invalidInputClass(fieldErrors.sortOrder)}`}
-          />
-        </AdminField>
-      </div>
+      <AdminField
+        label="Service or occasion"
+        htmlFor={`context-${testimonial?.id ?? "new"}`}
+        required
+        error={fieldErrors.context}
+      >
+        <Input
+          id={`context-${testimonial?.id ?? "new"}`}
+          value={context}
+          onChange={(e) => {
+            setContext(e.target.value);
+            setSavedMessage(null);
+          }}
+          placeholder="e.g. Engagement Hamper"
+          className={`h-11 ${invalidInputClass(fieldErrors.context)}`}
+        />
+      </AdminField>
 
       {formError ? <FormErrorBanner message={formError} /> : null}
 
-      <div className="flex flex-col-reverse sm:flex-row gap-3">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3">
         <Button
           type="submit"
           className="h-11 min-w-[130px]"
-          disabled={loading || (!isDirty && !success && !!testimonial)}
+          disabled={loading || (!isDirty && !!testimonial)}
         >
-          {loading ? (
-            "Saving…"
-          ) : success && !isDirty ? (
-            <span className="inline-flex items-center gap-2">
-              <Check className="w-4 h-4" />
-              Saved
-            </span>
-          ) : testimonial ? (
-            "Save changes"
-          ) : (
-            "Add testimonial"
-          )}
+          {loading ? "Saving…" : testimonial ? "Save changes" : "Add testimonial"}
         </Button>
         {onCancel ? (
           <Button type="button" variant="outline" className="h-11" onClick={onCancel}>
             Cancel
           </Button>
         ) : null}
+        <AdminSaveStatus message={!isDirty ? savedMessage : null} />
       </div>
     </form>
   );

@@ -34,9 +34,12 @@ export const adminSettingsFormSchema = z.object({
   whatsappNumber: z
     .string()
     .trim()
-    .min(8, "WhatsApp number is required")
-    .max(32)
-    .regex(/^\d+$/, "Use digits only, including country code (e.g. 919876543210)"),
+    .min(1, "WhatsApp number is required")
+    .max(40)
+    .transform((value) => value.replace(/\D/g, ""))
+    .refine((digits) => digits.length >= 8 && digits.length <= 15, {
+      message: "Enter a valid WhatsApp number with country code",
+    }),
   email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
   instagramUrl: z.string().trim().min(1, "Instagram URL is required").url("Enter a valid URL"),
   instagramHandle: z.string().trim().min(1, "Instagram handle is required").max(64),

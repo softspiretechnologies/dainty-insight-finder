@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ImagePlus, ChevronLeft, Package, Eye, EyeOff, Star } from "lucide-react";
 
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BulletTextarea } from "@/components/ui/bullet-textarea";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { adminProductFormSchema } from "@/lib/admin-schemas";
 import {
   invalidInputClass,
@@ -76,6 +78,8 @@ function AdminProductEditPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   useEffect(() => {
     if (!imageFile) {
@@ -89,6 +93,46 @@ function AdminProductEditPage() {
 
   const slug = slugify(name);
   const previewSrc = previewUrl ?? product?.imagePath ?? null;
+  const initialDetails = normalizeProductDetails(product?.details).join("\n");
+  const isDirty = useMemo(() => {
+    if (isNew) {
+      return Boolean(
+        name ||
+        blurb ||
+        description ||
+        details ||
+        priceFrom ||
+        imageFile ||
+        !isActive ||
+        featuredOnHomepage,
+      );
+    }
+    return (
+      name !== (product?.name ?? "") ||
+      categoryId !== (product?.categoryId ?? "") ||
+      blurb !== (product?.blurb ?? "") ||
+      description !== (product?.description ?? "") ||
+      details !== initialDetails ||
+      priceFrom !== (product?.priceFrom ?? "") ||
+      isActive !== (product?.isActive ?? true) ||
+      featuredOnHomepage !== (product?.featuredOnHomepage ?? false) ||
+      Boolean(imageFile)
+    );
+  }, [
+    blurb,
+    categoryId,
+    description,
+    details,
+    featuredOnHomepage,
+    imageFile,
+    initialDetails,
+    isActive,
+    isNew,
+    name,
+    priceFrom,
+    product,
+  ]);
+  useUnsavedChangesGuard(isDirty && !loading);
 
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
@@ -150,6 +194,7 @@ function AdminProductEditPage() {
           image: imagePayload,
         },
       });
+      setSavedMessage("Saved");
       await router.navigate({ to: "/admin/products" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to save product";
@@ -200,25 +245,31 @@ function AdminProductEditPage() {
                   onChange={(e) => {
                     setName(e.target.value);
                     clearFieldError("name");
+                    setSavedMessage(null);
                   }}
                   placeholder="e.g. Garden Meadow Bouquet"
                   className={`h-11 ${invalidInputClass(fieldErrors.name)}`}
                 />
               </AdminField>
 
-              <AdminField
-                label="URL slug"
-                htmlFor="slug"
-                hint={`Auto-generated from name · /catalog/${slug || "your-slug"}`}
+              <details
+                className="rounded-lg border border-border p-3"
+                open={advancedOpen}
+                onToggle={(event) => setAdvancedOpen((event.target as HTMLDetailsElement).open)}
               >
-                <Input
-                  id="slug"
-                  value={slug}
-                  readOnly
-                  disabled
-                  className="h-11 font-mono text-sm bg-muted/30 cursor-not-allowed"
-                />
-              </AdminField>
+                <summary className="cursor-pointer text-sm font-medium min-h-11 flex items-center">
+                  Advanced details
+                </summary>
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted">
+                    Page URL (auto-generated from the product name)
+                  </p>
+                  <p className="font-mono text-sm break-all">/catalog/{slug || "your-product"}</p>
+                  <p className="text-xs text-muted">
+                    Changing the product name also updates this page address.
+                  </p>
+                </div>
+              </details>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <AdminField
@@ -423,7 +474,7 @@ function AdminProductEditPage() {
                   ) : (
                     <EyeOff className="w-4 h-4 text-muted" />
                   )}
-                  Listed on site
+                  Listed on website
                 </span>
                 <span className="block text-xs text-muted mt-1 leading-relaxed">
                   When off, the product is hidden from the catalog, product pages, and sitemap.
@@ -454,7 +505,7 @@ function AdminProductEditPage() {
                       featuredOnHomepage ? "text-primary fill-primary/30" : "text-muted",
                     )}
                   />
-                  Homepage gallery
+                  Show on homepage
                 </span>
                 <span className="block text-xs text-muted mt-1 leading-relaxed">
                   Show in Recent Creations on the homepage. Up to 6 products at a time.
@@ -466,7 +517,8 @@ function AdminProductEditPage() {
 
         <div className="mt-6 pt-6 border-t border-border flex flex-col gap-3">
           {formError ? <FormErrorBanner message={formError} /> : null}
-          <div className="flex gap-3 w-full sm:w-auto sm:ml-auto">
+          <div className="hidden lg:flex gap-3 w-full sm:w-auto sm:ml-auto items-center">
+            <AdminSaveStatus message={savedMessage} />
             <Button type="button" variant="outline" className="flex-1 sm:flex-none h-11" asChild>
               <Link to="/admin/products">Cancel</Link>
             </Button>
@@ -488,6 +540,23 @@ function AdminProductEditPage() {
             </Button>
           </div>
         </div>
+
+        {isDirty ? (
+          <div
+            className="lg:hidden fixed inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur px-4 pt-3"
+            style={{
+              bottom: "calc(3.5rem + max(env(safe-area-inset-bottom), 0.5rem))",
+              paddingBottom: "0.75rem",
+            }}
+          >
+            <div className="flex items-center gap-3 max-w-5xl mx-auto">
+              <p className="text-xs text-muted flex-1">Unsaved changes</p>
+              <Button type="submit" disabled={loading} className="min-h-11 px-5">
+                {loading ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </form>
     </div>
   );

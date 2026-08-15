@@ -199,7 +199,7 @@ const adminViewports = [
 ] as const;
 
 const adminRoutes = [
-  { path: "/admin", heading: "Dashboard" },
+  { path: "/admin", heading: "DaintyHand Admin" },
   { path: "/admin/products", heading: "Products" },
   { path: "/admin/products/new", heading: "New product" },
   { path: "/admin/categories", heading: "Categories" },
@@ -229,14 +229,40 @@ for (const viewport of adminViewports) {
     await expect(page.getByTestId("product-table")).toBeHidden();
 
     if (viewport.width < 1024) {
-      await expect(page.getByRole("button", { name: "Open menu" })).toBeVisible();
-      await expect(page.getByRole("navigation").last()).toBeVisible();
+      const adminNav = page.getByRole("navigation", { name: "Admin" });
+      await expect(adminNav).toBeVisible();
+      await expect(adminNav.getByRole("link", { name: "Home" })).toBeVisible();
+      await expect(adminNav.getByRole("link", { name: "Enquiries" })).toBeVisible();
+      await expect(adminNav.getByRole("link", { name: "Products" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "More menu" })).toBeVisible();
     } else {
-      await expect(page.getByRole("button", { name: "Open menu" })).toBeHidden();
-      await expect(page.getByRole("link", { name: "Dashboard" }).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: "More menu" })).toBeHidden();
+      await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
     }
   });
 }
+
+test("mobile admin bottom navigation reaches Home, Enquiries, Products, More, Settings", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await login(page);
+
+  const adminNav = page.getByRole("navigation", { name: "Admin" });
+  await expect(adminNav.getByRole("link", { name: "Home" })).toBeVisible();
+  await adminNav.getByRole("link", { name: "Enquiries" }).click();
+  await expect(page).toHaveURL(/\/admin\/enquiries/);
+  await adminNav.getByRole("link", { name: "Products" }).click();
+  await expect(page).toHaveURL(/\/admin\/products/);
+
+  const more = page.getByRole("button", { name: "More menu" });
+  await more.click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/admin\/settings/);
+  await expect(page.getByRole("heading", { name: "Site settings" })).toBeVisible();
+});
 
 test("the desktop product table appears only with sufficient width", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });

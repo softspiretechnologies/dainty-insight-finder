@@ -114,7 +114,7 @@ test("iPad Safari covers authenticated admin navigation and keyboard focus", asy
   await login(page);
   await expectNoPageOverflow(page);
 
-  const trigger = page.getByRole("button", { name: "Open menu" });
+  const trigger = page.getByRole("button", { name: "More menu" });
   await trigger.focus();
   await page.keyboard.press("Enter");
   const dialog = page.getByRole("dialog");
@@ -132,5 +132,5 @@ test("iPad Safari covers authenticated admin navigation and keyboard focus", asy
   await page.setViewportSize({ width: 1024, height: 768 });
   await visit(page, "/admin/products");
   await expectNoPageOverflow(page);
-  await expect(page.getByRole("button", { name: "Open menu" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "More menu" })).toBeHidden();
 });

@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/rea
 
 import { AdminShell } from "@/components/admin/AdminShell";
 import { getSessionAdmin } from "@/lib/api/admin/auth";
+import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async ({ location }) => {
@@ -16,11 +17,23 @@ export const Route = createFileRoute("/admin")({
 
     return { session };
   },
+  loader: async ({ location }) => {
+    if (location.pathname === "/admin/login") {
+      return { newEnquiryCount: 0 };
+    }
+    try {
+      const summary = await getAdminEnquirySummary();
+      return { newEnquiryCount: summary.new };
+    } catch {
+      return { newEnquiryCount: 0 };
+    }
+  },
   component: AdminLayout,
 });
 
 function AdminLayout() {
   const { session } = Route.useRouteContext();
+  const { newEnquiryCount } = Route.useLoaderData();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   if (pathname === "/admin/login") {
@@ -28,7 +41,7 @@ function AdminLayout() {
   }
 
   return (
-    <AdminShell userName={session?.name}>
+    <AdminShell userName={session?.name} newEnquiryCount={newEnquiryCount}>
       <Outlet />
     </AdminShell>
   );

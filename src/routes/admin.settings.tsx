@@ -1,10 +1,18 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageCircle, Mail, Instagram, User, MapPin, Check } from "lucide-react";
 
-import { AdminField, FormErrorBanner, FormSuccessBanner } from "@/components/admin/AdminField";
+import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { adminSettingsFormSchema } from "@/lib/admin-schemas";
 import {
   invalidInputClass,
@@ -54,12 +62,25 @@ function AdminSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [success, setSuccess] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accountError, setAccountError] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
+
+  const isDirty = useMemo(() => {
+    return (
+      whatsappNumber !== (settings?.whatsappNumber ?? "") ||
+      email !== (settings?.email ?? "") ||
+      instagramUrl !== (settings?.instagramUrl ?? "") ||
+      instagramHandle !== (settings?.instagramHandle ?? "") ||
+      founder !== (settings?.founder ?? "") ||
+      location !== (settings?.location ?? "")
+    );
+  }, [whatsappNumber, email, instagramUrl, instagramHandle, founder, location, settings]);
+
+  useUnsavedChangesGuard(isDirty && !loading);
 
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
@@ -104,7 +125,7 @@ function AdminSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSuccess(false);
+    setSavedMessage(null);
 
     const payload = { whatsappNumber, email, instagramUrl, instagramHandle, founder, location };
     const validation = validateForm(adminSettingsFormSchema, payload);
@@ -119,8 +140,14 @@ function AdminSettingsPage() {
 
     try {
       await saveAdminSettings({ data: validation.data });
+      setWhatsappNumber(validation.data.whatsappNumber);
+      setEmail(validation.data.email);
+      setInstagramUrl(validation.data.instagramUrl);
+      setInstagramHandle(validation.data.instagramHandle);
+      setFounder(validation.data.founder);
+      setLocation(validation.data.location);
       await router.invalidate();
-      setSuccess(true);
+      setSavedMessage("Saved");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save settings");
     } finally {
@@ -147,17 +174,19 @@ function AdminSettingsPage() {
               htmlFor="whatsappNumber"
               required
               error={fieldErrors.whatsappNumber}
-              hint="Country code + number, digits only (e.g. 919876543210)."
+              hint="You can enter spaces or + — it will be cleaned automatically."
             >
               <Input
                 id="whatsappNumber"
                 value={whatsappNumber}
                 onChange={(e) => {
                   setWhatsappNumber(e.target.value);
+                  setSavedMessage(null);
                   clearFieldError("whatsappNumber");
                 }}
-                placeholder="919999999999"
-                inputMode="numeric"
+                placeholder="+91 98765 43210"
+                inputMode="tel"
+                autoComplete="tel"
                 className={`h-11 font-mono ${invalidInputClass(fieldErrors.whatsappNumber)}`}
               />
             </AdminField>
@@ -171,6 +200,7 @@ function AdminSettingsPage() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  setSavedMessage(null);
                   clearFieldError("email");
                 }}
                 placeholder="hello@daintyhand.in"
@@ -193,6 +223,7 @@ function AdminSettingsPage() {
                   value={instagramUrl}
                   onChange={(e) => {
                     setInstagramUrl(e.target.value);
+                    setSavedMessage(null);
                     clearFieldError("instagramUrl");
                   }}
                   placeholder="https://www.instagram.com/dainty.handd/"
@@ -210,6 +241,7 @@ function AdminSettingsPage() {
                   value={instagramHandle}
                   onChange={(e) => {
                     setInstagramHandle(e.target.value);
+                    setSavedMessage(null);
                     clearFieldError("instagramHandle");
                   }}
                   placeholder="@dainty.handd"
@@ -238,6 +270,7 @@ function AdminSettingsPage() {
                 value={founder}
                 onChange={(e) => {
                   setFounder(e.target.value);
+                  setSavedMessage(null);
                   clearFieldError("founder");
                 }}
                 placeholder="Nafisa"
@@ -258,6 +291,7 @@ function AdminSettingsPage() {
                 value={location}
                 onChange={(e) => {
                   setLocation(e.target.value);
+                  setSavedMessage(null);
                   clearFieldError("location");
                 }}
                 placeholder="Perinthalmanna, Malappuram, Kerala"
@@ -268,97 +302,109 @@ function AdminSettingsPage() {
         </div>
 
         {formError ? <FormErrorBanner message={formError} /> : null}
-        {success && !formError ? (
-          <FormSuccessBanner message="Settings saved — changes are live across the site." />
-        ) : null}
 
-        <Button type="submit" disabled={loading} className="w-full sm:w-auto h-11 min-w-[160px]">
-          {loading ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              Saving…
-            </span>
-          ) : success ? (
-            <span className="inline-flex items-center gap-2">
-              <Check className="w-4 h-4" />
-              Saved
-            </span>
-          ) : (
-            "Save settings"
-          )}
-        </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <Button
+            type="submit"
+            disabled={loading || (!isDirty && !savedMessage)}
+            className="w-full sm:w-auto h-11 min-w-[160px]"
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Saving…
+              </span>
+            ) : savedMessage && !isDirty ? (
+              <span className="inline-flex items-center gap-2">
+                <Check className="w-4 h-4" />
+                Saved
+              </span>
+            ) : (
+              "Save settings"
+            )}
+          </Button>
+          <AdminSaveStatus message={!isDirty ? savedMessage : null} />
+        </div>
       </form>
 
-      <div className="border-t border-border pt-8 space-y-6">
-        <div>
-          <h2 className="font-display text-2xl italic">Admin account</h2>
-          <p className="text-sm text-muted mt-1">
-            Changing your password revokes every existing admin session.
-          </p>
-        </div>
-        <form
-          onSubmit={handlePasswordChange}
-          className="space-y-4 border border-border rounded-xl p-4 sm:p-5"
-        >
-          <AdminField label="Current password" htmlFor="currentPassword" required>
-            <Input
-              id="currentPassword"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              className="h-11"
-            />
-          </AdminField>
-          <AdminField
-            label="New password"
-            htmlFor="newPassword"
-            required
-            hint="At least 12 characters."
-          >
-            <Input
-              id="newPassword"
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              className="h-11"
-            />
-          </AdminField>
-          <AdminField label="Confirm new password" htmlFor="confirmPassword" required>
-            <Input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              className="h-11"
-            />
-          </AdminField>
-          {accountError ? <FormErrorBanner message={accountError} /> : null}
-          <Button type="submit" disabled={accountLoading} className="w-full sm:w-auto">
-            {accountLoading ? "Changing…" : "Change password"}
-          </Button>
-        </form>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => endSession(false)}
-          >
-            Log out current session
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => endSession(true)}
-          >
-            Log out all sessions
-          </Button>
-        </div>
-      </div>
+      <Accordion
+        type="single"
+        collapsible
+        className="border border-border rounded-xl bg-surface/20"
+      >
+        <AccordionItem value="security" className="border-0">
+          <AccordionTrigger className="px-4 sm:px-5 py-4 hover:no-underline">
+            <div className="text-left">
+              <p className="font-medium text-sm">Security & account</p>
+              <p className="text-xs text-muted mt-0.5 font-normal">Password and session controls</p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 sm:px-5 pb-5 space-y-6">
+            <p className="text-sm text-muted">
+              Changing your password revokes every existing admin session.
+            </p>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <AdminField label="Current password" htmlFor="currentPassword" required>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  className="h-11"
+                />
+              </AdminField>
+              <AdminField
+                label="New password"
+                htmlFor="newPassword"
+                required
+                hint="At least 12 characters."
+              >
+                <Input
+                  id="newPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  className="h-11"
+                />
+              </AdminField>
+              <AdminField label="Confirm new password" htmlFor="confirmPassword" required>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  className="h-11"
+                />
+              </AdminField>
+              {accountError ? <FormErrorBanner message={accountError} /> : null}
+              <Button type="submit" disabled={accountLoading} className="w-full sm:w-auto">
+                {accountLoading ? "Changing…" : "Change password"}
+              </Button>
+            </form>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => endSession(false)}
+              >
+                Log out current session
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => endSession(true)}
+              >
+                Log out all sessions
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

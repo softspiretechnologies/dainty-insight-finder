@@ -117,6 +117,16 @@ export const adminEnquiryNotesSchema = z.object({
     .transform((value) => (value.length > 0 ? value : null)),
 });
 
+export const adminEnquiryUpdateSchema = z.object({
+  id: z.number().int().positive(),
+  status: z.enum(ENQUIRY_STATUSES),
+  adminNotes: z
+    .string()
+    .trim()
+    .max(8000)
+    .transform((value) => (value.length > 0 ? value : null)),
+});
+
 export const adminEnquiryListFilterSchema = z.object({
   status: z.enum(ENQUIRY_STATUSES).or(z.literal("all")).default("all"),
   q: z.string().trim().max(128).optional(),
@@ -184,6 +194,20 @@ export function serializeEnquiry(row: {
   };
 }
 
+export const ENQUIRY_SOURCE_LABELS: Record<EnquirySource, string> = {
+  general: "General enquiry",
+  product: "Product enquiry",
+  service: "Service enquiry",
+  contact: "Contact page",
+};
+
+export function enquirySourceLabel(source: string) {
+  if ((ENQUIRY_SOURCES as readonly string[]).includes(source)) {
+    return ENQUIRY_SOURCE_LABELS[source as EnquirySource];
+  }
+  return "Enquiry";
+}
+
 export function enquiryInterestLabel(enquiry: {
   productNameSnapshot?: string | null;
   serviceTitleSnapshot?: string | null;
@@ -191,10 +215,7 @@ export function enquiryInterestLabel(enquiry: {
 }) {
   if (enquiry.productNameSnapshot) return enquiry.productNameSnapshot;
   if (enquiry.serviceTitleSnapshot) return enquiry.serviceTitleSnapshot;
-  if (enquiry.source === "contact") return "Contact";
-  if (enquiry.source === "product") return "Product";
-  if (enquiry.source === "service") return "Service";
-  return "General";
+  return enquirySourceLabel(enquiry.source);
 }
 
 export function buildVisitorWhatsAppMessage(input: {

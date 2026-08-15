@@ -54,7 +54,7 @@ test("admin authentication rejects invalid credentials and revokes the current s
   ).toBeVisible({ timeout: 20_000 });
 
   await login(page);
-  await expect(page.getByRole("heading", { name: /Dashboard/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /DaintyHand Admin/i })).toBeVisible();
   await page.getByRole("button", { name: "Log out" }).first().click();
   await expect(page).toHaveURL(/\/admin\/login/);
   await page.goto("/admin");

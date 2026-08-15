@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { parseAdminBlogPostId } from "@/lib/admin-blog";
 import { adminBlogPostSchema } from "@/lib/admin-schemas";
 import { getAdminBlogPost, saveAdminBlogPost } from "@/lib/api/admin/blog";
@@ -39,6 +41,7 @@ function AdminBlogEditor() {
   const { post } = Route.useLoaderData();
   const { postId } = Route.useParams();
   const router = useRouter();
+  const isNew = !post;
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
@@ -49,6 +52,45 @@ function AdminBlogEditor() {
   const [isPublished, setIsPublished] = useState(post?.isPublished ?? false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  const isDirty = useMemo(() => {
+    if (isNew) {
+      return Boolean(
+        title ||
+        slug ||
+        excerpt ||
+        content ||
+        featuredImage ||
+        metaTitle ||
+        metaDescription ||
+        isPublished,
+      );
+    }
+    return (
+      title !== (post?.title ?? "") ||
+      slug !== (post?.slug ?? "") ||
+      excerpt !== (post?.excerpt ?? "") ||
+      content !== (post?.content ?? "") ||
+      featuredImage !== (post?.featuredImage ?? "") ||
+      metaTitle !== (post?.metaTitle ?? "") ||
+      metaDescription !== (post?.metaDescription ?? "") ||
+      isPublished !== (post?.isPublished ?? false)
+    );
+  }, [
+    content,
+    excerpt,
+    featuredImage,
+    isNew,
+    isPublished,
+    metaDescription,
+    metaTitle,
+    post,
+    slug,
+    title,
+  ]);
+  useUnsavedChangesGuard(isDirty && !saving);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -71,6 +113,7 @@ function AdminBlogEditor() {
     setError(null);
     try {
       await saveAdminBlogPost({ data: parsed.data });
+      setSavedMessage("Saved");
       await router.navigate({ to: "/admin/blog" });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Failed to save post");
@@ -93,22 +136,57 @@ function AdminBlogEditor() {
             value={title}
             onChange={(event) => {
               setTitle(event.target.value);
-              if (!post) setSlug(slugify(event.target.value));
+              setSavedMessage(null);
+              if (isNew) setSlug(slugify(event.target.value));
             }}
           />
         </AdminField>
-        <AdminField label="Slug" htmlFor="slug" required>
-          <Input
-            id="slug"
-            value={slug}
-            onChange={(event) => setSlug(slugify(event.target.value))}
-          />
-        </AdminField>
+
+        <details
+          className="rounded-lg border border-border p-3"
+          open={advancedOpen}
+          onToggle={(event) => setAdvancedOpen((event.target as HTMLDetailsElement).open)}
+        >
+          <summary className="cursor-pointer text-sm font-medium min-h-11 flex items-center">
+            Advanced details
+          </summary>
+          <div className="mt-3 space-y-3">
+            {isNew ? (
+              <>
+                <p className="text-xs text-muted">Page address (auto-generated from the title)</p>
+                <p className="font-mono text-sm break-all">/blog/{slug || "your-post"}</p>
+                <p className="text-xs text-muted">
+                  Renaming the title on a new post also updates this page address.
+                </p>
+              </>
+            ) : (
+              <AdminField
+                label="Page address"
+                htmlFor="slug"
+                required
+                hint={`/blog/${slug || "your-post"}`}
+              >
+                <Input
+                  id="slug"
+                  value={slug}
+                  onChange={(event) => {
+                    setSlug(slugify(event.target.value));
+                    setSavedMessage(null);
+                  }}
+                />
+              </AdminField>
+            )}
+          </div>
+        </details>
+
         <AdminField label="Excerpt" htmlFor="excerpt" required>
           <Textarea
             id="excerpt"
             value={excerpt}
-            onChange={(event) => setExcerpt(event.target.value)}
+            onChange={(event) => {
+              setExcerpt(event.target.value);
+              setSavedMessage(null);
+            }}
             rows={3}
           />
         </AdminField>
@@ -121,7 +199,10 @@ function AdminBlogEditor() {
           <Textarea
             id="content"
             value={content}
-            onChange={(event) => setContent(event.target.value)}
+            onChange={(event) => {
+              setContent(event.target.value);
+              setSavedMessage(null);
+            }}
             rows={14}
           />
         </AdminField>
@@ -133,21 +214,30 @@ function AdminBlogEditor() {
           <Input
             id="featuredImage"
             value={featuredImage}
-            onChange={(event) => setFeaturedImage(event.target.value)}
+            onChange={(event) => {
+              setFeaturedImage(event.target.value);
+              setSavedMessage(null);
+            }}
           />
         </AdminField>
         <AdminField label="SEO title" htmlFor="metaTitle">
           <Input
             id="metaTitle"
             value={metaTitle}
-            onChange={(event) => setMetaTitle(event.target.value)}
+            onChange={(event) => {
+              setMetaTitle(event.target.value);
+              setSavedMessage(null);
+            }}
           />
         </AdminField>
         <AdminField label="SEO description" htmlFor="metaDescription">
           <Textarea
             id="metaDescription"
             value={metaDescription}
-            onChange={(event) => setMetaDescription(event.target.value)}
+            onChange={(event) => {
+              setMetaDescription(event.target.value);
+              setSavedMessage(null);
+            }}
             rows={3}
           />
         </AdminField>
@@ -155,14 +245,20 @@ function AdminBlogEditor() {
           <input
             type="checkbox"
             checked={isPublished}
-            onChange={(event) => setIsPublished(event.target.checked)}
+            onChange={(event) => {
+              setIsPublished(event.target.checked);
+              setSavedMessage(null);
+            }}
           />
           Published
         </label>
         {error ? <FormErrorBanner message={error} /> : null}
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving…" : "Save post"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save post"}
+          </Button>
+          <AdminSaveStatus message={!isDirty ? savedMessage : null} />
+        </div>
       </form>
     </div>
   );

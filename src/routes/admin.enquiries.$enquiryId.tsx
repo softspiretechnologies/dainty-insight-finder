@@ -1,21 +1,21 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, MessageCircle, Phone } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import { FormErrorBanner, FormSuccessBanner } from "@/components/admin/AdminField";
+import { FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  getAdminEnquiry,
-  updateAdminEnquiryNotes,
-  updateAdminEnquiryStatus,
-} from "@/lib/api/admin/enquiries";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { getAdminEnquiry, updateAdminEnquiry } from "@/lib/api/admin/enquiries";
+import { formatAdminDateTime } from "@/lib/admin-format";
 import {
   ENQUIRY_STATUSES,
   ENQUIRY_STATUS_LABELS,
   buildAdminWhatsAppMessage,
   enquiryInterestLabel,
+  enquirySourceLabel,
   enquiryTelHref,
   type EnquiryStatus,
 } from "@/lib/enquiries";
@@ -46,46 +46,40 @@ function AdminEnquiryDetailPage() {
   const [status, setStatus] = useState(enquiry.status);
   const [notes, setNotes] = useState(enquiry.adminNotes ?? "");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [savingStatus, setSavingStatus] = useState(false);
-  const [savingNotes, setSavingNotes] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const isDirty = useMemo(
+    () => status !== enquiry.status || notes !== (enquiry.adminNotes ?? ""),
+    [enquiry.adminNotes, enquiry.status, notes, status],
+  );
+  useUnsavedChangesGuard(isDirty);
 
   const customerWa = whatsappLink(buildAdminWhatsAppMessage(enquiry), enquiry.phone);
 
-  const saveStatus = async () => {
+  const saveChanges = async () => {
     setError(null);
-    setSuccess(null);
-    setSavingStatus(true);
+    setSavedMessage(null);
+    setSaving(true);
     try {
-      await updateAdminEnquiryStatus({
-        data: { id: enquiry.id, status: status as EnquiryStatus },
+      await updateAdminEnquiry({
+        data: {
+          id: enquiry.id,
+          status: status as EnquiryStatus,
+          adminNotes: notes,
+        },
       });
-      setSuccess("Status updated.");
+      setSavedMessage("Saved");
       await router.invalidate();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not update status.");
+      setError(cause instanceof Error ? cause.message : "Could not save changes.");
     } finally {
-      setSavingStatus(false);
-    }
-  };
-
-  const saveNotes = async () => {
-    setError(null);
-    setSuccess(null);
-    setSavingNotes(true);
-    try {
-      await updateAdminEnquiryNotes({ data: { id: enquiry.id, adminNotes: notes } });
-      setSuccess("Notes saved.");
-      await router.invalidate();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save notes.");
-    } finally {
-      setSavingNotes(false);
+      setSaving(false);
     }
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-6 pb-24 lg:pb-0">
       <div>
         <Link
           to="/admin/enquiries"
@@ -97,14 +91,14 @@ function AdminEnquiryDetailPage() {
           {enquiry.name}
         </h1>
         <p className="text-sm text-muted mt-1">
-          {enquiryInterestLabel(enquiry)} · {enquiry.source}
+          {enquiryInterestLabel(enquiry)} · {enquirySourceLabel(enquiry.source)}
         </p>
       </div>
 
       {error ? <FormErrorBanner message={error} /> : null}
-      {success ? <FormSuccessBanner message={success} /> : null}
 
-      <div className="flex flex-col sm:flex-row gap-2">
+      {/* Desktop / tablet actions */}
+      <div className="hidden sm:flex flex-row gap-2">
         <a
           href={customerWa}
           target="_blank"
@@ -122,8 +116,27 @@ function AdminEnquiryDetailPage() {
       </div>
 
       <dl className="grid gap-4 border border-border rounded-xl p-4 sm:p-5">
-        <Detail label="Phone" value={enquiry.phone} />
-        {enquiry.email ? <Detail label="Email" value={enquiry.email} /> : null}
+        <Detail
+          label="Phone"
+          value={
+            <a href={enquiryTelHref(enquiry.phone)} className="underline underline-offset-2">
+              {enquiry.phone}
+            </a>
+          }
+        />
+        {enquiry.email ? (
+          <Detail
+            label="Email"
+            value={
+              <a
+                href={`mailto:${enquiry.email}`}
+                className="underline underline-offset-2 break-all"
+              >
+                {enquiry.email}
+              </a>
+            }
+          />
+        ) : null}
         {enquiry.eventType ? <Detail label="Event type" value={enquiry.eventType} /> : null}
         {enquiry.eventDate ? <Detail label="Event date" value={enquiry.eventDate} /> : null}
         {enquiry.budget ? <Detail label="Budget" value={enquiry.budget} /> : null}
@@ -133,51 +146,96 @@ function AdminEnquiryDetailPage() {
         {enquiry.serviceTitleSnapshot ? (
           <Detail label="Service" value={enquiry.serviceTitleSnapshot} />
         ) : null}
-        <Detail label="Source" value={enquiry.source} />
-        <Detail label="Received" value={new Date(enquiry.createdAt).toLocaleString()} />
+        <Detail label="Came from" value={enquirySourceLabel(enquiry.source)} />
+        <Detail label="Received" value={formatAdminDateTime(enquiry.createdAt)} />
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Message</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+            Customer message
+          </dt>
           <dd className="text-sm mt-1 whitespace-pre-wrap break-words">{enquiry.message}</dd>
         </div>
       </dl>
 
-      <div className="space-y-3 border border-border rounded-xl p-4 sm:p-5">
-        <Label htmlFor="enquiry-status">Status</Label>
-        <select
-          id="enquiry-status"
-          value={status}
-          onChange={(event) => setStatus(event.target.value)}
-          className="flex h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-        >
-          {ENQUIRY_STATUSES.map((value) => (
-            <option key={value} value={value}>
-              {ENQUIRY_STATUS_LABELS[value]}
-            </option>
-          ))}
-        </select>
-        <Button type="button" onClick={saveStatus} disabled={savingStatus} className="min-h-11">
-          {savingStatus ? "Saving…" : "Update status"}
-        </Button>
+      <div className="space-y-4 border border-border rounded-xl p-4 sm:p-5">
+        <div className="space-y-2">
+          <Label htmlFor="enquiry-status">Status</Label>
+          <select
+            id="enquiry-status"
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value);
+              setSavedMessage(null);
+            }}
+            className="flex h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+          >
+            {ENQUIRY_STATUSES.map((value) => (
+              <option key={value} value={value}>
+                {ENQUIRY_STATUS_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="enquiry-notes">Internal notes</Label>
+          <p className="text-xs text-muted">Only visible to you — never shown to customers.</p>
+          <Textarea
+            id="enquiry-notes"
+            value={notes}
+            onChange={(event) => {
+              setNotes(event.target.value);
+              setSavedMessage(null);
+            }}
+            rows={5}
+            className="min-h-28"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            onClick={saveChanges}
+            disabled={saving || !isDirty}
+            className="min-h-11"
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </Button>
+          <AdminSaveStatus message={savedMessage} />
+        </div>
       </div>
 
-      <div className="space-y-3 border border-border rounded-xl p-4 sm:p-5">
-        <Label htmlFor="enquiry-notes">Internal notes (never shown publicly)</Label>
-        <Textarea
-          id="enquiry-notes"
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          rows={5}
-          className="min-h-28"
-        />
-        <Button type="button" onClick={saveNotes} disabled={savingNotes} className="min-h-11">
-          {savingNotes ? "Saving…" : "Save notes"}
-        </Button>
+      {/* Mobile customer actions — sits above bottom admin nav, not overlapping */}
+      <div
+        className="sm:hidden fixed inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur px-4 pt-3"
+        style={{
+          bottom: "calc(3.5rem + max(env(safe-area-inset-bottom), 0.5rem))",
+          paddingBottom: "0.75rem",
+          paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+          paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
+        }}
+      >
+        <div className="flex gap-2 max-w-2xl mx-auto">
+          <a
+            href={customerWa}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[#25d366] px-4 text-sm font-medium text-white"
+          >
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </a>
+          <a
+            href={enquiryTelHref(enquiry.phone)}
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 text-sm"
+          >
+            <Phone className="w-4 h-4" /> Call
+          </a>
+        </div>
       </div>
     </div>
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">{label}</dt>

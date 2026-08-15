@@ -1,11 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { asc, eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { services as servicesTable, siteSettings } from "@/db/schema";
 import { defaultServicesPageContent, seedServices } from "@/data/services-seed";
 import { isValidUploadPath } from "@/lib/admin-upload-path";
 import { serviceInputSchema, servicesPageInputSchema } from "@/lib/admin-schemas";
+import { planReorderMove } from "@/lib/admin-reorder";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
 import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
@@ -127,6 +129,37 @@ export const saveAdminServicesPage = createServerFn({ method: "POST" })
         ...values,
       });
     }
+
+    clearDataCache();
+    return { ok: true as const };
+  });
+
+const moveServiceSchema = z.object({
+  id: z.string().min(1).max(64),
+  direction: z.enum(["up", "down"]),
+});
+
+export const moveAdminService = createServerFn({ method: "POST" })
+  .validator(moveServiceSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const db = getDb();
+    const rows = await db.select().from(servicesTable).orderBy(asc(servicesTable.sortOrder));
+    const plan = planReorderMove(
+      rows.map((row) => ({ id: row.id, sortOrder: row.sortOrder })),
+      data.id,
+      data.direction,
+    );
+    if (!plan) throw new Error("That service cannot be moved further.");
+
+    await db.transaction(async (tx) => {
+      for (const item of plan) {
+        await tx
+          .update(servicesTable)
+          .set({ sortOrder: item.sortOrder })
+          .where(eq(servicesTable.id, item.id));
+      }
+    });
 
     clearDataCache();
     return { ok: true as const };

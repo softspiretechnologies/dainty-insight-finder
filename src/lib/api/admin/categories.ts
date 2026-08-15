@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { categories as categoriesTable } from "@/db/schema";
 import { isValidUploadPath } from "@/lib/admin-upload-path";
 import { categoryInputSchema } from "@/lib/admin-schemas";
+import { planReorderMove, type MoveDirection } from "@/lib/admin-reorder";
 import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
 import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
@@ -60,4 +62,35 @@ export const saveAdminCategory = createServerFn({ method: "POST" })
 
     clearDataCache();
     return { id: data.id };
+  });
+
+const moveSchema = z.object({
+  id: z.string().min(1).max(32),
+  direction: z.enum(["up", "down"]),
+});
+
+export const moveAdminCategory = createServerFn({ method: "POST" })
+  .validator(moveSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const db = getDb();
+    const rows = await db.select().from(categoriesTable).orderBy(categoriesTable.sortOrder);
+    const plan = planReorderMove(
+      rows.map((row) => ({ id: row.id, sortOrder: row.sortOrder })),
+      data.id,
+      data.direction as MoveDirection,
+    );
+    if (!plan) throw new Error("That category cannot be moved further.");
+
+    await db.transaction(async (tx) => {
+      for (const item of plan) {
+        await tx
+          .update(categoriesTable)
+          .set({ sortOrder: item.sortOrder })
+          .where(eq(categoriesTable.id, item.id));
+      }
+    });
+
+    clearDataCache();
+    return { ok: true as const };
   });
