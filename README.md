@@ -75,10 +75,13 @@ Opens the Vite dev server (default port `8080`).
 ## Build
 
 ```bash
-npm run build
-npm run start     # run production server (Nitro node-server)
-npm run preview   # preview production build locally
+npm run build        # ensure + verify + compile (Hostinger / production)
+npm run build:app    # compile only (no database)
+npm run start        # run production server (Nitro node-server)
+npm run preview      # preview production build locally
 ```
+
+`npm run build` stops if schema reconciliation or verification fails. Use `npm run build:app` when you only need to compile (GitHub CI does this).
 
 ## Deploy on Hostinger (Node.js)
 
@@ -87,7 +90,7 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 | Hostinger setting | Value                             |
 | ----------------- | --------------------------------- |
 | Framework preset  | **React Router**                  |
-| Build command     | `npm run deploy:hostinger`        |
+| Build command     | `npm run build`                   |
 | Output directory  | `dist`                            |
 | Entry file        | `dist/server/hostinger-entry.mjs` |
 | Node version      | 22.x                              |
@@ -98,7 +101,7 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 2. Add environment variables: `DATABASE_URL`, `ADMIN_SESSION_SECRET`, `VITE_SITE_URL`, plus `ADMIN_EMAIL` / `ADMIN_PASSWORD` for seeding
 3. Export/backup the MySQL database
 4. Confirm `DATABASE_URL` is available to the Hostinger build
-5. Deploy with build command `npm run deploy:hostinger` (`db:ensure` → `db:verify` → `build`)
+5. Deploy with Hostinger Build Command `npm run build` (`db:ensure` → `db:verify` → `build:app`)
 6. Smoke test homepage, catalog, `/admin/login`, and Admin → Blog
 
 Do **not** run `npm run db:seed` during routine deploys. Seed only for a brand-new empty database, as an explicit admin step.
@@ -138,11 +141,11 @@ Admin uploads are saved **outside** `dist/` so redeploys do not wipe them:
 1. Export/backup the production database
 2. Push latest code
 3. Confirm env vars in hPanel, including `DATABASE_URL` at build time
-4. Build with `npm run deploy:hostinger` and wait for `Database schema verified.`
+4. Build with Hostinger command `npm run build` and wait for `Database schema verified.`
 5. Smoke test: homepage, `/catalog`, `/admin/login`, Admin → Blog
 6. Confirm WhatsApp in **Admin → Settings**
 
-If ensure/verify fail, the deploy stops. Fix schema first; do not switch the build command back to plain `npm run build`.
+If ensure/verify fail, the deploy stops. Fix schema first. Do not replace `npm run build` with `build:app` on Hostinger — that would skip schema checks.
 
 One-time production checks and commented additive SQL: `docs/production-schema-checks.sql` and `docs/production-schema-reconcile.sql`. Full strategy: `docs/database.md`.
 
@@ -167,7 +170,8 @@ npm run lint              # ESLint
 npm run format            # Prettier
 npm run db:ensure         # additive schema reconciliation
 npm run db:verify         # read-only schema check
-npm run deploy:hostinger  # ensure + verify + build
+npm run build             # Hostinger: ensure + verify + compile
+npm run build:app         # compile only (no database)
 ```
 
 ## Configuration

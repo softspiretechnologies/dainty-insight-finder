@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "dist/server/hostinger-entry.mjs");
 
-const source = `// Auto-generated — do not edit. Rebuilt by npm run build.
+const source = `// Auto-generated — do not edit. Rebuilt by npm run build:app.
 // Hostinger LiteSpeed binds stdin to the app socket; lazy SSR imports that
 // touch node:process can throw "open EEXIST" without this shim.
 

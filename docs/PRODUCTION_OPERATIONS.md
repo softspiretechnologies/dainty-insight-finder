@@ -16,7 +16,7 @@ Production startup rejects missing `DATABASE_URL`, `ADMIN_SESSION_SECRET`, or `V
 1. Back up MySQL and the persistent upload directory.
 2. Install dependencies on the same Linux platform that will run the application with `npm ci`. Sharp contains native components, so do not upload a macOS-built `node_modules` or server bundle to Linux.
 3. Apply `drizzle/migrations/0007_add_blog_posts.sql` (or run the normal migration process).
-4. Build with the production environment configured: `npm run build`.
+4. Build with the production environment configured: `npm run build` (Hostinger Build Command). This runs `db:ensure`, then `db:verify`, then `build:app`. Do not run `db:migrate` or `db:seed` during deploy.
 5. Keep `UPLOADS_DIR` outside release directories and preserve its ownership across deployments.
 6. Restart the Node application.
 7. Run `SITE_URL=https://your-origin.example npm run smoke`.
@@ -49,7 +49,7 @@ WebKit is a strong Safari-engine check, but it does not replace testing on physi
 Run Lighthouse against a production build or the deployed HTTPS origin, primarily with mobile emulation. Scores from local development mode are not representative.
 
 ```bash
-npm run build
+npm run build:app
 npm run start
 npx lighthouse http://127.0.0.1:3000/ --preset=perf \
   --only-categories=performance,accessibility,best-practices,seo \

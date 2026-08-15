@@ -174,8 +174,9 @@ Package manager: **npm** (`package-lock.json`).
 | --------------------- | --------------------------------------------------------------------- |
 | `npm install`         | Install dependencies                                                  |
 | `npm run dev`         | Start Vite dev server                                                 |
-| `npm run build`       | Production build (Vite + Nitro)                                       |
-| `npm run build:dev`   | Development-mode build                                                |
+| `npm run build`       | Hostinger production build: `db:ensure` → `db:verify` → `build:app`   |
+| `npm run build:app`   | Vite + Nitro compile only (no database; used by GitHub CI)            |
+| `npm run build:dev`   | Development-mode compile                                              |
 | `npm run preview`     | Preview production build locally                                      |
 | `npm run lint`        | ESLint check                                                          |
 | `npm run format`      | Prettier format all files                                             |

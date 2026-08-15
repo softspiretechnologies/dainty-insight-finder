@@ -10,7 +10,9 @@ Production schema and Drizzle migration history are **not currently in sync**. T
 | `npm run db:verify` | Read-only check that the live database matches the current app schema. Exit `0` if current, non-zero if outdated. |
 | `npm run db:migrate` | Drizzle Kit migrator. **Not safe for production today.** |
 | `npm run db:seed` | Explicit catalog/admin seed. **Never** part of routine production deploy. |
-| `npm run deploy:hostinger` | `db:ensure` → `db:verify` → `build`. Stops if schema reconciliation or verification fails. |
+| `npm run build:app` | Vite/Nitro compile only. No database access. Used by GitHub CI. |
+| `npm run build` | Hostinger Build Command. Runs `db:ensure` → `db:verify` → `build:app`. Stops if schema reconciliation or verification fails. |
+| `npm run deploy:hostinger` | Alias of `npm run build`. Hostinger’s UI only exposes `npm run build`. |
 
 ## Why production drifted
 
@@ -42,17 +44,17 @@ Only after all of the following:
    - those tags are recorded **after** confirming the SQL would be a no-op, or
    - a fresh baseline is generated from the verified schema in a planned maintenance window.
 
-Until then, Hostinger must use `deploy:hostinger`.
+Until then, Hostinger must keep using `npm run build` (ensure → verify → compile). Do not switch production to `db:migrate`.
 
 ## Hostinger deploy
 
-Set the build command to:
+Hostinger’s managed Node.js UI only exposes **`npm run build`**. Keep that as the Build Command. The script already runs schema reconciliation and verification before compiling:
 
 ```bash
-npm run deploy:hostinger
+npm run build
 ```
 
-`DATABASE_URL` must be available at build time so ensure/verify can reach MySQL.
+`DATABASE_URL` must be available at build time so ensure/verify can reach MySQL. GitHub CI compiles with `npm run build:app` and never uses production credentials.
 
 ### One-time production reconciliation
 
@@ -60,7 +62,7 @@ npm run deploy:hostinger
 2. Run the read-only checks in `docs/production-schema-checks.sql`.
 3. Uncomment and run only the matching statements in `docs/production-schema-reconcile.sql` for objects that are actually missing.
 4. Run `npm run db:verify`.
-5. Deploy with `npm run deploy:hostinger`.
+5. Deploy with Hostinger Build Command `npm run build`.
 6. Smoke test `/`, `/catalog`, `/admin/login`, and Admin → Blog.
 
 Never run `db:seed` as part of that sequence.
