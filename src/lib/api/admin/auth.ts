@@ -24,7 +24,12 @@ export const loginAdmin = createServerFn({ method: "POST" })
       return { ok: false as const, error: rateLimitError };
     }
 
-    const session = await verifyAdminCredentials(data.email, data.password);
+    let session;
+    try {
+      session = await verifyAdminCredentials(data.email, data.password);
+    } catch {
+      return { ok: false as const, error: "Invalid email or password" };
+    }
     if (!session) {
       await recordLoginFailure(ip, data.email);
       return { ok: false as const, error: "Invalid email or password" };

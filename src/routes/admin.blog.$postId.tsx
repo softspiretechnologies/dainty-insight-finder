@@ -6,16 +6,25 @@ import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { parseAdminBlogPostId } from "@/lib/admin-blog";
 import { adminBlogPostSchema } from "@/lib/admin-schemas";
 import { getAdminBlogPost, saveAdminBlogPost } from "@/lib/api/admin/blog";
 
 export const Route = createFileRoute("/admin/blog/$postId")({
-  loader: async ({ params }) => ({
-    post:
-      params.postId === "new"
-        ? null
-        : await getAdminBlogPost({ data: { id: Number(params.postId) } }),
-  }),
+  loader: async ({ params }) => {
+    const parsed = parseAdminBlogPostId(params.postId);
+    if (parsed === "new" || parsed === null) return { post: null };
+    return { post: await getAdminBlogPost({ data: { id: parsed } }) };
+  },
+  errorComponent: ({ error, reset }) => (
+    <div className="max-w-3xl space-y-4">
+      <h1 className="font-display text-3xl italic">Blog post</h1>
+      <p className="text-sm text-destructive">{error.message}</p>
+      <button type="button" className="text-sm underline" onClick={reset}>
+        Try again
+      </button>
+    </div>
+  ),
   component: AdminBlogEditor,
 });
 

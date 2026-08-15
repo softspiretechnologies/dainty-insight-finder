@@ -12,6 +12,8 @@ import {
   type AdminSession,
 } from "@/lib/admin-session";
 import { getServerConfig } from "@/lib/config.server";
+import { logError } from "@/lib/logger.server";
+import { inferMissingSchemaFromError } from "@/lib/schema-expectations";
 
 export type { AdminSession };
 
@@ -62,7 +64,10 @@ export async function getAdminSession(): Promise<AdminSession | null> {
 
   try {
     return await resolveAdminSession(token, getServerConfig().adminSessionSecret, loadAdminUser);
-  } catch {
+  } catch (error) {
+    logError("admin.auth.session_lookup_failed", error, {
+      schemaVerificationSuggests: inferMissingSchemaFromError(error),
+    });
     return null;
   }
 }
@@ -79,13 +84,22 @@ export async function verifyAdminCredentials(
 ): Promise<(AdminSession & { sessionVersion: number }) | null> {
   if (!isDatabaseConfigured()) return null;
 
-  const db = getDb();
-  const rows = await db
-    .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.email, email.toLowerCase().trim()))
-    .limit(1);
-  const user = rows[0];
+  let user;
+  try {
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(adminUsers)
+      .where(eq(adminUsers.email, email.toLowerCase().trim()))
+      .limit(1);
+    user = rows[0];
+  } catch (error) {
+    const missing = inferMissingSchemaFromError(error);
+    logError("admin.auth.database_query_failed", error, {
+      schemaVerificationSuggests: missing.length > 0 ? missing : ["admin_users.session_version"],
+    });
+    throw error;
+  }
   if (!user) return null;
 
   const valid = await bcrypt.compare(password, user.passwordHash);

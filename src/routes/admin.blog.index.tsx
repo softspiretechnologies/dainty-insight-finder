@@ -6,13 +6,29 @@ import { FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { deleteAdminBlogPost, listAdminBlogPosts, toggleAdminBlogPost } from "@/lib/api/admin/blog";
 
+function BlogError({ error, reset }: { error: Error; reset: () => void }) {
+  return (
+    <div className="space-y-4">
+      <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Blog</h1>
+      <FormErrorBanner message={error.message || "The blog page could not be loaded."} />
+      <Button type="button" variant="outline" onClick={reset}>
+        Try again
+      </Button>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/admin/blog/")({
   loader: () => listAdminBlogPosts(),
+  errorComponent: BlogError,
+  pendingComponent: () => <p className="text-sm text-muted">Loading blog posts…</p>,
   component: AdminBlogPage,
 });
 
 function AdminBlogPage() {
-  const posts = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  const posts = data?.posts ?? [];
+  const loadError = data?.error;
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -51,14 +67,16 @@ function AdminBlogPage() {
         </Button>
       </div>
 
+      {loadError ? <FormErrorBanner message={loadError} /> : null}
       {error ? <FormErrorBanner message={error} /> : null}
-      {posts.length === 0 ? (
+      {posts.length === 0 && !loadError ? (
         <div className="border border-dashed border-border rounded-xl py-16 text-center">
           <FileText className="w-9 h-9 text-muted mx-auto mb-3" />
           <p className="font-display text-xl italic">No database posts yet</p>
           <p className="text-sm text-muted mt-1">The existing static journal remains public.</p>
         </div>
-      ) : (
+      ) : null}
+      {posts.length > 0 ? (
         <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
           {posts.map((post) => (
             <article key={post.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -98,7 +116,7 @@ function AdminBlogPage() {
             </article>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

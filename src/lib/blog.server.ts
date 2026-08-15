@@ -3,10 +3,19 @@ import { desc, eq } from "drizzle-orm";
 import { blogPosts as staticBlogPosts, type BlogPost } from "@/data/blog";
 import { getDb, isDatabaseConfigured } from "@/db/index.server";
 import { blogPosts } from "@/db/schema";
+import { toIsoDate } from "@/lib/admin-blog";
 import { logError } from "@/lib/logger.server";
 
 function mapBlogPost(row: typeof blogPosts.$inferSelect): BlogPost {
   const publishedAt = row.publishedAt ?? row.createdAt;
+  const iso = toIsoDate(publishedAt);
+  const displayDate = iso
+    ? new Date(iso).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "";
   const content = row.content
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
@@ -17,12 +26,8 @@ function mapBlogPost(row: typeof blogPosts.$inferSelect): BlogPost {
     category: "Journal",
     readTime: `${Math.max(1, Math.ceil(row.content.split(/\s+/).length / 220))} min read`,
     author: "DaintyHand",
-    date: publishedAt.toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-    datePublished: publishedAt.toISOString(),
+    date: displayDate,
+    datePublished: iso ?? new Date().toISOString(),
     excerpt: row.excerpt,
     content,
     targetKeyword: "",

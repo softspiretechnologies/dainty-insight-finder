@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "tsx scripts/ensure-schema.ts && vite dev",
     "db:ensure": "tsx scripts/ensure-schema.ts",
+    "db:verify": "tsx scripts/verify-schema.ts",
+    "deploy:hostinger": "npm run db:ensure && npm run db:verify && npm run build",
     "build": "tsx scripts/prepare-uploads.ts && vite build && node scripts/write-hostinger-entry.mjs",
     "build:dev": "tsx scripts/prepare-uploads.ts && vite build --mode development && node scripts/write-hostinger-entry.mjs",
     "start": "node dist/server/hostinger-entry.mjs",

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { categoryInputSchema, loginSchema, productInputSchema } from "@/lib/admin-schemas";
+import {
+  adminBlogPostSchema,
+  categoryInputSchema,
+  loginSchema,
+  productInputSchema,
+} from "@/lib/admin-schemas";
 
 const validProduct = {
   id: "new" as const,
@@ -65,6 +70,34 @@ describe("categoryInputSchema", () => {
         label: "X",
         blurb: "Y",
         sortOrder: 0,
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("adminBlogPostSchema", () => {
+  it("accepts a valid journal post", () => {
+    expect(
+      adminBlogPostSchema.safeParse({
+        id: "new",
+        title: "Hamper ideas",
+        slug: "hamper-ideas",
+        excerpt: "A short intro",
+        content: "The full story",
+        isPublished: false,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects an invalid slug", () => {
+    expect(
+      adminBlogPostSchema.safeParse({
+        id: "new",
+        title: "Hamper ideas",
+        slug: "Nope Slug",
+        excerpt: "A short intro",
+        content: "The full story",
+        isPublished: false,
       }).success,
     ).toBe(false);
   });

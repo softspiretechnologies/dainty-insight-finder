@@ -50,15 +50,17 @@ Without `DATABASE_URL`, the site falls back to static data in `src/data/products
 ## Database setup
 
 ```bash
-# Generate migrations from schema (after schema changes)
-npm run db:generate
+# Safe additive reconciliation (creates only missing tables/columns/uniques)
+npm run db:ensure
 
-# Apply migrations to MySQL
-npm run db:migrate
+# Read-only check that the database matches the current app schema
+npm run db:verify
 
-# Seed categories, products, site settings, admin user + copy images to public/uploads/
+# Explicit initial/sample data — never part of routine production deploy
 npm run db:seed
 ```
+
+`npm run db:migrate` is the Drizzle Kit migrator. **Do not run it on production** until migration history is reconciled. See `docs/database.md`.
 
 Optional: `npm run db:studio` opens Drizzle Studio.
 
@@ -85,7 +87,7 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 | Hostinger setting | Value                             |
 | ----------------- | --------------------------------- |
 | Framework preset  | **React Router**                  |
-| Build command     | `npm run build`                   |
+| Build command     | `npm run deploy:hostinger`        |
 | Output directory  | `dist`                            |
 | Entry file        | `dist/server/hostinger-entry.mjs` |
 | Node version      | 22.x                              |
@@ -94,8 +96,12 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 
 1. Create a MySQL database and user in hPanel → **Databases**
 2. Add environment variables: `DATABASE_URL`, `ADMIN_SESSION_SECRET`, `VITE_SITE_URL`, plus `ADMIN_EMAIL` / `ADMIN_PASSWORD` for seeding
-3. Run `npm run db:migrate` and `npm run db:seed` once in the Hostinger SSH terminal (production only — do not point local `.env` at the live database)
-4. Deploy / redeploy the app
+3. Export/backup the MySQL database
+4. Confirm `DATABASE_URL` is available to the Hostinger build
+5. Deploy with build command `npm run deploy:hostinger` (`db:ensure` → `db:verify` → `build`)
+6. Smoke test homepage, catalog, `/admin/login`, and Admin → Blog
+
+Do **not** run `npm run db:seed` during routine deploys. Seed only for a brand-new empty database, as an explicit admin step.
 
 ### hPanel environment variables (production)
 
@@ -129,21 +135,16 @@ Admin uploads are saved **outside** `dist/` so redeploys do not wipe them:
 
 ### Redeploy checklist
 
-1. Push latest code to the Hostinger Git repo (or upload)
-2. Confirm all env vars above are set in hPanel
-3. Click **Save and redeploy** and wait for the build to finish
-4. Verify: homepage loads, `/catalog` images work, `/admin/login` works
-5. Confirm WhatsApp in **Admin → Settings** matches Nafisa's number
-6. Upload a test product image in admin, redeploy again, confirm the image still loads
+1. Export/backup the production database
+2. Push latest code
+3. Confirm env vars in hPanel, including `DATABASE_URL` at build time
+4. Build with `npm run deploy:hostinger` and wait for `Database schema verified.`
+5. Smoke test: homepage, `/catalog`, `/admin/login`, Admin → Blog
+6. Confirm WhatsApp in **Admin → Settings**
 
-**Migrate/seed on production** (SSH into Hostinger, then from the deployed app directory):
+If ensure/verify fail, the deploy stops. Fix schema first; do not switch the build command back to plain `npm run build`.
 
-```bash
-npm run db:migrate
-npm run db:seed
-```
-
-Re-running `db:seed` preserves the WhatsApp number already saved in admin settings.
+One-time production checks and commented additive SQL: `docs/production-schema-checks.sql` and `docs/production-schema-reconcile.sql`. Full strategy: `docs/database.md`.
 
 Local development uses its own MySQL database via `.env` — keep `DATABASE_URL` pointed at `localhost`, not the production server.
 
@@ -162,8 +163,11 @@ Product and category images use **file upload only** (no URL paste). Images are 
 ## Other commands
 
 ```bash
-npm run lint      # ESLint
-npm run format    # Prettier
+npm run lint              # ESLint
+npm run format            # Prettier
+npm run db:ensure         # additive schema reconciliation
+npm run db:verify         # read-only schema check
+npm run deploy:hostinger  # ensure + verify + build
 ```
 
 ## Configuration
