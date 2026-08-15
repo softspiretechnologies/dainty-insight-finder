@@ -28,6 +28,15 @@ export const Route = createFileRoute("/admin")({
       return { newEnquiryCount: 0 };
     }
   },
+  head: () => ({
+    meta: [
+      { title: "DaintyHand Admin" },
+      { name: "application-name", content: "DaintyHand Admin" },
+      { name: "apple-mobile-web-app-title", content: "DaintyHand Admin" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "theme-color", content: "#fdfbf7" },
+    ],
+  }),
   component: AdminLayout,
 });
 

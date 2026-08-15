@@ -11,6 +11,7 @@ import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { getRootPageData } from "../lib/api/catalog";
+import { matchesIncludeAdmin, resolvePwaIdentity } from "../lib/pwa-identity";
 import { siteUrl } from "../lib/site";
 import type { CatalogCategory, SiteSettingsData } from "../types/catalog";
 
@@ -87,80 +88,84 @@ export const Route = createRootRouteWithContext<{
     const { categories, siteSettings } = await getRootPageData();
     return { categories, siteSettings };
   },
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      {
-        name: "description",
-        content:
-          "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide.",
-      },
-      { name: "author", content: "DaintyHand" },
-      { property: "og:site_name", content: "DaintyHand" },
-      { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      {
-        property: "og:description",
-        content:
-          "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@dainty.handd" },
-      { name: "twitter:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
-      {
-        name: "twitter:description",
-        content:
-          "Custom hampers, bouquets, invitations and celebration services handcrafted with care and shipped across India & worldwide.",
-      },
-      { property: "og:image", content: siteUrl("/og-image.jpg") },
-      { property: "og:image:type", content: "image/jpeg" },
-      { property: "og:image:width", content: "1080" },
-      { property: "og:image:height", content: "1080" },
-      { property: "og:image:alt", content: "DaintyHand logo" },
-      { name: "twitter:image", content: siteUrl("/og-image.jpg") },
-      { name: "theme-color", content: "#fdfbf7" },
-      { name: "application-name", content: "DaintyHand" },
-      { name: "apple-mobile-web-app-title", content: "DaintyHand" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "geo.region", content: "IN-KL" },
-      { name: "geo.placename", content: "Perinthalmanna" },
-      { name: "geo.position", content: "10.9752;76.2238" },
-      { name: "ICBM", content: "10.9752, 76.2238" },
-    ],
-    links: [
-      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "32x32" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "stylesheet", href: appCss },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "DaintyHand",
-          alternateName: ["DaintyHand Studio", "DaintyHand Gifting Kerala"],
-          url: siteUrl("/"),
-          publisher: {
-            "@type": "Organization",
+  head: ({ matches }) => {
+    const identity = resolvePwaIdentity(matchesIncludeAdmin(matches));
+
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: identity.title },
+        {
+          name: "description",
+          content:
+            "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide.",
+        },
+        { name: "author", content: "DaintyHand" },
+        { property: "og:site_name", content: "DaintyHand" },
+        { property: "og:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
+        {
+          property: "og:description",
+          content:
+            "Custom hampers, bouquets, invitations and celebration services handcrafted by Nafisa in Perinthalmanna. We ship across India & worldwide.",
+        },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@dainty.handd" },
+        { name: "twitter:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
+        {
+          name: "twitter:description",
+          content:
+            "Custom hampers, bouquets, invitations and celebration services handcrafted with care and shipped across India & worldwide.",
+        },
+        { property: "og:image", content: siteUrl("/og-image.jpg") },
+        { property: "og:image:type", content: "image/jpeg" },
+        { property: "og:image:width", content: "1080" },
+        { property: "og:image:height", content: "1080" },
+        { property: "og:image:alt", content: "DaintyHand logo" },
+        { name: "twitter:image", content: siteUrl("/og-image.jpg") },
+        { name: "theme-color", content: "#fdfbf7" },
+        { name: "application-name", content: identity.applicationName },
+        { name: "apple-mobile-web-app-title", content: identity.appleWebAppTitle },
+        { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "geo.region", content: "IN-KL" },
+        { name: "geo.placename", content: "Perinthalmanna" },
+        { name: "geo.position", content: "10.9752;76.2238" },
+        { name: "ICBM", content: "10.9752, 76.2238" },
+      ],
+      links: [
+        { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "32x32" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+        { rel: "manifest", href: identity.manifestHref },
+        { rel: "stylesheet", href: appCss },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
             name: "DaintyHand",
-            logo: siteUrl("/og-image.jpg"),
-          },
-        }),
-      },
-      ...(analyticsId
-        ? [
-            { src: `https://www.googletagmanager.com/gtag/js?id=${analyticsId}`, async: true },
-            {
-              children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`,
+            alternateName: ["DaintyHand Studio", "DaintyHand Gifting Kerala"],
+            url: siteUrl("/"),
+            publisher: {
+              "@type": "Organization",
+              name: "DaintyHand",
+              logo: siteUrl("/og-image.jpg"),
             },
-          ]
-        : []),
-    ],
-  }),
+          }),
+        },
+        ...(analyticsId
+          ? [
+              { src: `https://www.googletagmanager.com/gtag/js?id=${analyticsId}`, async: true },
+              {
+                children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`,
+              },
+            ]
+          : []),
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "DaintyHand — Handcrafted Gifts & Wedding Studio",
   "short_name": "DaintyHand",
   "description": "Custom hampers, bouquets, invitations and celebration services handcrafted with care.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fdfbf7",
   "theme_color": "#fdfbf7",

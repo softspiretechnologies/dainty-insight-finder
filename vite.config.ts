@@ -23,6 +23,7 @@ export default defineConfig({
       "/icon-192.png": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
       "/icon-512.png": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
       "/manifest.webmanifest": { headers: { "cache-control": "public, max-age=604800" } },
+      "/admin.webmanifest": { headers: { "cache-control": "public, max-age=604800" } },
       "/og-image.jpg": { headers: { "cache-control": "public, max-age=604800" } },
       "/logo.jpg": { headers: { "cache-control": "public, max-age=604800" } },
     },
