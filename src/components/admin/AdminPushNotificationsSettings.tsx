@@ -31,7 +31,6 @@ type VapidDiagnosticsUi = {
 type UiState = {
   configured: boolean;
   vapidPublicKey?: string;
-  vapidPairValid: boolean | null;
   vapidDiagnostics: VapidDiagnosticsUi | null;
   browser: AdminPushBrowserSnapshot["browser"];
   permission: AdminPushBrowserSnapshot["permission"];
@@ -50,14 +49,15 @@ function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
   if (state.browser === "unsupported") {
     return "Push notifications aren't available in this browser";
   }
-  if (!state.configured) {
-    return "Push notifications are not configured for this deployment";
-  }
   if (state.permission === "denied") {
     return "Notifications are blocked on this device";
   }
+  // Local subscription wins over server-config messaging so Disable remains discoverable.
   if (state.enabledOnDevice) {
     return "Enabled on this device";
+  }
+  if (!state.configured) {
+    return "Push notifications are not configured for this deployment";
   }
   return "Not enabled on this device";
 }
@@ -82,10 +82,6 @@ export function AdminPushNotificationsSettings() {
     const configured = Boolean(status.configured);
     const vapidPublicKey =
       status.configured && "vapidPublicKey" in status ? status.vapidPublicKey : undefined;
-    const vapidPairValid =
-      status.configured && "vapidPairValid" in status
-        ? (status.vapidPairValid as boolean | null)
-        : null;
     const vapidDiagnostics =
       "vapidDiagnostics" in status && status.vapidDiagnostics
         ? (status.vapidDiagnostics as VapidDiagnosticsUi)
@@ -93,7 +89,6 @@ export function AdminPushNotificationsSettings() {
     const next: UiState = {
       configured,
       vapidPublicKey,
-      vapidPairValid,
       vapidDiagnostics,
       browser: browser.browser,
       permission: browser.permission,
@@ -161,11 +156,17 @@ export function AdminPushNotificationsSettings() {
     );
   }
 
-  const showEnable =
-    state.configured &&
-    state.browser === "available" &&
-    !state.enabledOnDevice &&
-    state.permission !== "denied";
+  const canUsePushRuntime =
+    state.configured && Boolean(state.vapidPublicKey) && state.browser === "available";
+
+  // Enable only when runtime is healthy and there is no local subscription.
+  const showEnable = canUsePushRuntime && !state.enabledOnDevice && state.permission !== "denied";
+
+  // Test requires a local subscription AND a healthy server push config.
+  const showTest = state.enabledOnDevice && canUsePushRuntime && state.permission !== "denied";
+
+  // Disable must always be available when a local subscription exists (recovery path).
+  const showDisable = state.enabledOnDevice;
 
   const diagnostics = state.vapidDiagnostics;
   const legacyMismatch =
@@ -202,11 +203,18 @@ export function AdminPushNotificationsSettings() {
         </p>
       ) : null}
 
-      {!state.configured && state.browser === "available" ? (
+      {!state.configured && state.browser === "available" && !state.enabledOnDevice ? (
         <p className="text-sm text-muted">
           Push notifications are not configured for this deployment. Set{" "}
           <span className="font-mono text-xs">WEB_PUSH_VAPID_PRIVATE_KEY</span> and{" "}
           <span className="font-mono text-xs">WEB_PUSH_VAPID_SUBJECT</span>.
+        </p>
+      ) : null}
+
+      {!state.configured && state.enabledOnDevice ? (
+        <p className="text-sm text-muted">
+          This device still has a local push subscription, but server push is not configured. You
+          can disable on this device to clear it.
         </p>
       ) : null}
 
@@ -215,14 +223,14 @@ export function AdminPushNotificationsSettings() {
           Legacy configured public key mismatch:{" "}
           <span className="font-mono text-xs">WEB_PUSH_VAPID_PUBLIC_KEY</span> does not match the
           public key derived from the private key. Runtime uses the derived key; you can remove the
-          legacy public env after redeploy.
+          legacy public env after redeploy. This does not block Enable or Disable.
         </p>
       ) : null}
 
       {state.permission === "denied" ? (
         <p className="text-sm text-muted">
-          Notifications are blocked on this device. You can enable them later in your device/browser
-          settings.
+          Notifications are blocked for this site. Open your device or browser notification
+          settings, allow notifications for DaintyHand Admin, then return here to enable them.
         </p>
       ) : null}
 
@@ -286,50 +294,55 @@ export function AdminPushNotificationsSettings() {
           </Button>
         ) : null}
 
-        {state.enabledOnDevice && state.configured ? (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto h-11"
-              disabled={busy}
-              onClick={() =>
-                void run(async () => {
-                  const subscription = await getCurrentPushSubscription();
-                  if (!subscription) {
-                    return { ok: false, error: "Enable notifications on this device first." };
-                  }
-                  const result = await sendAdminPushTest({
-                    data: { endpoint: subscription.endpoint },
-                  });
-                  if (result.ok) setMessage("Test notification sent.");
-                  return result;
-                })
-              }
-            >
-              Send test notification
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto h-11"
-              disabled={busy}
-              onClick={() =>
-                void run(async () => {
-                  const subscription = await getCurrentPushSubscription();
-                  if (subscription) {
+        {showTest ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto h-11"
+            disabled={busy}
+            onClick={() =>
+              void run(async () => {
+                const subscription = await getCurrentPushSubscription();
+                if (!subscription) {
+                  return { ok: false, error: "Enable notifications on this device first." };
+                }
+                const result = await sendAdminPushTest({
+                  data: { endpoint: subscription.endpoint },
+                });
+                if (result.ok) setMessage("Test notification sent.");
+                return result;
+              })
+            }
+          >
+            Send test notification
+          </Button>
+        ) : null}
+
+        {showDisable ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto h-11"
+            disabled={busy}
+            onClick={() =>
+              void run(async () => {
+                const subscription = await getCurrentPushSubscription();
+                if (subscription) {
+                  try {
                     await removeAdminPushSubscription({
                       data: { endpoint: subscription.endpoint },
                     });
+                  } catch {
+                    // Still clear the local subscription so the user can recover.
                   }
-                  await unsubscribeAdminPushOnDevice();
-                  return { ok: true };
-                })
-              }
-            >
-              Disable on this device
-            </Button>
-          </>
+                }
+                await unsubscribeAdminPushOnDevice();
+                return { ok: true };
+              })
+            }
+          >
+            Disable on this device
+          </Button>
         ) : null}
       </div>
 
