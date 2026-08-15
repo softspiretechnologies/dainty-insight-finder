@@ -21,6 +21,7 @@ import { getAdminProduct, saveAdminProduct } from "@/lib/api/admin/products";
 import { listAdminCategories } from "@/lib/api/admin/categories";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { normalizeProductDetails } from "@/lib/product-details";
+import { productPriceInputValue } from "@/lib/product-price";
 import { cn } from "@/lib/utils";
 import type { CategoryId } from "@/types/catalog";
 
@@ -77,7 +78,9 @@ function AdminProductEditPage() {
   const [blurb, setBlurb] = useState(product?.blurb ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
   const [details, setDetails] = useState(normalizeProductDetails(product?.details).join("\n"));
-  const [priceFrom, setPriceFrom] = useState(product?.priceFrom ?? "");
+  const [priceFrom, setPriceFrom] = useState(
+    productPriceInputValue(product?.priceFrom ?? undefined),
+  );
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
   const [featuredOnHomepage, setFeaturedOnHomepage] = useState(
     product?.featuredOnHomepage ?? false,
@@ -122,7 +125,7 @@ function AdminProductEditPage() {
       blurb !== (product?.blurb ?? "") ||
       description !== (product?.description ?? "") ||
       details !== initialDetails ||
-      priceFrom !== (product?.priceFrom ?? "") ||
+      priceFrom !== productPriceInputValue(product?.priceFrom ?? undefined) ||
       isActive !== (product?.isActive ?? true) ||
       featuredOnHomepage !== (product?.featuredOnHomepage ?? false) ||
       Boolean(imageFile)
@@ -162,7 +165,7 @@ function AdminProductEditPage() {
       blurb,
       description,
       details,
-      priceFrom: priceFrom || undefined,
+      priceFrom: priceFrom.trim() || undefined,
       isActive,
       featuredOnHomepage: isActive ? featuredOnHomepage : false,
     };
@@ -312,17 +315,31 @@ function AdminProductEditPage() {
                   </select>
                 </AdminField>
 
-                <AdminField label="Price from" htmlFor="priceFrom" error={fieldErrors.priceFrom}>
-                  <Input
-                    id="priceFrom"
-                    value={priceFrom}
-                    onChange={(e) => {
-                      setPriceFrom(e.target.value);
-                      clearFieldError("priceFrom");
-                    }}
-                    placeholder="₹1,200"
-                    className={`h-11 ${invalidInputClass(fieldErrors.priceFrom)}`}
-                  />
+                <AdminField
+                  label="Price from"
+                  htmlFor="priceFrom"
+                  error={fieldErrors.priceFrom}
+                  hint="Enter amount only — ₹ is added automatically."
+                >
+                  <div className="relative">
+                    <span
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted"
+                      aria-hidden="true"
+                    >
+                      ₹
+                    </span>
+                    <Input
+                      id="priceFrom"
+                      value={priceFrom}
+                      onChange={(e) => {
+                        setPriceFrom(e.target.value);
+                        clearFieldError("priceFrom");
+                      }}
+                      inputMode="decimal"
+                      placeholder="1800"
+                      className={`h-11 pl-8 ${invalidInputClass(fieldErrors.priceFrom)}`}
+                    />
+                  </div>
                 </AdminField>
               </div>
             </FormSection>
@@ -422,7 +439,9 @@ function AdminProductEditPage() {
                   <Package className="w-10 h-10 text-muted/30" />
                   <ImagePlus className="w-5 h-5" />
                   <p className="text-sm font-medium">Upload image</p>
-                  <p className="text-xs text-muted">JPEG, PNG or WebP · max 5 MB</p>
+                  <p className="text-xs text-muted">
+                    JPEG, PNG or WebP · Max 5 MB · automatically optimized for the website
+                  </p>
                 </div>
               )}
             </button>

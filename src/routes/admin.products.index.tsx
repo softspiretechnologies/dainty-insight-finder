@@ -19,6 +19,7 @@ import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OptimizedImage, adminThumbSizes } from "@/components/ui/optimized-image";
 import {
   Sheet,
   SheetContent,
@@ -43,6 +44,7 @@ import {
   type AdminProductStatusFilter,
 } from "@/lib/admin-product-search";
 import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
+import { formatProductPrice } from "@/lib/product-price";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products/")({
@@ -393,7 +395,14 @@ function AdminProductsPage() {
               <div className="flex gap-4 p-4">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
                   {product.imagePath ? (
-                    <img src={product.imagePath} alt="" className="w-full h-full object-cover" />
+                    <OptimizedImage
+                      src={product.imagePath}
+                      alt=""
+                      width={80}
+                      height={80}
+                      sizes={adminThumbSizes}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full grid place-items-center">
                       <Package className="w-5 h-5 text-muted/40" />
@@ -412,9 +421,11 @@ function AdminProductsPage() {
                   <p className="text-xs text-muted mt-1">
                     {categoryLabels.get(product.categoryId) ?? product.categoryId}
                   </p>
-                  {product.priceFrom && (
-                    <p className="text-xs font-medium text-primary mt-1">{product.priceFrom}</p>
-                  )}
+                  {product.priceFrom ? (
+                    <p className="text-xs font-medium text-primary mt-1">
+                      {formatProductPrice(product.priceFrom ?? undefined)}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 px-4 pb-4">
@@ -531,9 +542,12 @@ function AdminProductsPage() {
                   <td className="px-4 py-3">
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-surface border border-border shrink-0">
                       {product.imagePath ? (
-                        <img
+                        <OptimizedImage
                           src={product.imagePath}
                           alt=""
+                          width={80}
+                          height={80}
+                          sizes={adminThumbSizes}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -559,7 +573,7 @@ function AdminProductsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted hidden lg:table-cell">
-                    {product.priceFrom ?? "—"}
+                    {formatProductPrice(product.priceFrom ?? undefined) ?? "—"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">

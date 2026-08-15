@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isValidProductPriceInput, normalizeProductPriceInput } from "@/lib/product-price";
+
 export const categoryIds = [
   "hampers",
   "bouquets",
@@ -12,6 +14,16 @@ export const categoryIds = [
 ] as const;
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const priceFromSchema = z
+  .string()
+  .trim()
+  .max(64)
+  .optional()
+  .refine((value) => isValidProductPriceInput(value), {
+    message: "Enter an amount, for example 1800.",
+  })
+  .transform((value) => normalizeProductPriceInput(value));
 
 export const imageUploadPayloadSchema = z.object({
   name: z.string().min(1),
@@ -65,7 +77,7 @@ export const adminProductFormSchema = z.object({
   blurb: z.string().trim().min(1, "Short blurb is required"),
   description: z.string().trim().min(1, "Description is required"),
   details: z.string().trim().min(1, "Add at least one detail"),
-  priceFrom: z.string().trim().max(64).optional(),
+  priceFrom: priceFromSchema,
   isActive: z.boolean(),
   featuredOnHomepage: z.boolean(),
 });
@@ -78,7 +90,7 @@ export const productInputSchema = z.object({
   blurb: z.string().min(1),
   description: z.string().min(1),
   details: z.string().min(1),
-  priceFrom: z.string().max(64).optional(),
+  priceFrom: priceFromSchema,
   isActive: z.boolean(),
   featuredOnHomepage: z.boolean(),
   existingImagePath: uploadPathSchema.optional(),

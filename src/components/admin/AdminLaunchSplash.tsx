@@ -3,12 +3,45 @@ import { useLayoutEffect, useState } from "react";
 import { markAdminLaunchSplashShown, shouldShowAdminLaunchSplash } from "@/lib/standalone-web-app";
 import { cn } from "@/lib/utils";
 
-const EXIT_START_MS = 560;
-const DONE_MS = 760;
-const REDUCED_MOTION_MS = 120;
+/** Longer, calmer brand moment for installed Admin (~1.2s). */
+const EXIT_START_MS = 900;
+const DONE_MS = 1200;
+const REDUCED_MOTION_MS = 160;
+
+function prefersReducedMotion() {
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+function finishEarlySplash(early: HTMLElement, onDone: () => void) {
+  const reduced = prefersReducedMotion();
+  if (reduced) {
+    early.remove();
+    document.documentElement.removeAttribute("data-admin-launch");
+    onDone();
+    return () => {};
+  }
+
+  const exitTimer = window.setTimeout(() => {
+    early.classList.add("admin-launch-overlay-exit");
+  }, EXIT_START_MS);
+  const doneTimer = window.setTimeout(() => {
+    early.remove();
+    document.documentElement.removeAttribute("data-admin-launch");
+    onDone();
+  }, DONE_MS);
+
+  return () => {
+    window.clearTimeout(exitTimer);
+    window.clearTimeout(doneTimer);
+  };
+}
 
 /**
- * Brief brand overlay for the installed DaintyHand Admin Home Screen app.
+ * Completes the early standalone splash (if present) or shows a React fallback.
  * Mounted once on the Admin layout — not replayed on in-app navigation.
  */
 export function AdminLaunchSplash() {
@@ -16,19 +49,19 @@ export function AdminLaunchSplash() {
   const [exiting, setExiting] = useState(false);
 
   useLayoutEffect(() => {
+    document.documentElement.classList.add("dh-admin");
+
+    const early = document.getElementById("admin-early-splash");
+    if (early) {
+      return finishEarlySplash(early, () => {});
+    }
+
     if (!shouldShowAdminLaunchSplash()) return;
 
     markAdminLaunchSplashShown();
     setVisible(true);
 
-    let reduced = false;
-    try {
-      reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    } catch {
-      reduced = false;
-    }
-
-    if (reduced) {
+    if (prefersReducedMotion()) {
       const done = window.setTimeout(() => setVisible(false), REDUCED_MOTION_MS);
       return () => window.clearTimeout(done);
     }
@@ -38,6 +71,12 @@ export function AdminLaunchSplash() {
     return () => {
       window.clearTimeout(exitTimer);
       window.clearTimeout(doneTimer);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    return () => {
+      document.documentElement.classList.remove("dh-admin");
     };
   }, []);
 

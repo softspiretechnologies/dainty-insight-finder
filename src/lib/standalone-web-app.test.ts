@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   ADMIN_LAUNCH_STORAGE_KEY,
@@ -16,16 +16,9 @@ function mockWindow({
   iosStandalone?: boolean;
 }) {
   return {
-    matchMedia: vi.fn((query: string) => ({
+    matchMedia: (query: string) => ({
       matches: query.includes("display-mode: standalone") ? standaloneDisplay : false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
+    }),
     navigator: { standalone: iosStandalone },
   };
 }
@@ -84,5 +77,12 @@ describe("admin launch splash session gate", () => {
     };
     expect(hasAdminLaunchSplashBeenShown(broken)).toBe(false);
     expect(() => markAdminLaunchSplashShown(broken)).not.toThrow();
+  });
+});
+
+describe("standalone chrome expectations", () => {
+  it("treats standalone detection as the gate for hiding mobile admin chrome", () => {
+    expect(isStandaloneWebApp(mockWindow({ standaloneDisplay: true }))).toBe(true);
+    expect(isStandaloneWebApp(mockWindow({}))).toBe(false);
   });
 });

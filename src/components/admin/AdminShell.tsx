@@ -120,9 +120,10 @@ export function AdminShell({
         </div>
       </aside>
 
-      {/* z-40: mobile header above page content; Sheets/dialogs use z-50 in ui components */}
+      {/* z-40: mobile header above page content; Sheets/dialogs use z-50 in ui components.
+          Hidden in installed standalone Admin via .admin-mobile-chrome-header + CSS. */}
       <header
-        className="lg:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-4 py-3"
+        className="admin-mobile-chrome-header lg:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-4 py-3"
         style={{
           paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))",
           paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
@@ -176,7 +177,7 @@ export function AdminShell({
         </SheetContent>
       </Sheet>
 
-      <main className="flex-1 min-w-0 max-w-full p-4 pb-28 sm:p-6 sm:pb-28 lg:p-10 lg:pb-10">
+      <main className="admin-shell-main flex-1 min-w-0 max-w-full p-4 pb-28 sm:p-6 sm:pb-28 lg:p-10 lg:pb-10">
         {children}
       </main>
 

@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
+import { ADMIN_EARLY_BOOT_SCRIPT, ADMIN_EARLY_BOOT_STYLE } from "../lib/admin-early-boot";
 import { getRootPageData } from "../lib/api/catalog";
 import { matchesIncludeAdmin, resolvePwaIdentity } from "../lib/pwa-identity";
 import { siteUrl } from "../lib/site";
@@ -174,11 +175,14 @@ export const Route = createRootRouteWithContext<{
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ backgroundColor: "#fdfbf7", colorScheme: "light" }}>
       <head>
+        <meta name="color-scheme" content="light" />
+        <style dangerouslySetInnerHTML={{ __html: ADMIN_EARLY_BOOT_STYLE }} />
+        <script dangerouslySetInnerHTML={{ __html: ADMIN_EARLY_BOOT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body>
+      <body style={{ backgroundColor: "#fdfbf7" }}>
         {children}
         <Scripts />
       </body>

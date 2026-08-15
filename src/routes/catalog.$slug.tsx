@@ -6,6 +6,7 @@ import { getProductBySlugData } from "@/lib/api/catalog";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { siteUrl } from "@/lib/site";
 import { absoluteProductImage, buildProductStructuredData } from "@/lib/product-schema";
+import { formatProductPriceFrom } from "@/lib/product-price";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
 import { useEffect } from "react";
@@ -140,6 +141,11 @@ function ProductPage() {
               <h1 className="break-words font-display text-3xl sm:text-4xl md:text-6xl tracking-tighter mt-3 mb-5 md:mb-6 leading-[0.95] text-balance">
                 {product.name}
               </h1>
+              {product.priceFrom ? (
+                <p className="font-display text-lg md:text-xl text-foreground/80 mb-5 md:mb-6">
+                  {formatProductPriceFrom(product.priceFrom)}
+                </p>
+              ) : null}
               <p className="text-sm text-muted leading-relaxed mb-8 md:mb-10 text-pretty whitespace-pre-line">
                 {product.description}
               </p>

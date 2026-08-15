@@ -13,6 +13,7 @@ import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-select
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 import { getPaginationItems, type PaginationItem } from "@/lib/pagination";
+import { formatProductPriceFrom } from "@/lib/product-price";
 
 const PAGE_SIZE = 12;
 
@@ -208,6 +209,9 @@ function CatalogPage() {
                 <p className="break-words text-[11px] sm:text-xs text-muted leading-relaxed mt-2 max-w-xs">
                   {p.blurb}
                 </p>
+                {p.priceFrom ? (
+                  <p className="text-xs text-muted mt-1.5">{formatProductPriceFrom(p.priceFrom)}</p>
+                ) : null}
                 <div className="mt-3">
                   <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary border border-primary/40 rounded-full px-2 py-0.5">
                     Customisable

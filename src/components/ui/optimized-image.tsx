@@ -36,3 +36,6 @@ export const catalogGridSizes =
 
 /** Responsive `sizes` for full-width product hero on small screens. */
 export const productHeroSizes = "(max-width: 1024px) 100vw, 55vw";
+
+/** Tiny Admin product list / table thumbnails (~64–80px CSS). */
+export const adminThumbSizes = "80px";
