@@ -66,3 +66,16 @@ npm run build
 6. Smoke test `/`, `/catalog`, `/admin/login`, and Admin → Blog.
 
 Never run `db:seed` as part of that sequence.
+
+## MariaDB JSON columns (Hostinger)
+
+Hostinger Web/Cloud MySQL is typically **MariaDB**. On MariaDB, the `JSON` type is an alias for `LONGTEXT` (often with a `CHECK (json_valid(...))` constraint). Schema inspection therefore reports:
+
+- `products.details` as `longtext`
+- `services.bullets` as `longtext`
+
+even when those columns were created as `JSON`.
+
+This repository’s `db:ensure` / `db:verify` detect MariaDB via `SELECT VERSION()` and treat MariaDB JSON aliases as compatible with expected `json` columns (preferring evidence of a `JSON_VALID` check). They do **not** emit `ALTER TABLE` to convert `LONGTEXT` to `JSON`.
+
+Do **not** manually convert those columns in phpMyAdmin because of inspection output. Leaving MariaDB’s JSON/`LONGTEXT` representation in place is correct.

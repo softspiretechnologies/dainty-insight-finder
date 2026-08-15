@@ -1,6 +1,16 @@
+export type DatabaseFlavor = "mysql" | "mariadb";
+
+/** How MariaDB JSON_VALID check-constraint inspection completed. */
+export type MariaDbJsonConstraintInspection = "not_applicable" | "available" | "unavailable";
+
 export type SchemaColumnSnapshot = {
   dataType: string;
   nullable: boolean;
+  /**
+   * True when MariaDB stores this column as LONGTEXT with a JSON_VALID check
+   * (the normal representation of a JSON column on MariaDB/Hostinger).
+   */
+  mariaDbJsonAlias?: boolean;
 };
 
 export type SchemaUniqueSnapshot = {
@@ -14,6 +24,8 @@ export type SchemaTableSnapshot = {
 };
 
 export type SchemaSnapshot = {
+  flavor: DatabaseFlavor;
+  mariaDbJsonConstraintInspection: MariaDbJsonConstraintInspection;
   tables: Record<string, SchemaTableSnapshot>;
 };
 
@@ -71,6 +83,52 @@ export function normalizeMysqlType(dataType: string) {
   return TYPE_FAMILY[dataType.toLowerCase()] ?? dataType.toLowerCase();
 }
 
+export function detectDatabaseFlavor(version: string): DatabaseFlavor {
+  return /mariadb/i.test(version) ? "mariadb" : "mysql";
+}
+
+/** Extract column names referenced by MariaDB `json_valid(...)` check clauses. */
+export function parseMariaDbJsonValidColumns(checkClause: string): string[] {
+  const columns: string[] = [];
+  const pattern = /json_valid\s*\(\s*(?:`([^`]+)`|'([^']+)'|"([^"]+)"|([A-Za-z_][\w$]*))\s*\)/gi;
+  for (const match of checkClause.matchAll(pattern)) {
+    const name = match[1] ?? match[2] ?? match[3] ?? match[4];
+    if (name) columns.push(name);
+  }
+  return columns;
+}
+
+function allowsJson(allowedTypes: string[]) {
+  return allowedTypes.some((type) => normalizeMysqlType(type) === "json");
+}
+
+/**
+ * Compatibility for inspected columns.
+ *
+ * MySQL: expected JSON requires an actual JSON type (LONGTEXT alone is not enough).
+ * MariaDB: JSON is an alias for LONGTEXT; prefer a JSON_VALID check, and only fall
+ * back to accepting bare LONGTEXT when constraint inspection was unavailable.
+ */
+export function columnTypesCompatible(
+  actual: SchemaColumnSnapshot,
+  allowedTypes: string[],
+  flavor: DatabaseFlavor,
+  mariaDbJsonConstraintInspection: MariaDbJsonConstraintInspection = "not_applicable",
+) {
+  if (typesCompatible(actual.dataType, allowedTypes)) return true;
+
+  if (!allowsJson(allowedTypes)) return false;
+  if (flavor !== "mariadb") return false;
+  if (actual.dataType.toLowerCase() !== "longtext") return false;
+
+  if (actual.mariaDbJsonAlias) return true;
+
+  // Narrow fallback: only when we could not inspect CHECK constraints on MariaDB.
+  // Do not treat arbitrary LONGTEXT as JSON when inspection succeeded and found no JSON_VALID.
+  return mariaDbJsonConstraintInspection === "unavailable";
+}
+
+/** Exact type-family match (no MariaDB JSON alias rules). */
 export function typesCompatible(actualType: string, allowedTypes: string[]) {
   const actual = normalizeMysqlType(actualType);
   return allowedTypes.some((type) => normalizeMysqlType(type) === actual);
@@ -369,6 +427,8 @@ export function diffExpectedSchema(
   expected: ExpectedTable[] = EXPECTED_TABLES,
 ): SchemaIssue[] {
   const issues: SchemaIssue[] = [];
+  const flavor = actual.flavor ?? "mysql";
+  const jsonInspection = actual.mariaDbJsonConstraintInspection ?? "not_applicable";
 
   for (const table of expected) {
     const snapshot = actual.tables[table.name];
@@ -398,7 +458,7 @@ export function diffExpectedSchema(
         continue;
       }
 
-      if (!typesCompatible(existing.dataType, column.allowedTypes)) {
+      if (!columnTypesCompatible(existing, column.allowedTypes, flavor, jsonInspection)) {
         issues.push({
           kind: "incompatible_column",
           table: table.name,

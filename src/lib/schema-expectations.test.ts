@@ -2,19 +2,26 @@ import { describe, expect, it } from "vitest";
 
 import {
   EXPECTED_TABLES,
+  columnTypesCompatible,
+  detectDatabaseFlavor,
   diffExpectedSchema,
   formatVerifyFailure,
   inferMissingSchemaFromError,
+  parseMariaDbJsonValidColumns,
   planEnsureActions,
   typesCompatible,
   type SchemaSnapshot,
 } from "@/lib/schema-expectations";
 
-function emptySnapshot(): SchemaSnapshot {
-  return { tables: {} };
+function emptySnapshot(flavor: SchemaSnapshot["flavor"] = "mysql"): SchemaSnapshot {
+  return {
+    flavor,
+    mariaDbJsonConstraintInspection: flavor === "mariadb" ? "available" : "not_applicable",
+    tables: {},
+  };
 }
 
-function currentSnapshot(): SchemaSnapshot {
+function currentSnapshot(flavor: SchemaSnapshot["flavor"] = "mysql"): SchemaSnapshot {
   const tables: SchemaSnapshot["tables"] = {};
   for (const table of EXPECTED_TABLES) {
     tables[table.name] = {
@@ -27,13 +34,119 @@ function currentSnapshot(): SchemaSnapshot {
       uniques: table.uniques.map((unique) => ({ name: unique.name, columns: unique.columns })),
     };
   }
-  return { tables };
+  return {
+    flavor,
+    mariaDbJsonConstraintInspection: flavor === "mariadb" ? "available" : "not_applicable",
+    tables,
+  };
 }
+
+function mariaDbProductionLikeSnapshot(): SchemaSnapshot {
+  const snapshot = currentSnapshot("mariadb");
+  snapshot.tables.products.columns.details = {
+    dataType: "longtext",
+    nullable: false,
+    mariaDbJsonAlias: true,
+  };
+  snapshot.tables.services.columns.bullets = {
+    dataType: "longtext",
+    nullable: false,
+    mariaDbJsonAlias: true,
+  };
+  return snapshot;
+}
+
+describe("detectDatabaseFlavor", () => {
+  it("detects MariaDB from VERSION()", () => {
+    expect(detectDatabaseFlavor("10.11.6-MariaDB-log")).toBe("mariadb");
+    expect(detectDatabaseFlavor("8.0.36")).toBe("mysql");
+  });
+});
+
+describe("parseMariaDbJsonValidColumns", () => {
+  it("extracts column names from json_valid checks", () => {
+    expect(parseMariaDbJsonValidColumns("json_valid(`details`)")).toEqual(["details"]);
+    expect(
+      parseMariaDbJsonValidColumns(
+        "`bullets` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`bullets`))",
+      ),
+    ).toEqual(["bullets"]);
+  });
+});
 
 describe("typesCompatible", () => {
   it("treats MySQL boolean as tinyint", () => {
     expect(typesCompatible("tinyint", ["tinyint", "boolean"])).toBe(true);
     expect(typesCompatible("varchar", ["int"])).toBe(false);
+  });
+
+  it("treats MySQL JSON as compatible with expected JSON", () => {
+    expect(typesCompatible("json", ["json"])).toBe(true);
+  });
+
+  it("does not treat LONGTEXT as JSON without flavor rules", () => {
+    expect(typesCompatible("longtext", ["json"])).toBe(false);
+  });
+});
+
+describe("columnTypesCompatible", () => {
+  it("accepts MySQL JSON for expected JSON", () => {
+    expect(columnTypesCompatible({ dataType: "json", nullable: false }, ["json"], "mysql")).toBe(
+      true,
+    );
+  });
+
+  it("rejects MySQL ordinary LONGTEXT for expected JSON", () => {
+    expect(
+      columnTypesCompatible({ dataType: "longtext", nullable: false }, ["json"], "mysql"),
+    ).toBe(false);
+  });
+
+  it("accepts MariaDB JSON represented as LONGTEXT with JSON_VALID alias", () => {
+    expect(
+      columnTypesCompatible(
+        { dataType: "longtext", nullable: false, mariaDbJsonAlias: true },
+        ["json"],
+        "mariadb",
+        "available",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects MariaDB LONGTEXT without JSON_VALID when inspection was available", () => {
+    expect(
+      columnTypesCompatible(
+        { dataType: "longtext", nullable: false },
+        ["json"],
+        "mariadb",
+        "available",
+      ),
+    ).toBe(false);
+  });
+
+  it("narrowly accepts MariaDB LONGTEXT for JSON only when constraint inspection is unavailable", () => {
+    expect(
+      columnTypesCompatible(
+        { dataType: "longtext", nullable: false },
+        ["json"],
+        "mariadb",
+        "unavailable",
+      ),
+    ).toBe(true);
+    expect(
+      columnTypesCompatible(
+        { dataType: "text", nullable: false },
+        ["json"],
+        "mariadb",
+        "unavailable",
+      ),
+    ).toBe(false);
+  });
+
+  it("still rejects ordinary incompatible types", () => {
+    expect(
+      columnTypesCompatible({ dataType: "varchar", nullable: false }, ["int"], "mariadb"),
+    ).toBe(false);
   });
 });
 
@@ -87,10 +200,36 @@ describe("diffExpectedSchema", () => {
     expect(formatVerifyFailure([])).toContain("Database schema is outdated.");
   });
 
+  it("passes production-equivalent MariaDB JSON LONGTEXT for products.details", () => {
+    const issues = diffExpectedSchema(mariaDbProductionLikeSnapshot());
+    expect(issues.some((issue) => issue.target === "details")).toBe(false);
+  });
+
+  it("passes production-equivalent MariaDB JSON LONGTEXT for services.bullets", () => {
+    const issues = diffExpectedSchema(mariaDbProductionLikeSnapshot());
+    expect(issues.some((issue) => issue.target === "bullets")).toBe(false);
+  });
+
+  it("fails MySQL LONGTEXT where JSON is expected", () => {
+    const actual = currentSnapshot("mysql");
+    actual.tables.products.columns.details = { dataType: "longtext", nullable: false };
+    const issues = diffExpectedSchema(actual);
+    expect(
+      issues.some(
+        (issue) =>
+          issue.kind === "incompatible_column" && issue.message.includes("products.details"),
+      ),
+    ).toBe(true);
+    expect(planEnsureActions(issues).apply.some((issue) => issue.target === "details")).toBe(false);
+  });
+
   it("treats a second ensure pass as a no-op", () => {
     const first = planEnsureActions(diffExpectedSchema(emptySnapshot()));
     expect(first.apply.length).toBeGreaterThan(0);
     expect(planEnsureActions(diffExpectedSchema(currentSnapshot())).apply).toEqual([]);
+    expect(planEnsureActions(diffExpectedSchema(mariaDbProductionLikeSnapshot())).apply).toEqual(
+      [],
+    );
   });
 
   it("fails incompatible columns instead of mutating them", () => {
