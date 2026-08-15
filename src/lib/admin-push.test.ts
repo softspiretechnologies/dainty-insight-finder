@@ -1,5 +1,6 @@
 import { createECDH } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import webpush from "web-push";
 
 import {
   adminPushSubscriptionInputSchema,
@@ -13,6 +14,8 @@ import {
   vapidPublicKeyToUint8Array,
 } from "@/lib/admin-push";
 import {
+  buildVapidEnvDiagnostics,
+  fingerprintVapidKeyString,
   hashPushEndpoint,
   isStalePushSubscriptionError,
   validateVapidKeyPair,
@@ -57,6 +60,50 @@ describe("validateVapidKeyPair", () => {
     const a = sampleVapidPair();
     const b = sampleVapidPair();
     expect(validateVapidKeyPair(a.publicKey, b.privateKey).ok).toBe(false);
+  });
+
+  it("accepts every pair from web-push.generateVAPIDKeys (10 samples)", () => {
+    for (let i = 0; i < 10; i += 1) {
+      const keys = webpush.generateVAPIDKeys();
+      expect(validateVapidKeyPair(keys.publicKey, keys.privateKey)).toEqual({ ok: true });
+    }
+  });
+
+  it("rejects intentionally crossed web-push pairs", () => {
+    const a = webpush.generateVAPIDKeys();
+    const b = webpush.generateVAPIDKeys();
+    expect(validateVapidKeyPair(a.publicKey, b.privateKey).ok).toBe(false);
+    expect(validateVapidKeyPair(b.publicKey, a.privateKey).ok).toBe(false);
+  });
+});
+
+describe("buildVapidEnvDiagnostics", () => {
+  it("returns safe fingerprints that match for a valid pair", () => {
+    const keys = webpush.generateVAPIDKeys();
+    const diagnostics = buildVapidEnvDiagnostics({
+      WEB_PUSH_VAPID_PUBLIC_KEY: keys.publicKey,
+      WEB_PUSH_VAPID_PRIVATE_KEY: keys.privateKey,
+      WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
+    });
+    expect(diagnostics.publicFingerprint).toBe(fingerprintVapidKeyString(keys.publicKey));
+    expect(diagnostics.derivedFingerprint).toBe(diagnostics.publicFingerprint);
+    expect(diagnostics.publicLength).toBe(keys.publicKey.length);
+    expect(diagnostics.privateLength).toBe(keys.privateKey.length);
+    expect(diagnostics.pairMatches).toBe(true);
+    expect(diagnostics.subjectValid).toBe(true);
+    expect(diagnostics.publicFingerprint).toMatch(/^[0-9a-f]{12}$/);
+  });
+
+  it("shows diverging fingerprints for crossed pairs", () => {
+    const a = webpush.generateVAPIDKeys();
+    const b = webpush.generateVAPIDKeys();
+    const diagnostics = buildVapidEnvDiagnostics({
+      WEB_PUSH_VAPID_PUBLIC_KEY: a.publicKey,
+      WEB_PUSH_VAPID_PRIVATE_KEY: b.privateKey,
+      WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
+    });
+    expect(diagnostics.pairMatches).toBe(false);
+    expect(diagnostics.publicFingerprint).not.toBe(diagnostics.derivedFingerprint);
   });
 });
 

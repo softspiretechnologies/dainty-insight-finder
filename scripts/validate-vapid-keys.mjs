@@ -4,11 +4,12 @@
  *
  * Usage:
  *   WEB_PUSH_VAPID_PUBLIC_KEY=... WEB_PUSH_VAPID_PRIVATE_KEY=... WEB_PUSH_VAPID_SUBJECT=mailto:... \
- *     node scripts/validate-vapid-keys.mjs
+ *     npm run validate:vapid-keys
  *
- * Never prints private key material.
+ * Prints the same safe fingerprints as Admin Settings (process-env view).
+ * Never prints private or full public key material.
  */
-import { createECDH } from "node:crypto";
+import { createECDH, createHash } from "node:crypto";
 
 function decode(value) {
   const trimmed = String(value ?? "").trim();
@@ -22,6 +23,10 @@ function decode(value) {
   }
 }
 
+function fingerprint(value) {
+  return createHash("sha256").update(String(value).trim(), "utf8").digest("hex").slice(0, 12);
+}
+
 function validateSubject(subject) {
   try {
     const parsed = new URL(String(subject ?? "").trim());
@@ -29,6 +34,32 @@ function validateSubject(subject) {
   } catch {
     return false;
   }
+}
+
+function derivePublicBase64Url(privateKey) {
+  const priv = decode(privateKey);
+  if (!priv || priv.length !== 32) return null;
+  try {
+    const ecdh = createECDH("prime256v1");
+    ecdh.setPrivateKey(priv);
+    const derived = ecdh.getPublicKey(null, "uncompressed");
+    if (derived.length !== 65 || derived[0] !== 0x04) return null;
+    return derived.toString("base64url");
+  } catch {
+    return null;
+  }
+}
+
+function pairMatches(publicKey, privateKey) {
+  const pub = decode(publicKey);
+  const priv = decode(privateKey);
+  if (!pub || !priv) return false;
+  if (priv.length !== 32) return false;
+  if (pub.length !== 65 || pub[0] !== 0x04) return false;
+  const derivedB64 = derivePublicBase64Url(privateKey);
+  if (!derivedB64) return false;
+  const derived = decode(derivedB64);
+  return Boolean(derived && Buffer.compare(derived, pub) === 0);
 }
 
 const publicKey = process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
@@ -41,39 +72,19 @@ if (!publicKey || !privateKey || !subject) {
   process.exit();
 }
 
-if (!validateSubject(subject)) {
-  console.log("VAPID pair: INVALID / subject must be mailto: or https:");
-  process.exitCode = 1;
-  process.exit();
-}
+const publicTrimmed = publicKey.trim();
+const privateTrimmed = privateKey.trim();
+const subjectValid = validateSubject(subject);
+const derived = derivePublicBase64Url(privateTrimmed);
+const matches = pairMatches(publicTrimmed, privateTrimmed);
 
-const pub = decode(publicKey);
-const priv = decode(privateKey);
+console.log(`Public fingerprint: ${fingerprint(publicTrimmed)}`);
+console.log(
+  `Derived fingerprint: ${derived ? fingerprint(derived) : "(unavailable — private key could not be decoded)"}`,
+);
+console.log(`Public length: ${publicTrimmed.length}`);
+console.log(`Private length: ${privateTrimmed.length}`);
+console.log(`Pair matches: ${matches ? "Yes" : "No"}`);
+console.log(`Subject valid: ${subjectValid ? "Yes" : "No"}`);
 
-if (!pub || !priv) {
-  console.log("VAPID pair: INVALID / public and private do not match");
-  process.exitCode = 1;
-  process.exit();
-}
-
-if (priv.length !== 32 || pub.length !== 65 || pub[0] !== 0x04) {
-  console.log("VAPID pair: INVALID / public and private do not match");
-  process.exitCode = 1;
-  process.exit();
-}
-
-try {
-  const ecdh = createECDH("prime256v1");
-  ecdh.setPrivateKey(priv);
-  const derived = ecdh.getPublicKey(null, "uncompressed");
-  if (Buffer.compare(derived, pub) === 0) {
-    console.log("VAPID pair: valid and matching");
-    process.exitCode = 0;
-  } else {
-    console.log("VAPID pair: INVALID / public and private do not match");
-    process.exitCode = 1;
-  }
-} catch {
-  console.log("VAPID pair: INVALID / public and private do not match");
-  process.exitCode = 1;
-}
+process.exitCode = subjectValid && matches ? 0 : 1;

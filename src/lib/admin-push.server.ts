@@ -36,6 +36,29 @@ function decodeVapidBase64Url(value: string): Buffer | null {
   }
 }
 
+/** First 12 hex chars of SHA-256 over the raw trimmed UTF-8 string (never logs the input). */
+export function fingerprintVapidKeyString(value: string): string {
+  return createHash("sha256").update(value.trim(), "utf8").digest("hex").slice(0, 12);
+}
+
+/**
+ * Derive uncompressed P-256 public key (base64url) from a VAPID private key string.
+ * Uses the same decode + ECDH path as validateVapidKeyPair.
+ */
+export function deriveVapidPublicKeyBase64UrlFromPrivate(privateKey: string): string | null {
+  const priv = decodeVapidBase64Url(privateKey);
+  if (!priv || priv.length !== 32) return null;
+  try {
+    const ecdh = createECDH("prime256v1");
+    ecdh.setPrivateKey(priv);
+    const derived = ecdh.getPublicKey(null, "uncompressed");
+    if (derived.length !== 65 || derived[0] !== 0x04) return null;
+    return derived.toString("base64url");
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Confirm public/private VAPID keys are a matching P-256 pair.
  * Never logs or returns key material.
@@ -50,17 +73,52 @@ export function validateVapidKeyPair(
   if (priv.length !== 32) return { ok: false, reason: "length" };
   if (pub.length !== 65 || pub[0] !== 0x04) return { ok: false, reason: "length" };
 
-  try {
-    const ecdh = createECDH("prime256v1");
-    ecdh.setPrivateKey(priv);
-    const derived = ecdh.getPublicKey(null, "uncompressed");
-    if (derived.length !== 65 || Buffer.compare(derived, pub) !== 0) {
-      return { ok: false, reason: "mismatch" };
-    }
-    return { ok: true };
-  } catch {
-    return { ok: false, reason: "invalid_format" };
+  const derivedB64 = deriveVapidPublicKeyBase64UrlFromPrivate(privateKey);
+  if (!derivedB64) return { ok: false, reason: "invalid_format" };
+  const derived = decodeVapidBase64Url(derivedB64);
+  if (!derived || Buffer.compare(derived, pub) !== 0) {
+    return { ok: false, reason: "mismatch" };
   }
+  return { ok: true };
+}
+
+export type VapidEnvDiagnostics = {
+  publicFingerprint: string | null;
+  derivedFingerprint: string | null;
+  publicLength: number | null;
+  privateLength: number | null;
+  pairMatches: boolean | null;
+  subjectValid: boolean;
+};
+
+/**
+ * Safe fingerprints of whatever VAPID env the *current Node process* actually reads.
+ * Never includes key material.
+ */
+export function buildVapidEnvDiagnostics(
+  env: NodeJS.ProcessEnv = process.env,
+): VapidEnvDiagnostics {
+  const publicKey = env.WEB_PUSH_VAPID_PUBLIC_KEY?.trim() ?? "";
+  const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim() ?? "";
+  const subject = env.WEB_PUSH_VAPID_SUBJECT?.trim() ?? "";
+
+  const publicFingerprint = publicKey ? fingerprintVapidKeyString(publicKey) : null;
+  const derivedPublic = privateKey ? deriveVapidPublicKeyBase64UrlFromPrivate(privateKey) : null;
+  const derivedFingerprint = derivedPublic ? fingerprintVapidKeyString(derivedPublic) : null;
+
+  let pairMatches: boolean | null = null;
+  if (publicKey && privateKey) {
+    pairMatches = validateVapidKeyPair(publicKey, privateKey).ok;
+  }
+
+  return {
+    publicFingerprint,
+    derivedFingerprint,
+    publicLength: publicKey ? publicKey.length : null,
+    privateLength: privateKey ? privateKey.length : null,
+    pairMatches,
+    subjectValid: isValidVapidSubject(subject),
+  };
 }
 
 export function isValidVapidSubject(subject: string): boolean {
@@ -141,14 +199,20 @@ export async function countNewEnquiries(): Promise<number> {
 }
 
 export function getAdminPushStatusPayload() {
+  const vapidDiagnostics = buildVapidEnvDiagnostics();
   const assessment = assessWebPushVapidConfig();
   if (!assessment.configured || !assessment.publicKey) {
-    return { configured: false as const, vapidPairValid: null as boolean | null };
+    return {
+      configured: false as const,
+      vapidPairValid: null as boolean | null,
+      vapidDiagnostics,
+    };
   }
   return {
     configured: true as const,
     vapidPublicKey: assessment.publicKey,
     vapidPairValid: assessment.pairValid,
+    vapidDiagnostics,
   };
 }
 

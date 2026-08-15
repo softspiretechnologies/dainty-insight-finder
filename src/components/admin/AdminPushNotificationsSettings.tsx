@@ -17,10 +17,20 @@ import {
   sendAdminPushTest,
 } from "@/lib/api/admin/push";
 
+type VapidDiagnosticsUi = {
+  publicFingerprint: string | null;
+  derivedFingerprint: string | null;
+  publicLength: number | null;
+  privateLength: number | null;
+  pairMatches: boolean | null;
+  subjectValid: boolean;
+};
+
 type UiState = {
   configured: boolean;
   vapidPublicKey?: string;
   vapidPairValid: boolean | null;
+  vapidDiagnostics: VapidDiagnosticsUi | null;
   browser: AdminPushBrowserSnapshot["browser"];
   permission: AdminPushBrowserSnapshot["permission"];
   enabledOnDevice: boolean;
@@ -72,10 +82,15 @@ export function AdminPushNotificationsSettings() {
       status.configured && "vapidPairValid" in status
         ? (status.vapidPairValid as boolean | null)
         : null;
+    const vapidDiagnostics =
+      "vapidDiagnostics" in status && status.vapidDiagnostics
+        ? (status.vapidDiagnostics as VapidDiagnosticsUi)
+        : null;
     const next: UiState = {
       configured,
       vapidPublicKey,
       vapidPairValid,
+      vapidDiagnostics,
       browser: browser.browser,
       permission: browser.permission,
       enabledOnDevice: Boolean(browser.localSubscription?.endpoint),
@@ -190,6 +205,37 @@ export function AdminPushNotificationsSettings() {
           The configured VAPID public and private keys do not form a matching pair. Fix the
           Hostinger env values (do not casually regenerate production keys).
         </p>
+      ) : null}
+
+      {state.vapidDiagnostics ? (
+        <div className="space-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+            VAPID diagnostics
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Public fingerprint: {state.vapidDiagnostics.publicFingerprint ?? "—"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Derived fingerprint: {state.vapidDiagnostics.derivedFingerprint ?? "—"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Public length: {state.vapidDiagnostics.publicLength ?? "—"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Private length: {state.vapidDiagnostics.privateLength ?? "—"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Pair matches:{" "}
+            {state.vapidDiagnostics.pairMatches === null
+              ? "—"
+              : state.vapidDiagnostics.pairMatches
+                ? "Yes"
+                : "No"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Subject valid: {state.vapidDiagnostics.subjectValid ? "Yes" : "No"}
+          </p>
+        </div>
       ) : null}
 
       {state.permission === "denied" ? (
