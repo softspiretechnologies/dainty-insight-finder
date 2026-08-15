@@ -1,5 +1,5 @@
 import { createECDH } from "node:crypto";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import webpush from "web-push";
 
 import {
@@ -15,7 +15,10 @@ import {
 } from "@/lib/admin-push";
 import {
   buildVapidEnvDiagnostics,
+  deriveVapidPublicKeyBase64UrlFromPrivate,
   fingerprintVapidKeyString,
+  getAdminPushStatusPayload,
+  getWebPushVapidConfig,
   hashPushEndpoint,
   isStalePushSubscriptionError,
   validateVapidKeyPair,
@@ -77,24 +80,91 @@ describe("validateVapidKeyPair", () => {
   });
 });
 
+describe("deriveVapidPublicKeyBase64UrlFromPrivate", () => {
+  it("derives the same public key as web-push.generateVAPIDKeys", () => {
+    const keys = webpush.generateVAPIDKeys();
+    expect(deriveVapidPublicKeyBase64UrlFromPrivate(keys.privateKey)).toBe(keys.publicKey);
+  });
+
+  it("derives correctly for 10 generated pairs", () => {
+    for (let i = 0; i < 10; i += 1) {
+      const keys = webpush.generateVAPIDKeys();
+      expect(deriveVapidPublicKeyBase64UrlFromPrivate(keys.privateKey)).toBe(keys.publicKey);
+      expect(validateVapidKeyPair(keys.publicKey, keys.privateKey)).toEqual({ ok: true });
+    }
+  });
+
+  it("rejects malformed private keys gracefully", () => {
+    expect(deriveVapidPublicKeyBase64UrlFromPrivate("not-a-key")).toBeNull();
+    expect(deriveVapidPublicKeyBase64UrlFromPrivate("")).toBeNull();
+    expect(deriveVapidPublicKeyBase64UrlFromPrivate("====")).toBeNull();
+  });
+});
+
+describe("getWebPushVapidConfig (derive-only)", () => {
+  it("configures successfully with only private key + subject", () => {
+    const keys = webpush.generateVAPIDKeys();
+    const config = getWebPushVapidConfig({
+      WEB_PUSH_VAPID_PRIVATE_KEY: keys.privateKey,
+      WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
+    });
+    expect(config).toEqual({
+      publicKey: keys.publicKey,
+      privateKey: keys.privateKey,
+      subject: "mailto:admin@daintyhand.in",
+    });
+  });
+
+  it("ignores legacy public env and still uses derived public", () => {
+    const keys = webpush.generateVAPIDKeys();
+    const other = webpush.generateVAPIDKeys();
+    const config = getWebPushVapidConfig({
+      WEB_PUSH_VAPID_PRIVATE_KEY: keys.privateKey,
+      WEB_PUSH_VAPID_PUBLIC_KEY: other.publicKey,
+      WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
+    });
+    expect(config?.publicKey).toBe(keys.publicKey);
+    expect(config?.publicKey).not.toBe(other.publicKey);
+  });
+
+  it("returns null when private key is malformed", () => {
+    expect(
+      getWebPushVapidConfig({
+        WEB_PUSH_VAPID_PRIVATE_KEY: "bad",
+        WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
+      }),
+    ).toBeNull();
+  });
+});
+
 describe("buildVapidEnvDiagnostics", () => {
-  it("returns safe fingerprints that match for a valid pair", () => {
+  it("reports derived fingerprints without requiring public env", () => {
+    const keys = webpush.generateVAPIDKeys();
+    const diagnostics = buildVapidEnvDiagnostics({
+      WEB_PUSH_VAPID_PRIVATE_KEY: keys.privateKey,
+      WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
+    });
+    expect(diagnostics.derivedPublicFingerprint).toBe(fingerprintVapidKeyString(keys.publicKey));
+    expect(diagnostics.derivedPublicLength).toBe(keys.publicKey.length);
+    expect(diagnostics.privateLength).toBe(keys.privateKey.length);
+    expect(diagnostics.privateKeyValid).toBe(true);
+    expect(diagnostics.subjectValid).toBe(true);
+    expect(diagnostics.legacyPublicFingerprint).toBeNull();
+    expect(diagnostics.legacyPublicMatchesDerived).toBeNull();
+  });
+
+  it("reports legacy public match when legacy env matches derived", () => {
     const keys = webpush.generateVAPIDKeys();
     const diagnostics = buildVapidEnvDiagnostics({
       WEB_PUSH_VAPID_PUBLIC_KEY: keys.publicKey,
       WEB_PUSH_VAPID_PRIVATE_KEY: keys.privateKey,
       WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
     });
-    expect(diagnostics.publicFingerprint).toBe(fingerprintVapidKeyString(keys.publicKey));
-    expect(diagnostics.derivedFingerprint).toBe(diagnostics.publicFingerprint);
-    expect(diagnostics.publicLength).toBe(keys.publicKey.length);
-    expect(diagnostics.privateLength).toBe(keys.privateKey.length);
-    expect(diagnostics.pairMatches).toBe(true);
-    expect(diagnostics.subjectValid).toBe(true);
-    expect(diagnostics.publicFingerprint).toMatch(/^[0-9a-f]{12}$/);
+    expect(diagnostics.legacyPublicMatchesDerived).toBe(true);
+    expect(diagnostics.legacyPublicFingerprint).toBe(fingerprintVapidKeyString(keys.publicKey));
   });
 
-  it("shows diverging fingerprints for crossed pairs", () => {
+  it("reports legacy mismatch without blocking derived runtime key", () => {
     const a = webpush.generateVAPIDKeys();
     const b = webpush.generateVAPIDKeys();
     const diagnostics = buildVapidEnvDiagnostics({
@@ -102,8 +172,48 @@ describe("buildVapidEnvDiagnostics", () => {
       WEB_PUSH_VAPID_PRIVATE_KEY: b.privateKey,
       WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
     });
-    expect(diagnostics.pairMatches).toBe(false);
-    expect(diagnostics.publicFingerprint).not.toBe(diagnostics.derivedFingerprint);
+    expect(diagnostics.legacyPublicMatchesDerived).toBe(false);
+    expect(diagnostics.derivedPublicFingerprint).toBe(fingerprintVapidKeyString(b.publicKey));
+    expect(diagnostics.privateKeyValid).toBe(true);
+
+    const config = getWebPushVapidConfig({
+      WEB_PUSH_VAPID_PUBLIC_KEY: a.publicKey,
+      WEB_PUSH_VAPID_PRIVATE_KEY: b.privateKey,
+      WEB_PUSH_VAPID_SUBJECT: "mailto:admin@daintyhand.in",
+    });
+    expect(config?.publicKey).toBe(b.publicKey);
+  });
+});
+
+describe("getAdminPushStatusPayload", () => {
+  const previous = {
+    public: process.env.WEB_PUSH_VAPID_PUBLIC_KEY,
+    private: process.env.WEB_PUSH_VAPID_PRIVATE_KEY,
+    subject: process.env.WEB_PUSH_VAPID_SUBJECT,
+  };
+
+  afterEach(() => {
+    if (previous.public === undefined) delete process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
+    else process.env.WEB_PUSH_VAPID_PUBLIC_KEY = previous.public;
+    if (previous.private === undefined) delete process.env.WEB_PUSH_VAPID_PRIVATE_KEY;
+    else process.env.WEB_PUSH_VAPID_PRIVATE_KEY = previous.private;
+    if (previous.subject === undefined) delete process.env.WEB_PUSH_VAPID_SUBJECT;
+    else process.env.WEB_PUSH_VAPID_SUBJECT = previous.subject;
+  });
+
+  it("returns derived public key to the browser even when legacy public mismatches", () => {
+    const a = webpush.generateVAPIDKeys();
+    const b = webpush.generateVAPIDKeys();
+    process.env.WEB_PUSH_VAPID_PUBLIC_KEY = a.publicKey;
+    process.env.WEB_PUSH_VAPID_PRIVATE_KEY = b.privateKey;
+    process.env.WEB_PUSH_VAPID_SUBJECT = "mailto:admin@daintyhand.in";
+
+    const status = getAdminPushStatusPayload();
+    expect(status.configured).toBe(true);
+    if (!status.configured) return;
+    expect(status.vapidPublicKey).toBe(b.publicKey);
+    expect(status.vapidPairValid).toBe(true);
+    expect(status.vapidDiagnostics.legacyPublicMatchesDerived).toBe(false);
   });
 });
 

@@ -18,12 +18,14 @@ import {
 } from "@/lib/api/admin/push";
 
 type VapidDiagnosticsUi = {
-  publicFingerprint: string | null;
-  derivedFingerprint: string | null;
-  publicLength: number | null;
+  derivedPublicFingerprint: string | null;
+  derivedPublicLength: number | null;
   privateLength: number | null;
-  pairMatches: boolean | null;
+  privateKeyValid: boolean;
   subjectValid: boolean;
+  legacyPublicFingerprint: string | null;
+  legacyPublicLength: number | null;
+  legacyPublicMatchesDerived: boolean | null;
 };
 
 type UiState = {
@@ -51,9 +53,6 @@ function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
   if (!state.configured) {
     return "Push notifications are not configured for this deployment";
   }
-  if (state.vapidPairValid === false) {
-    return "Push VAPID keys are configured but do not form a matching pair";
-  }
   if (state.permission === "denied") {
     return "Notifications are blocked on this device";
   }
@@ -61,6 +60,11 @@ function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
     return "Enabled on this device";
   }
   return "Not enabled on this device";
+}
+
+function yesNo(value: boolean | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  return value ? "Yes" : "No";
 }
 
 export function AdminPushNotificationsSettings() {
@@ -159,10 +163,14 @@ export function AdminPushNotificationsSettings() {
 
   const showEnable =
     state.configured &&
-    state.vapidPairValid !== false &&
     state.browser === "available" &&
     !state.enabledOnDevice &&
     state.permission !== "denied";
+
+  const diagnostics = state.vapidDiagnostics;
+  const legacyMismatch =
+    diagnostics?.legacyPublicMatchesDerived === false &&
+    Boolean(diagnostics.legacyPublicFingerprint);
 
   return (
     <section className="border border-border rounded-xl p-4 sm:p-5 space-y-4 bg-surface/20">
@@ -196,46 +204,19 @@ export function AdminPushNotificationsSettings() {
 
       {!state.configured && state.browser === "available" ? (
         <p className="text-sm text-muted">
-          Push notifications are not configured for this deployment.
+          Push notifications are not configured for this deployment. Set{" "}
+          <span className="font-mono text-xs">WEB_PUSH_VAPID_PRIVATE_KEY</span> and{" "}
+          <span className="font-mono text-xs">WEB_PUSH_VAPID_SUBJECT</span>.
         </p>
       ) : null}
 
-      {state.configured && state.vapidPairValid === false ? (
+      {legacyMismatch ? (
         <p className="text-sm text-muted">
-          The configured VAPID public and private keys do not form a matching pair. Fix the
-          Hostinger env values (do not casually regenerate production keys).
+          Legacy configured public key mismatch:{" "}
+          <span className="font-mono text-xs">WEB_PUSH_VAPID_PUBLIC_KEY</span> does not match the
+          public key derived from the private key. Runtime uses the derived key; you can remove the
+          legacy public env after redeploy.
         </p>
-      ) : null}
-
-      {state.vapidDiagnostics ? (
-        <div className="space-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
-            VAPID diagnostics
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Public fingerprint: {state.vapidDiagnostics.publicFingerprint ?? "—"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Derived fingerprint: {state.vapidDiagnostics.derivedFingerprint ?? "—"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Public length: {state.vapidDiagnostics.publicLength ?? "—"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Private length: {state.vapidDiagnostics.privateLength ?? "—"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Pair matches:{" "}
-            {state.vapidDiagnostics.pairMatches === null
-              ? "—"
-              : state.vapidDiagnostics.pairMatches
-                ? "Yes"
-                : "No"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Subject valid: {state.vapidDiagnostics.subjectValid ? "Yes" : "No"}
-          </p>
-        </div>
       ) : null}
 
       {state.permission === "denied" ? (
@@ -243,6 +224,42 @@ export function AdminPushNotificationsSettings() {
           Notifications are blocked on this device. You can enable them later in your device/browser
           settings.
         </p>
+      ) : null}
+
+      {diagnostics ? (
+        <div className="space-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+            VAPID diagnostics
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Derived public fingerprint: {diagnostics.derivedPublicFingerprint ?? "—"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Derived public length: {diagnostics.derivedPublicLength ?? "—"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Private length: {diagnostics.privateLength ?? "—"}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Private key valid: {yesNo(diagnostics.privateKeyValid)}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Subject valid: {yesNo(diagnostics.subjectValid)}
+          </p>
+          {diagnostics.legacyPublicFingerprint ? (
+            <>
+              <p className="text-xs font-mono text-foreground">
+                Legacy public fingerprint: {diagnostics.legacyPublicFingerprint}
+              </p>
+              <p className="text-xs font-mono text-foreground">
+                Legacy public length: {diagnostics.legacyPublicLength ?? "—"}
+              </p>
+              <p className="text-xs font-mono text-foreground">
+                Legacy public matches derived: {yesNo(diagnostics.legacyPublicMatchesDerived)}
+              </p>
+            </>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="flex flex-col sm:flex-row flex-wrap gap-3">
@@ -269,7 +286,7 @@ export function AdminPushNotificationsSettings() {
           </Button>
         ) : null}
 
-        {state.enabledOnDevice && state.vapidPairValid !== false ? (
+        {state.enabledOnDevice && state.configured ? (
           <>
             <Button
               type="button"

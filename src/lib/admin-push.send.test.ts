@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import webpush from "web-push";
 
-import { hashPushEndpoint } from "@/lib/admin-push.server";
+import { hashPushEndpoint, validateVapidKeyPair } from "@/lib/admin-push.server";
 
 const getDb = vi.fn();
 const deletedHashes: string[] = [];
@@ -16,13 +17,30 @@ vi.mock("@/lib/logger.server", () => ({
 }));
 
 describe("sendAdminNotification transport matrix", () => {
+  const previous = {
+    public: process.env.WEB_PUSH_VAPID_PUBLIC_KEY,
+    private: process.env.WEB_PUSH_VAPID_PRIVATE_KEY,
+    subject: process.env.WEB_PUSH_VAPID_SUBJECT,
+  };
+  let testKeys: { publicKey: string; privateKey: string };
+
   beforeEach(() => {
     vi.resetModules();
     deletedHashes.length = 0;
-    process.env.WEB_PUSH_VAPID_PUBLIC_KEY = "pub";
-    process.env.WEB_PUSH_VAPID_PRIVATE_KEY = "priv";
+    testKeys = webpush.generateVAPIDKeys();
+    delete process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
+    process.env.WEB_PUSH_VAPID_PRIVATE_KEY = testKeys.privateKey;
     process.env.WEB_PUSH_VAPID_SUBJECT = "mailto:admin@daintyhand.in";
     getDb.mockReset();
+  });
+
+  afterEach(() => {
+    if (previous.public === undefined) delete process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
+    else process.env.WEB_PUSH_VAPID_PUBLIC_KEY = previous.public;
+    if (previous.private === undefined) delete process.env.WEB_PUSH_VAPID_PRIVATE_KEY;
+    else process.env.WEB_PUSH_VAPID_PRIVATE_KEY = previous.private;
+    if (previous.subject === undefined) delete process.env.WEB_PUSH_VAPID_SUBJECT;
+    else process.env.WEB_PUSH_VAPID_SUBJECT = previous.subject;
   });
 
   function mockRows(
@@ -127,6 +145,31 @@ describe("sendAdminNotification transport matrix", () => {
 
     const forbidden = result.failures.find((f) => f.statusCode === 403);
     expect(forbidden?.reason).toBe("BadJwtToken");
+  });
+
+  it("passes matching derived vapidDetails to sendNotification", async () => {
+    mockRows([{ endpoint: "https://push.example/ok" }]);
+    const { sendAdminNotification } = await import("@/lib/admin-push.server");
+
+    let captured: { subject: string; publicKey: string; privateKey: string } | undefined;
+    await sendAdminNotification(
+      { type: "test", title: "t", body: "b", url: "/admin" },
+      {
+        transport: {
+          sendNotification: async (_subscription, _payload, options) => {
+            captured = options?.vapidDetails;
+            return {};
+          },
+        },
+      },
+    );
+
+    expect(captured).toEqual({
+      subject: "mailto:admin@daintyhand.in",
+      publicKey: testKeys.publicKey,
+      privateKey: testKeys.privateKey,
+    });
+    expect(validateVapidKeyPair(captured!.publicKey, captured!.privateKey)).toEqual({ ok: true });
   });
 
   it("keeps 401 subscriptions and deletes only 404/410", async () => {

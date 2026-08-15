@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import webpush from "web-push";
 
 import { hashPushEndpoint } from "@/lib/admin-push.server";
 
@@ -38,8 +39,9 @@ vi.mock("@/lib/logger.server", () => ({
 describe("admin push subscription persistence", () => {
   beforeEach(() => {
     vi.resetModules();
-    process.env.WEB_PUSH_VAPID_PUBLIC_KEY = "BPublicKeyExample";
-    process.env.WEB_PUSH_VAPID_PRIVATE_KEY = "PrivateKeyExample";
+    const keys = webpush.generateVAPIDKeys();
+    delete process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
+    process.env.WEB_PUSH_VAPID_PRIVATE_KEY = keys.privateKey;
     process.env.WEB_PUSH_VAPID_SUBJECT = "mailto:admin@daintyhand.in";
     insertValues.mockClear();
     onDuplicateKeyUpdate.mockClear();

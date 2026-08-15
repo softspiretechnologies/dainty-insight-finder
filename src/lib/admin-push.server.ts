@@ -83,41 +83,50 @@ export function validateVapidKeyPair(
 }
 
 export type VapidEnvDiagnostics = {
-  publicFingerprint: string | null;
-  derivedFingerprint: string | null;
-  publicLength: number | null;
+  /** Fingerprint of the server-derived public key (runtime source of truth). */
+  derivedPublicFingerprint: string | null;
+  derivedPublicLength: number | null;
   privateLength: number | null;
-  pairMatches: boolean | null;
+  privateKeyValid: boolean;
   subjectValid: boolean;
+  /** Present only when legacy WEB_PUSH_VAPID_PUBLIC_KEY is still set in the process env. */
+  legacyPublicFingerprint: string | null;
+  legacyPublicLength: number | null;
+  legacyPublicMatchesDerived: boolean | null;
 };
 
 /**
  * Safe fingerprints of whatever VAPID env the *current Node process* actually reads.
- * Never includes key material.
+ * Never includes key material. Runtime uses the derived public key, not the legacy env.
  */
 export function buildVapidEnvDiagnostics(
   env: NodeJS.ProcessEnv = process.env,
 ): VapidEnvDiagnostics {
-  const publicKey = env.WEB_PUSH_VAPID_PUBLIC_KEY?.trim() ?? "";
+  const legacyPublic = env.WEB_PUSH_VAPID_PUBLIC_KEY?.trim() ?? "";
   const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim() ?? "";
   const subject = env.WEB_PUSH_VAPID_SUBJECT?.trim() ?? "";
 
-  const publicFingerprint = publicKey ? fingerprintVapidKeyString(publicKey) : null;
   const derivedPublic = privateKey ? deriveVapidPublicKeyBase64UrlFromPrivate(privateKey) : null;
-  const derivedFingerprint = derivedPublic ? fingerprintVapidKeyString(derivedPublic) : null;
+  const derivedPublicFingerprint = derivedPublic ? fingerprintVapidKeyString(derivedPublic) : null;
 
-  let pairMatches: boolean | null = null;
-  if (publicKey && privateKey) {
-    pairMatches = validateVapidKeyPair(publicKey, privateKey).ok;
+  const legacyPublicFingerprint = legacyPublic ? fingerprintVapidKeyString(legacyPublic) : null;
+
+  let legacyPublicMatchesDerived: boolean | null = null;
+  if (legacyPublic && derivedPublic) {
+    legacyPublicMatchesDerived = validateVapidKeyPair(legacyPublic, privateKey).ok;
+  } else if (legacyPublic && !derivedPublic) {
+    legacyPublicMatchesDerived = false;
   }
 
   return {
-    publicFingerprint,
-    derivedFingerprint,
-    publicLength: publicKey ? publicKey.length : null,
+    derivedPublicFingerprint,
+    derivedPublicLength: derivedPublic ? derivedPublic.length : null,
     privateLength: privateKey ? privateKey.length : null,
-    pairMatches,
+    privateKeyValid: Boolean(derivedPublic),
     subjectValid: isValidVapidSubject(subject),
+    legacyPublicFingerprint,
+    legacyPublicLength: legacyPublic ? legacyPublic.length : null,
+    legacyPublicMatchesDerived,
   };
 }
 
@@ -132,37 +141,55 @@ export function isValidVapidSubject(subject: string): boolean {
   }
 }
 
-/** Optional Web Push config — missing env must never fail app boot. */
+/**
+ * Optional Web Push config — missing/malformed env must never fail app boot.
+ * Public key is always derived from WEB_PUSH_VAPID_PRIVATE_KEY (single source of truth).
+ * Legacy WEB_PUSH_VAPID_PUBLIC_KEY is ignored for runtime.
+ */
 export function getWebPushVapidConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): WebPushVapidConfig | null {
-  const publicKey = env.WEB_PUSH_VAPID_PUBLIC_KEY?.trim();
   const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim();
   const subject = env.WEB_PUSH_VAPID_SUBJECT?.trim();
-  if (!publicKey || !privateKey || !subject) return null;
+  if (!privateKey || !subject) return null;
   if (!isValidVapidSubject(subject)) return null;
+  const publicKey = deriveVapidPublicKeyBase64UrlFromPrivate(privateKey);
+  if (!publicKey) return null;
   return { publicKey, privateKey, subject };
 }
 
 export function assessWebPushVapidConfig(env: NodeJS.ProcessEnv = process.env): {
   configured: boolean;
+  /** Always true when configured — public is derived from private. */
   pairValid: boolean | null;
   subjectValid: boolean;
+  privateKeyValid: boolean;
   publicKey?: string;
+  legacyPublicMatchesDerived: boolean | null;
 } {
-  const publicKey = env.WEB_PUSH_VAPID_PUBLIC_KEY?.trim();
-  const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim();
+  const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim() ?? "";
   const subject = env.WEB_PUSH_VAPID_SUBJECT?.trim() ?? "";
   const subjectValid = isValidVapidSubject(subject);
-  if (!publicKey || !privateKey || !subjectValid) {
-    return { configured: false, pairValid: null, subjectValid };
+  const diagnostics = buildVapidEnvDiagnostics(env);
+  const publicKey = privateKey ? deriveVapidPublicKeyBase64UrlFromPrivate(privateKey) : null;
+
+  if (!privateKey || !subjectValid || !publicKey) {
+    return {
+      configured: false,
+      pairValid: null,
+      subjectValid,
+      privateKeyValid: Boolean(publicKey),
+      legacyPublicMatchesDerived: diagnostics.legacyPublicMatchesDerived,
+    };
   }
-  const pair = validateVapidKeyPair(publicKey, privateKey);
+
   return {
     configured: true,
-    pairValid: pair.ok,
+    pairValid: true,
     subjectValid: true,
+    privateKeyValid: true,
     publicKey,
+    legacyPublicMatchesDerived: diagnostics.legacyPublicMatchesDerived,
   };
 }
 
@@ -210,8 +237,9 @@ export function getAdminPushStatusPayload() {
   }
   return {
     configured: true as const,
+    /** Always the derived public key — never the legacy env value. */
     vapidPublicKey: assessment.publicKey,
-    vapidPairValid: assessment.pairValid,
+    vapidPairValid: true as const,
     vapidDiagnostics,
   };
 }
@@ -516,14 +544,6 @@ export async function sendAdminTestNotification(
   const assessment = assessWebPushVapidConfig();
   if (!assessment.configured) {
     return { ok: false, error: "Push notifications are not configured for this deployment." };
-  }
-  if (assessment.pairValid === false) {
-    return {
-      ok: false,
-      error:
-        "Push provider rejected the server notification credentials. Check the configured VAPID key pair.",
-      diagnostic: { category: "vapid_auth", reason: "VAPID public/private keys do not match" },
-    };
   }
 
   const trimmed = typeof endpoint === "string" ? endpoint.trim() : "";

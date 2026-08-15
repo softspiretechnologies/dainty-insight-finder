@@ -2,11 +2,13 @@
 /**
  * Validate WEB_PUSH VAPID env without printing secrets.
  *
- * Usage:
- *   WEB_PUSH_VAPID_PUBLIC_KEY=... WEB_PUSH_VAPID_PRIVATE_KEY=... WEB_PUSH_VAPID_SUBJECT=mailto:... \
+ * Usage (required):
+ *   WEB_PUSH_VAPID_PRIVATE_KEY=... WEB_PUSH_VAPID_SUBJECT=mailto:... \
  *     npm run validate:vapid-keys
  *
- * Prints the same safe fingerprints as Admin Settings (process-env view).
+ * Optional legacy compare:
+ *   WEB_PUSH_VAPID_PUBLIC_KEY=... (reports whether legacy matches derived)
+ *
  * Never prints private or full public key material.
  */
 import { createECDH, createHash } from "node:crypto";
@@ -50,11 +52,10 @@ function derivePublicBase64Url(privateKey) {
   }
 }
 
-function pairMatches(publicKey, privateKey) {
-  const pub = decode(publicKey);
+function legacyMatchesDerived(legacyPublic, privateKey) {
+  const pub = decode(legacyPublic);
   const priv = decode(privateKey);
-  if (!pub || !priv) return false;
-  if (priv.length !== 32) return false;
+  if (!pub || !priv || priv.length !== 32) return false;
   if (pub.length !== 65 || pub[0] !== 0x04) return false;
   const derivedB64 = derivePublicBase64Url(privateKey);
   if (!derivedB64) return false;
@@ -62,29 +63,37 @@ function pairMatches(publicKey, privateKey) {
   return Boolean(derived && Buffer.compare(derived, pub) === 0);
 }
 
-const publicKey = process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
 const privateKey = process.env.WEB_PUSH_VAPID_PRIVATE_KEY;
 const subject = process.env.WEB_PUSH_VAPID_SUBJECT;
+const legacyPublic = process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
 
-if (!publicKey || !privateKey || !subject) {
-  console.log("VAPID pair check not executed because local keys were not supplied.");
+if (!privateKey || !subject) {
+  console.log(
+    "VAPID check not executed because WEB_PUSH_VAPID_PRIVATE_KEY and WEB_PUSH_VAPID_SUBJECT were not both supplied.",
+  );
   process.exitCode = 0;
   process.exit();
 }
 
-const publicTrimmed = publicKey.trim();
 const privateTrimmed = privateKey.trim();
 const subjectValid = validateSubject(subject);
 const derived = derivePublicBase64Url(privateTrimmed);
-const matches = pairMatches(publicTrimmed, privateTrimmed);
+const privateKeyValid = Boolean(derived);
 
-console.log(`Public fingerprint: ${fingerprint(publicTrimmed)}`);
 console.log(
-  `Derived fingerprint: ${derived ? fingerprint(derived) : "(unavailable — private key could not be decoded)"}`,
+  `Derived public fingerprint: ${derived ? fingerprint(derived) : "(unavailable — private key could not be decoded)"}`,
 );
-console.log(`Public length: ${publicTrimmed.length}`);
+console.log(`Derived public length: ${derived ? derived.length : "—"}`);
 console.log(`Private length: ${privateTrimmed.length}`);
-console.log(`Pair matches: ${matches ? "Yes" : "No"}`);
+console.log(`Private key valid: ${privateKeyValid ? "Yes" : "No"}`);
 console.log(`Subject valid: ${subjectValid ? "Yes" : "No"}`);
 
-process.exitCode = subjectValid && matches ? 0 : 1;
+if (legacyPublic?.trim()) {
+  const legacyTrimmed = legacyPublic.trim();
+  const matches = privateKeyValid && legacyMatchesDerived(legacyTrimmed, privateTrimmed);
+  console.log(`Legacy public fingerprint: ${fingerprint(legacyTrimmed)}`);
+  console.log(`Legacy public length: ${legacyTrimmed.length}`);
+  console.log(`Legacy public matches derived: ${matches ? "Yes" : "No"}`);
+}
+
+process.exitCode = subjectValid && privateKeyValid ? 0 : 1;
