@@ -264,6 +264,28 @@ test("mobile admin bottom navigation reaches Home, Enquiries, Products, More, Se
   await expect(page.getByRole("heading", { name: "Site settings" })).toBeVisible();
 });
 
+test("mobile product more uses a sheet and keeps delete confirmation", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await login(page);
+  await visitAndCheck(page, "/admin/products");
+
+  await expect(page.locator("header").getByRole("link", { name: /new enquiries/i })).toHaveCount(0);
+
+  const firstCard = page.getByTestId("product-card-list").locator("article").first();
+  await firstCard.getByRole("button", { name: /More actions for/ }).click();
+
+  const actions = page.getByRole("dialog").filter({ hasText: "Product actions" });
+  await expect(actions).toBeVisible();
+  await actions.getByRole("button", { name: "Delete product" }).click();
+  await expect(actions).toBeHidden();
+
+  const confirm = page.getByRole("dialog").filter({ hasText: /Delete "/ });
+  await expect(confirm).toBeVisible();
+  await confirm.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(confirm).toBeHidden();
+  await expect(firstCard).toBeVisible();
+});
+
 test("the desktop product table appears only with sufficient width", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await login(page);

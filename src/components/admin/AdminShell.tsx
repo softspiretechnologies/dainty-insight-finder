@@ -121,7 +121,7 @@ export function AdminShell({
       </aside>
 
       <header
-        className="lg:hidden sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur px-4 py-3"
+        className="lg:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-4 py-3"
         style={{
           paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))",
           paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
@@ -134,16 +134,6 @@ export function AdminShell({
           </p>
           <p className="font-display text-lg italic truncate">{adminPageTitle(pathname)}</p>
         </div>
-        {newEnquiryCount > 0 ? (
-          <Link
-            to="/admin/enquiries"
-            search={{ status: "new" }}
-            className="shrink-0"
-            aria-label={`${newEnquiryCount} new enquiries`}
-          >
-            <EnquiryBadge count={newEnquiryCount} />
-          </Link>
-        ) : null}
       </header>
 
       <Sheet open={moreOpen} onOpenChange={handleMoreOpenChange}>

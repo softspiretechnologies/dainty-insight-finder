@@ -11,12 +11,19 @@ import {
   EyeOff,
   MoreHorizontal,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import { FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FormErrorBanner } from "@/components/admin/AdminField";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { listAdminCategories } from "@/lib/api/admin/categories";
 import {
   deleteAdminProduct,
@@ -57,7 +64,11 @@ function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
-  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+  const [productActionTarget, setProductActionTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const moreTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const categoryLabels = useMemo(
     () => new Map(categories.map((category) => [category.id, category.label])),
@@ -279,11 +290,11 @@ function AdminProductsPage() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 px-4 pb-4">
+              <div className="grid grid-cols-2 gap-2 px-4 pb-4">
                 <Button
                   variant="outline"
                   className={cn(
-                    "h-11 px-3.5 shrink-0 gap-1.5 text-xs",
+                    "h-11 w-full gap-1.5 px-3 text-xs",
                     product.isActive
                       ? "text-emerald-700 border-emerald-300/60 bg-emerald-50 hover:bg-emerald-100"
                       : "text-muted hover:text-foreground hover:border-border",
@@ -308,7 +319,7 @@ function AdminProductsPage() {
                 <Button
                   variant="outline"
                   className={cn(
-                    "h-11 px-3.5 shrink-0 gap-1.5 text-xs",
+                    "h-11 w-full gap-1.5 px-3 text-xs",
                     product.featuredOnHomepage
                       ? "text-primary border-primary/40 bg-primary/5 hover:bg-primary/10"
                       : "text-muted hover:text-primary hover:border-primary/40",
@@ -330,40 +341,25 @@ function AdminProductsPage() {
                   )}
                   Homepage
                 </Button>
-                <Button variant="outline" className="min-w-[5.5rem] flex-1 h-11 text-sm" asChild>
+                <Button variant="outline" className="h-11 w-full text-sm" asChild>
                   <Link to="/admin/products/$productId" params={{ productId: String(product.id) }}>
                     <Pencil className="w-3.5 h-3.5 mr-2" />
                     Edit
                   </Link>
                 </Button>
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    className="h-11 min-w-11 px-3.5"
-                    aria-label={`More actions for ${product.name}`}
-                    aria-expanded={menuOpenId === product.id}
-                    onClick={() =>
-                      setMenuOpenId((current) => (current === product.id ? null : product.id))
-                    }
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                  {menuOpenId === product.id ? (
-                    <div className="absolute right-0 bottom-12 z-20 min-w-40 rounded-lg border border-border bg-background p-1 shadow-lg">
-                      <button
-                        type="button"
-                        className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm text-destructive hover:bg-destructive/5"
-                        onClick={() => {
-                          setMenuOpenId(null);
-                          setDeleteTarget({ id: product.id, name: product.name });
-                        }}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
+                <Button
+                  variant="outline"
+                  className="h-11 w-full min-w-11 px-3"
+                  aria-label={`More actions for ${product.name}`}
+                  aria-haspopup="dialog"
+                  aria-expanded={productActionTarget?.id === product.id}
+                  onClick={(event) => {
+                    moreTriggerRef.current = event.currentTarget;
+                    setProductActionTarget({ id: product.id, name: product.name });
+                  }}
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
               </div>
             </article>
           ))}
@@ -534,6 +530,51 @@ function AdminProductsPage() {
           </table>
         </div>
       )}
+
+      <Sheet
+        open={Boolean(productActionTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProductActionTarget(null);
+            requestAnimationFrame(() => moreTriggerRef.current?.focus());
+          }
+        }}
+      >
+        <SheetContent side="bottom" className="mx-auto w-full max-w-lg rounded-t-2xl">
+          <SheetHeader className="text-left mb-4 pr-10">
+            <SheetTitle className="font-display italic font-normal text-2xl">
+              Product actions
+            </SheetTitle>
+            <SheetDescription className="text-sm text-muted truncate">
+              {productActionTarget?.name ?? "Product"}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full justify-start gap-2 border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
+              onClick={() => {
+                if (!productActionTarget) return;
+                const target = productActionTarget;
+                setProductActionTarget(null);
+                setDeleteTarget(target);
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete product
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full"
+              onClick={() => setProductActionTarget(null)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <AdminConfirmDialog
         open={Boolean(deleteTarget)}
