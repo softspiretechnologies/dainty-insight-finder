@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
+import { EnquirySheet } from "@/components/site/EnquirySheet";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getServicesPageDataFn } from "@/lib/api/catalog";
 import { siteUrl } from "@/lib/site";
@@ -138,14 +139,23 @@ function ServicesPage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href={waLink(`Hi ${founder}, I'd like to enquire about ${s.title}.`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary"
-                >
-                  Enquire on WhatsApp →
-                </a>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <EnquirySheet
+                    source="service"
+                    serviceId={s.id}
+                    serviceTitle={s.title}
+                    triggerLabel="Get a Quote"
+                    triggerClassName="inline-flex min-h-11 items-center justify-center gap-3 rounded-full bg-foreground px-6 py-3 text-[11px] font-semibold uppercase tracking-widest text-background hover:bg-primary w-full sm:w-auto"
+                  />
+                  <a
+                    href={waLink(`Hi ${founder}, I'd like to enquire about ${s.title}.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center justify-center gap-3 text-[11px] uppercase tracking-widest font-semibold border-b border-foreground pb-0.5 hover:text-primary hover:border-primary w-fit"
+                  >
+                    Or WhatsApp →
+                  </a>
+                </div>
               </div>
             </article>
           ))}

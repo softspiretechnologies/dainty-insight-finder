@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
+import { EnquiryForm } from "@/components/site/EnquiryForm";
 import { site, siteUrl } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
@@ -158,6 +159,22 @@ function ContactPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Enquiry form */}
+      <section className="px-5 md:px-6 pb-12 md:pb-20">
+        <div className="max-w-xl mx-auto border border-border rounded-sm p-5 sm:p-8 bg-surface/30">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
+            Send an enquiry
+          </span>
+          <h2 className="font-display text-2xl md:text-3xl italic mt-3 mb-2">
+            Tell us what you need
+          </h2>
+          <p className="text-sm text-muted mb-6 leading-relaxed">
+            We save your message first, then you can continue on WhatsApp if you prefer.
+          </p>
+          <EnquiryForm source="contact" />
         </div>
       </section>
 

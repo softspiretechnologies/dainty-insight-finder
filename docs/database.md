@@ -79,3 +79,13 @@ even when those columns were created as `JSON`.
 This repository’s `db:ensure` / `db:verify` detect MariaDB via `SELECT VERSION()` and treat MariaDB JSON aliases as compatible with expected `json` columns (preferring evidence of a `JSON_VALID` check). They do **not** emit `ALTER TABLE` to convert `LONGTEXT` to `JSON`.
 
 Do **not** manually convert those columns in phpMyAdmin because of inspection output. Leaving MariaDB’s JSON/`LONGTEXT` representation in place is correct.
+
+## Enquiries table
+
+Lead capture uses an `enquiries` table (see `src/db/schema.ts`).
+
+Production receives it through **`npm run build` → `db:ensure`**, which creates the table if missing. A documentary migration file `drizzle/migrations/0008_add_enquiries.sql` exists for fresh installs / history, but Hostinger must **not** rely on `db:migrate`.
+
+Statuses (application-level): `new`, `contacted`, `quoted`, `confirmed`, `lost`.
+
+Public visitors submit enquiries; only admins can list, change status, or edit internal notes. Admin notes are never exposed publicly.

@@ -195,6 +195,19 @@ describe("diffExpectedSchema", () => {
     );
   });
 
+  it("detects a missing enquiries table", () => {
+    const actual = currentSnapshot();
+    delete actual.tables.enquiries;
+    expect(diffExpectedSchema(actual).some((issue) => issue.message === "enquiries table")).toBe(
+      true,
+    );
+  });
+
+  it("does not recreate an existing enquiries table", () => {
+    const issues = diffExpectedSchema(currentSnapshot());
+    expect(issues.some((issue) => issue.table === "enquiries")).toBe(false);
+  });
+
   it("passes a fully current schema", () => {
     expect(diffExpectedSchema(currentSnapshot())).toEqual([]);
     expect(formatVerifyFailure([])).toContain("Database schema is outdated.");

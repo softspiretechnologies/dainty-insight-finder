@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
+import { EnquirySheet } from "@/components/site/EnquirySheet";
 import { OptimizedImage, productHeroSizes } from "@/components/ui/optimized-image";
 import { getProductBySlugData } from "@/lib/api/catalog";
 import { normalizeProductDetails } from "@/lib/product-details";
@@ -177,27 +178,35 @@ function ProductPage() {
                 </div>
               </div>
 
-              <a
-                href={waLink(
-                  `Hi ${founder}, I'd like to request the "${product.name}". Could we discuss customisation?`,
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
-                  trackEvent("whatsapp_product_click", {
-                    product_slug: product.slug,
-                    category: product.category,
-                    source_page: "product",
-                  })
-                }
-                className="inline-flex min-h-11 w-full sm:w-auto min-w-0 items-center justify-center gap-3 break-words bg-foreground text-background px-5 sm:px-8 py-4 rounded-full text-center text-xs font-semibold uppercase tracking-widest hover:bg-primary transition-all active:scale-95 group"
-              >
-                Discuss this design on WhatsApp
-                <span className="w-5 h-px bg-background/40 group-hover:w-8 transition-all" />
-              </a>
+              <div className="flex flex-col gap-3">
+                <EnquirySheet
+                  source="product"
+                  productId={product.id}
+                  productSlug={product.slug}
+                  productName={product.name}
+                  triggerLabel="Get a Quote"
+                />
+                <a
+                  href={waLink(
+                    `Hi ${founder}, I'd like to request the "${product.name}". Could we discuss customisation?`,
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() =>
+                    trackEvent("whatsapp_product_click", {
+                      product_slug: product.slug,
+                      category: product.category,
+                      source_page: "product",
+                    })
+                  }
+                  className="inline-flex min-h-11 w-full sm:w-auto items-center justify-center gap-3 break-words border border-border px-5 sm:px-8 py-3 rounded-full text-center text-xs font-semibold uppercase tracking-widest hover:border-foreground transition-all"
+                >
+                  Or chat on WhatsApp
+                </a>
+              </div>
               <p className="text-[11px] text-muted mt-4">
-                We'll talk through your idea, share visuals and confirm pricing before anything is
-                made.
+                Send an enquiry first so we keep your details — then continue on WhatsApp if you
+                like. We'll share visuals and pricing before anything is made.
               </p>
 
               <div className="mt-8 min-w-0 pt-6 border-t border-border flex flex-wrap gap-4 text-xs">

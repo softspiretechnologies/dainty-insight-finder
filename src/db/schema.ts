@@ -104,3 +104,24 @@ export const blogPosts = mysqlTable("blog_posts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
+
+/** Public lead capture — soft links to products/services (no FK constraints). */
+export const enquiries = mysqlTable("enquiries", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 128 }).notNull(),
+  phone: varchar("phone", { length: 32 }).notNull(),
+  email: varchar("email", { length: 256 }),
+  eventType: varchar("event_type", { length: 128 }),
+  eventDate: varchar("event_date", { length: 32 }),
+  budget: varchar("budget", { length: 128 }),
+  message: text("message").notNull(),
+  source: varchar("source", { length: 32 }).notNull().default("general"),
+  productId: int("product_id"),
+  productNameSnapshot: varchar("product_name_snapshot", { length: 256 }),
+  serviceId: varchar("service_id", { length: 64 }),
+  serviceTitleSnapshot: varchar("service_title_snapshot", { length: 256 }),
+  status: varchar("status", { length: 32 }).notNull().default("new"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});

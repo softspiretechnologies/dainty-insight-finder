@@ -8,25 +8,41 @@ import {
   TrendingUp,
   Sparkles,
   MessageSquareQuote,
+  Inbox,
 } from "lucide-react";
 
 import { getAdminDashboardData } from "@/lib/api/catalog";
+import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
+import { ENQUIRY_STATUS_LABELS, enquiryInterestLabel } from "@/lib/enquiries";
 
 export const Route = createFileRoute("/admin/")({
-  loader: () => getAdminDashboardData(),
+  loader: async () => {
+    const [dashboard, enquiries] = await Promise.all([
+      getAdminDashboardData(),
+      getAdminEnquirySummary(),
+    ]);
+    return { ...dashboard, enquiries };
+  },
   component: AdminDashboard,
 });
 
 function AdminDashboard() {
-  const { productCount } = Route.useLoaderData();
+  const { productCount, enquiries } = Route.useLoaderData();
 
   const quickLinks = [
+    {
+      to: "/admin/enquiries",
+      icon: Inbox,
+      label: "Enquiries",
+      desc: "Review new leads and follow up",
+      accent: "bg-amber-50 text-amber-700 border-amber-200",
+    },
     {
       to: "/admin/products",
       icon: Package,
       label: "Products",
       desc: "Add, edit or remove catalog items",
-      accent: "bg-amber-50 text-amber-700 border-amber-200",
+      accent: "bg-orange-50 text-orange-700 border-orange-200",
     },
     {
       to: "/admin/categories",
@@ -60,32 +76,92 @@ function AdminDashboard() {
 
   return (
     <div className="max-w-3xl space-y-8 md:space-y-10">
-      {/* Header */}
       <div>
         <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted mt-1.5">
-          Manage your catalog, categories and contact settings.
+          Manage enquiries, catalog, and contact settings.
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 min-[400px]:grid-cols-4 gap-3">
+        <StatCard
+          label="New"
+          value={String(enquiries.new)}
+          icon={<Inbox className="w-4 h-4" />}
+          href="/admin/enquiries"
+          search={{ status: "new" }}
+        />
+        <StatCard
+          label="Contacted"
+          value={String(enquiries.contacted)}
+          icon={<MessageCircle className="w-4 h-4" />}
+          href="/admin/enquiries"
+          search={{ status: "contacted" }}
+        />
+        <StatCard
+          label="Quoted"
+          value={String(enquiries.quoted)}
+          icon={<TrendingUp className="w-4 h-4" />}
+          href="/admin/enquiries"
+          search={{ status: "quoted" }}
+        />
+        <StatCard
+          label="Confirmed"
+          value={String(enquiries.confirmed)}
+          icon={<Package className="w-4 h-4" />}
+          href="/admin/enquiries"
+          search={{ status: "confirmed" }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
         <StatCard
           label="Products"
           value={String(productCount)}
           icon={<Package className="w-4 h-4" />}
           href="/admin/products"
         />
-        <StatCard
-          label="Categories"
-          value="8"
-          icon={<Tags className="w-4 h-4" />}
-          href="/admin/categories"
-        />
         <StatCard label="Status" value="Live" icon={<TrendingUp className="w-4 h-4" />} badge />
       </div>
 
-      {/* Quick actions */}
+      {enquiries.recent.length > 0 ? (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+              Recent enquiries
+            </p>
+            <Link to="/admin/enquiries" className="text-xs text-muted hover:text-foreground">
+              View all →
+            </Link>
+          </div>
+          <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
+            {enquiries.recent.map((enquiry) => (
+              <Link
+                key={enquiry.id}
+                to="/admin/enquiries/$enquiryId"
+                params={{ enquiryId: String(enquiry.id) }}
+                className="block p-3 sm:p-4 hover:bg-surface/50 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{enquiry.name}</p>
+                    <p className="text-xs text-muted mt-0.5 truncate">
+                      {enquiryInterestLabel(enquiry)} ·{" "}
+                      {ENQUIRY_STATUS_LABELS[
+                        enquiry.status as keyof typeof ENQUIRY_STATUS_LABELS
+                      ] ?? enquiry.status}
+                    </p>
+                  </div>
+                  <time className="text-[10px] text-muted font-mono shrink-0">
+                    {new Date(enquiry.createdAt).toLocaleDateString()}
+                  </time>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
           Quick actions
@@ -111,28 +187,6 @@ function AdminDashboard() {
           ))}
         </div>
       </div>
-
-      {/* WhatsApp shortcut */}
-      <div className="rounded-xl border border-border bg-surface/20 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
-        <div className="w-10 h-10 rounded-full bg-[#25d366]/10 border border-[#25d366]/30 flex items-center justify-center shrink-0">
-          <MessageCircle className="w-5 h-5 text-[#25d366]" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm">Check enquiries</p>
-          <p className="text-xs text-muted mt-0.5">
-            Customer orders come in via WhatsApp — open it to reply.
-          </p>
-        </div>
-        <a
-          href="https://web.whatsapp.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 w-full sm:w-auto items-center justify-center gap-2 text-xs font-semibold uppercase tracking-widest border border-border rounded-full px-4 py-2.5 hover:border-foreground transition-colors shrink-0"
-        >
-          Open WhatsApp
-          <ArrowRight className="w-3 h-3" />
-        </a>
-      </div>
     </div>
   );
 }
@@ -142,12 +196,14 @@ function StatCard({
   value,
   icon,
   href,
+  search,
   badge,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
-  href?: string;
+  href?: "/admin/enquiries" | "/admin/products";
+  search?: { status?: "new" | "contacted" | "quoted" | "confirmed" | "lost" | "all" };
   badge?: boolean;
 }) {
   const content = (
@@ -173,7 +229,7 @@ function StatCard({
 
   if (href) {
     return (
-      <Link to={href} className="block">
+      <Link to={href} search={search} className="block">
         {content}
       </Link>
     );

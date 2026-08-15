@@ -5,12 +5,16 @@ export type AnalyticsEvent =
   | "whatsapp_custom_order_click"
   | "whatsapp_contact_click"
   | "instagram_click"
-  | "blog_view";
+  | "blog_view"
+  | "enquiry_form_opened"
+  | "enquiry_submitted"
+  | "enquiry_whatsapp_clicked";
 
 export type AnalyticsMetadata = {
   product_slug?: string;
   category?: string;
   source_page?: string;
+  enquiry_source?: string;
 };
 
 declare global {

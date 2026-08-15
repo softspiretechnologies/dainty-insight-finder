@@ -29,11 +29,14 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminServicesRouteImport } from './routes/admin.services'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminEnquiriesRouteImport } from './routes/admin.enquiries'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminProductsIndexRouteImport } from './routes/admin.products.index'
+import { Route as AdminEnquiriesIndexRouteImport } from './routes/admin.enquiries.index'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
 import { Route as AdminProductsProductIdRouteImport } from './routes/admin.products.$productId'
+import { Route as AdminEnquiriesEnquiryIdRouteImport } from './routes/admin.enquiries.$enquiryId'
 import { Route as AdminBlogPostIdRouteImport } from './routes/admin.blog.$postId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -136,6 +139,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEnquiriesRoute = AdminEnquiriesRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -151,6 +159,11 @@ const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminProductsRoute,
 } as any)
+const AdminEnquiriesIndexRoute = AdminEnquiriesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminEnquiriesRoute,
+} as any)
 const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -160,6 +173,11 @@ const AdminProductsProductIdRoute = AdminProductsProductIdRouteImport.update({
   id: '/$productId',
   path: '/$productId',
   getParentRoute: () => AdminProductsRoute,
+} as any)
+const AdminEnquiriesEnquiryIdRoute = AdminEnquiriesEnquiryIdRouteImport.update({
+  id: '/$enquiryId',
+  path: '/$enquiryId',
+  getParentRoute: () => AdminEnquiriesRoute,
 } as any)
 const AdminBlogPostIdRoute = AdminBlogPostIdRouteImport.update({
   id: '/$postId',
@@ -179,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/enquiries': typeof AdminEnquiriesRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/services': typeof AdminServicesRoute
@@ -191,8 +210,10 @@ export interface FileRoutesByFullPath {
   '/blog/': typeof BlogIndexRoute
   '/catalog/': typeof CatalogIndexRoute
   '/admin/blog/$postId': typeof AdminBlogPostIdRoute
+  '/admin/enquiries/$enquiryId': typeof AdminEnquiriesEnquiryIdRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
+  '/admin/enquiries/': typeof AdminEnquiriesIndexRoute
   '/admin/products/': typeof AdminProductsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -215,8 +236,10 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/catalog': typeof CatalogIndexRoute
   '/admin/blog/$postId': typeof AdminBlogPostIdRoute
+  '/admin/enquiries/$enquiryId': typeof AdminEnquiriesEnquiryIdRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
   '/admin/blog': typeof AdminBlogIndexRoute
+  '/admin/enquiries': typeof AdminEnquiriesIndexRoute
   '/admin/products': typeof AdminProductsIndexRoute
 }
 export interface FileRoutesById {
@@ -232,6 +255,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/enquiries': typeof AdminEnquiriesRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/services': typeof AdminServicesRoute
@@ -244,8 +268,10 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/catalog/': typeof CatalogIndexRoute
   '/admin/blog/$postId': typeof AdminBlogPostIdRoute
+  '/admin/enquiries/$enquiryId': typeof AdminEnquiriesEnquiryIdRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
+  '/admin/enquiries/': typeof AdminEnquiriesIndexRoute
   '/admin/products/': typeof AdminProductsIndexRoute
 }
 export interface FileRouteTypes {
@@ -262,6 +288,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/blog'
     | '/admin/categories'
+    | '/admin/enquiries'
     | '/admin/login'
     | '/admin/products'
     | '/admin/services'
@@ -274,8 +301,10 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/catalog/'
     | '/admin/blog/$postId'
+    | '/admin/enquiries/$enquiryId'
     | '/admin/products/$productId'
     | '/admin/blog/'
+    | '/admin/enquiries/'
     | '/admin/products/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -298,8 +327,10 @@ export interface FileRouteTypes {
     | '/blog'
     | '/catalog'
     | '/admin/blog/$postId'
+    | '/admin/enquiries/$enquiryId'
     | '/admin/products/$productId'
     | '/admin/blog'
+    | '/admin/enquiries'
     | '/admin/products'
   id:
     | '__root__'
@@ -314,6 +345,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/blog'
     | '/admin/categories'
+    | '/admin/enquiries'
     | '/admin/login'
     | '/admin/products'
     | '/admin/services'
@@ -326,8 +358,10 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/catalog/'
     | '/admin/blog/$postId'
+    | '/admin/enquiries/$enquiryId'
     | '/admin/products/$productId'
     | '/admin/blog/'
+    | '/admin/enquiries/'
     | '/admin/products/'
   fileRoutesById: FileRoutesById
 }
@@ -488,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/enquiries': {
+      id: '/admin/enquiries'
+      path: '/enquiries'
+      fullPath: '/admin/enquiries'
+      preLoaderRoute: typeof AdminEnquiriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/categories'
@@ -509,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsIndexRouteImport
       parentRoute: typeof AdminProductsRoute
     }
+    '/admin/enquiries/': {
+      id: '/admin/enquiries/'
+      path: '/'
+      fullPath: '/admin/enquiries/'
+      preLoaderRoute: typeof AdminEnquiriesIndexRouteImport
+      parentRoute: typeof AdminEnquiriesRoute
+    }
     '/admin/blog/': {
       id: '/admin/blog/'
       path: '/'
@@ -522,6 +570,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/products/$productId'
       preLoaderRoute: typeof AdminProductsProductIdRouteImport
       parentRoute: typeof AdminProductsRoute
+    }
+    '/admin/enquiries/$enquiryId': {
+      id: '/admin/enquiries/$enquiryId'
+      path: '/$enquiryId'
+      fullPath: '/admin/enquiries/$enquiryId'
+      preLoaderRoute: typeof AdminEnquiriesEnquiryIdRouteImport
+      parentRoute: typeof AdminEnquiriesRoute
     }
     '/admin/blog/$postId': {
       id: '/admin/blog/$postId'
@@ -547,6 +602,20 @@ const AdminBlogRouteWithChildren = AdminBlogRoute._addFileChildren(
   AdminBlogRouteChildren,
 )
 
+interface AdminEnquiriesRouteChildren {
+  AdminEnquiriesEnquiryIdRoute: typeof AdminEnquiriesEnquiryIdRoute
+  AdminEnquiriesIndexRoute: typeof AdminEnquiriesIndexRoute
+}
+
+const AdminEnquiriesRouteChildren: AdminEnquiriesRouteChildren = {
+  AdminEnquiriesEnquiryIdRoute: AdminEnquiriesEnquiryIdRoute,
+  AdminEnquiriesIndexRoute: AdminEnquiriesIndexRoute,
+}
+
+const AdminEnquiriesRouteWithChildren = AdminEnquiriesRoute._addFileChildren(
+  AdminEnquiriesRouteChildren,
+)
+
 interface AdminProductsRouteChildren {
   AdminProductsProductIdRoute: typeof AdminProductsProductIdRoute
   AdminProductsIndexRoute: typeof AdminProductsIndexRoute
@@ -564,6 +633,7 @@ const AdminProductsRouteWithChildren = AdminProductsRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminBlogRoute: typeof AdminBlogRouteWithChildren
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminEnquiriesRoute: typeof AdminEnquiriesRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
   AdminProductsRoute: typeof AdminProductsRouteWithChildren
   AdminServicesRoute: typeof AdminServicesRoute
@@ -575,6 +645,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminBlogRoute: AdminBlogRouteWithChildren,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminEnquiriesRoute: AdminEnquiriesRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
   AdminProductsRoute: AdminProductsRouteWithChildren,
   AdminServicesRoute: AdminServicesRoute,

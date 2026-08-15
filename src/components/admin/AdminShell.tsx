@@ -9,6 +9,7 @@ import {
   Sparkles,
   Tags,
   FileText,
+  Inbox,
 } from "lucide-react";
 import { useRef, useState } from "react";
 
@@ -19,6 +20,13 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/admin", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard, exact: true },
+  {
+    to: "/admin/enquiries",
+    label: "Enquiries",
+    shortLabel: "Leads",
+    icon: Inbox,
+    exact: false,
+  },
   { to: "/admin/products", label: "Products", shortLabel: "Products", icon: Package, exact: false },
   {
     to: "/admin/categories",

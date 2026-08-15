@@ -156,10 +156,19 @@ Local development uses its own MySQL database via `.env` — keep `DATABASE_URL`
 | Path                | Purpose                                       |
 | ------------------- | --------------------------------------------- |
 | `/admin/login`      | Admin sign-in                                 |
-| `/admin`            | Dashboard                                     |
+| `/admin`            | Dashboard (includes enquiry summary)          |
+| `/admin/enquiries`  | Lead / enquiry list + status filters          |
 | `/admin/products`   | Product list + add/edit/delete                |
 | `/admin/categories` | Edit category labels, blurbs, images          |
 | `/admin/settings`   | WhatsApp, email, Instagram, founder, location |
+
+### Enquiries (leads)
+
+Visitors can send an enquiry from **Contact**, product pages (**Get a Quote**), and services. The enquiry is saved first; then they may continue on WhatsApp.
+
+Statuses: `new` → `contacted` → `quoted` → `confirmed` (or `lost`).
+
+Admin notes are internal only. See `docs/enquiries.md`. The `enquiries` table is created on deploy by `db:ensure` (Hostinger Build Command remains `npm run build`).
 
 Product and category images use **file upload only** (no URL paste). Images are saved to the persistent uploads folder and served at `/uploads/*`.
 

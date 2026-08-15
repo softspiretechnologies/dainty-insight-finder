@@ -17,10 +17,18 @@ SHOW COLUMNS FROM site_settings LIKE 'testimonials_heading';
 
 SHOW TABLES LIKE 'admin_login_attempts';
 SHOW TABLES LIKE 'blog_posts';
+SHOW TABLES LIKE 'enquiries';
 SHOW TABLES LIKE 'services';
 SHOW TABLES LIKE 'testimonials';
 SHOW TABLES LIKE 'categories';
 SHOW TABLES LIKE 'site_settings';
+
+SHOW COLUMNS FROM enquiries LIKE 'status';
+SHOW COLUMNS FROM enquiries LIKE 'admin_notes';
+SHOW COLUMNS FROM enquiries LIKE 'product_name_snapshot';
+SHOW COLUMNS FROM enquiries LIKE 'service_title_snapshot';
+SHOW COLUMNS FROM enquiries LIKE 'phone';
+SHOW COLUMNS FROM enquiries LIKE 'message';
 
 SHOW INDEX FROM admin_users WHERE Non_unique = 0 AND Column_name = 'email';
 SHOW INDEX FROM products WHERE Non_unique = 0 AND Column_name = 'slug';
