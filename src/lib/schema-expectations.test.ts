@@ -203,6 +203,16 @@ describe("diffExpectedSchema", () => {
     );
   });
 
+  it("detects a missing admin_push_subscriptions table", () => {
+    const actual = currentSnapshot();
+    delete actual.tables.admin_push_subscriptions;
+    expect(
+      diffExpectedSchema(actual).some(
+        (issue) => issue.message === "admin_push_subscriptions table",
+      ),
+    ).toBe(true);
+  });
+
   it("does not recreate an existing enquiries table", () => {
     const issues = diffExpectedSchema(currentSnapshot());
     expect(issues.some((issue) => issue.table === "enquiries")).toBe(false);

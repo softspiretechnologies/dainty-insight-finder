@@ -28,4 +28,19 @@ describe("admin server function authorization", () => {
     expect(source).toContain("await requireAdmin()");
     expect(source).toMatch(/getAdminDashboardData[\s\S]*await requireAdmin\(\)/);
   });
+
+  it("protects admin push subscription endpoints", () => {
+    const source = readFileSync(path.join(adminApiDir, "push.ts"), "utf8");
+    for (const name of [
+      "getAdminPushStatus",
+      "saveAdminPushSubscription",
+      "removeAdminPushSubscription",
+      "sendAdminPushTest",
+    ]) {
+      expect(source).toContain(`export const ${name}`);
+    }
+    expect(source.match(/await requireAdmin\(\)/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(source).toMatch(/saveAdminPushSubscription[\s\S]*session\.userId/);
+    expect(source).toMatch(/removeAdminPushSubscription[\s\S]*session\.userId/);
+  });
 });

@@ -3,11 +3,19 @@ import { eq } from "drizzle-orm";
 import { getDb, isDatabaseConfigured } from "@/db/index.server";
 import { enquiries, products, services } from "@/db/schema";
 import {
+  buildVisitorWhatsAppMessage,
   normalizeEnquiryPhone,
   publicEnquirySchema,
   type PublicEnquiryInput,
 } from "@/lib/enquiries";
-import { logError } from "@/lib/logger.server";
+import {
+  checkEnquiryRateLimit,
+  getEnquiryClientIp,
+  recordEnquirySubmission,
+} from "@/lib/enquiry-rate-limit.server";
+import { logError, logInfo } from "@/lib/logger.server";
+
+const GENERIC_ERROR = "We could not save your enquiry. Please try again shortly.";
 
 export type ResolvedEnquiryContext = {
   productId: number | null;
@@ -89,5 +97,88 @@ export async function insertEnquiry(
   } catch (error) {
     logError("enquiry.insert_failed", error, { source: input.source });
     throw new Error("We could not save your enquiry. Please try again shortly.");
+  }
+}
+
+/** Best-effort Admin push after a successful insert. Never throws. */
+export async function notifyAfterEnquiryInserted(enquiryId: number): Promise<void> {
+  try {
+    const { notifyAdminsOfNewEnquiry } = await import("@/lib/admin-push.server");
+    await notifyAdminsOfNewEnquiry(enquiryId);
+  } catch (error) {
+    logError("admin_push.send_failed", error, {
+      notificationType: "new_enquiry",
+      enquiryId,
+    });
+  }
+}
+
+/** Public enquiry submit core — server-only (used by createServerFn + unit tests). */
+export async function submitEnquiryCore(data: unknown) {
+  if (!isDatabaseConfigured()) {
+    throw new Error("Enquiries are temporarily unavailable. Please try WhatsApp instead.");
+  }
+
+  const parsed = publicEnquirySchema.safeParse(data);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]?.message ?? "Please check the form and try again.";
+    throw new Error(first);
+  }
+
+  // Honeypot: pretend success without storing.
+  if (parsed.data.website && parsed.data.website.trim().length > 0) {
+    return {
+      id: 0,
+      whatsappMessage: buildVisitorWhatsAppMessage({
+        name: parsed.data.name,
+        message: parsed.data.message,
+      }),
+    };
+  }
+
+  const ip = getEnquiryClientIp();
+  const limited = await checkEnquiryRateLimit(ip);
+  if (limited) throw new Error(limited);
+
+  try {
+    await recordEnquirySubmission(ip);
+    const context = await resolveEnquiryContext(parsed.data);
+    const { id } = await insertEnquiry(parsed.data, context);
+    logInfo("enquiry.submitted", { id, source: parsed.data.source });
+
+    // Enquiry is already stored. Push is best-effort and must never fail the customer.
+    try {
+      await notifyAfterEnquiryInserted(id);
+    } catch (error) {
+      logError("admin_push.send_failed", error, {
+        notificationType: "new_enquiry",
+        enquiryId: id,
+      });
+    }
+
+    return {
+      id,
+      whatsappMessage: buildVisitorWhatsAppMessage({
+        name: parsed.data.name,
+        eventType: parsed.data.eventType,
+        eventDate: parsed.data.eventDate,
+        budget: parsed.data.budget,
+        productName: context.productNameSnapshot ?? undefined,
+        serviceTitle: context.serviceTitleSnapshot ?? undefined,
+        message: parsed.data.message,
+      }),
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message !== GENERIC_ERROR) {
+      if (
+        /too many enquiries|check the form|valid|tell us|enter your|temporarily unavailable/i.test(
+          error.message,
+        )
+      ) {
+        throw error;
+      }
+    }
+    logError("enquiry.submit_failed", error, { source: parsed.data.source });
+    throw new Error(GENERIC_ERROR);
   }
 }

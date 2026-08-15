@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/rea
 
 import { AdminLaunchSplash } from "@/components/admin/AdminLaunchSplash";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { sanitizeAdminNotificationUrl } from "@/lib/admin-push";
 import { getSessionAdmin } from "@/lib/api/admin/auth";
 import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
 
@@ -13,7 +14,12 @@ export const Route = createFileRoute("/admin")({
 
     const session = await getSessionAdmin();
     if (!session) {
-      throw redirect({ to: "/admin/login" });
+      const nextCandidate = `${location.pathname}${location.searchStr || ""}`;
+      const next = sanitizeAdminNotificationUrl(nextCandidate);
+      throw redirect({
+        to: "/admin/login",
+        search: next ? { next } : {},
+      });
     }
 
     return { session };

@@ -39,6 +39,10 @@ npm run build
 
 `db:ensure` creates `enquiries` if missing. Do not use `db:migrate` or `db:seed` for this on production.
 
+## Admin push notifications
+
+After a real enquiry is stored, the server best-effort sends a Web Push to saved Admin device subscriptions. Push failure never fails the customer form response. See Admin → Settings → Notifications and `docs/PRODUCTION_OPERATIONS.md` for VAPID env setup.
+
 ## Privacy / security
 
 - Public submission cannot set `status` or `admin_notes`.

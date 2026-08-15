@@ -5,6 +5,7 @@ import { MessageCircle, Mail, Instagram, User, MapPin, Check } from "lucide-reac
 import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminPushNotificationsSettings } from "@/components/admin/AdminPushNotificationsSettings";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import {
   Accordion,
@@ -349,6 +350,8 @@ function AdminSettingsPage() {
           <AdminSaveStatus message={!isDirty ? savedMessage : null} />
         </div>
       </form>
+
+      <AdminPushNotificationsSettings />
 
       <Accordion
         type="single"

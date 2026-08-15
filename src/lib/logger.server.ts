@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 
 const SENSITIVE_KEY =
-  /(password|secret|cookie|authorization|database_?url|token|session|credential|phone|email|message|admin_?notes)/i;
+  /(password|secret|cookie|authorization|database_?url|token|session|credential|phone|email|message|admin_?notes|endpoint|p256dh|vapid|private_?key)/i;
 
 function safeValue(value: unknown, key?: string): unknown {
   if (key && SENSITIVE_KEY.test(key)) return "[REDACTED]";

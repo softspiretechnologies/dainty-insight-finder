@@ -262,6 +262,8 @@ test("mobile admin bottom navigation reaches Home, Enquiries, Products, More, Se
   await sheet.getByRole("link", { name: "Settings" }).click();
   await expect(page).toHaveURL(/\/admin\/settings/);
   await expect(page.getByRole("heading", { name: "Site settings" })).toBeVisible();
+  await expect(page.getByText("Notifications", { exact: true })).toBeVisible();
+  await expect(page.getByText("Get notified when a customer sends a new enquiry.")).toBeVisible();
 });
 
 test("mobile product more uses a sheet and keeps delete confirmation", async ({ page }) => {

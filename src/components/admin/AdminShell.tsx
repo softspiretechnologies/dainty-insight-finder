@@ -11,12 +11,13 @@ import {
   FileText,
   Inbox,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { logoutAdmin } from "@/lib/api/admin/auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { formatEnquiryBadgeCount } from "@/lib/admin-format";
+import { syncAdminAppBadge } from "@/lib/admin-push";
 import { adminPageTitle, resolveAdminMobileSection } from "@/lib/admin-nav";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +67,10 @@ export function AdminShell({
   const [moreOpen, setMoreOpen] = useState(false);
   const moreTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileSection = resolveAdminMobileSection(pathname);
+
+  useEffect(() => {
+    void syncAdminAppBadge(newEnquiryCount);
+  }, [newEnquiryCount]);
 
   const handleMoreOpenChange = (open: boolean) => {
     setMoreOpen(open);

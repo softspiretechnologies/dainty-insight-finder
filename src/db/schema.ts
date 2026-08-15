@@ -105,6 +105,29 @@ export const blogPosts = mysqlTable("blog_posts", {
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
 
+/**
+ * Admin Web Push subscriptions (multi-device). Soft reference to admin_users.id — no DB FK.
+ * Deduplicate by endpoint_hash (SHA-256 of endpoint), not by admin_user_id.
+ */
+export const adminPushSubscriptions = mysqlTable(
+  "admin_push_subscriptions",
+  {
+    id: int("id").primaryKey().autoincrement(),
+    adminUserId: int("admin_user_id").notNull(),
+    endpoint: text("endpoint").notNull(),
+    endpointHash: varchar("endpoint_hash", { length: 64 }).notNull(),
+    p256dh: varchar("p256dh", { length: 256 }).notNull(),
+    auth: varchar("auth", { length: 128 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  },
+  (table) => ({
+    endpointHashUnique: uniqueIndex("admin_push_subscriptions_endpoint_hash_unique").on(
+      table.endpointHash,
+    ),
+  }),
+);
+
 /** Public lead capture — soft links to products/services (no FK constraints). */
 export const enquiries = mysqlTable("enquiries", {
   id: int("id").primaryKey().autoincrement(),

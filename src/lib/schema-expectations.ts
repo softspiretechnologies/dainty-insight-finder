@@ -459,6 +459,39 @@ export const EXPECTED_TABLES: ExpectedTable[] = [
     ],
     uniques: [],
   },
+  {
+    name: "admin_push_subscriptions",
+    createSql: `CREATE TABLE IF NOT EXISTS \`admin_push_subscriptions\` (
+      \`id\` int AUTO_INCREMENT NOT NULL,
+      \`admin_user_id\` int NOT NULL,
+      \`endpoint\` text NOT NULL,
+      \`endpoint_hash\` varchar(64) NOT NULL,
+      \`p256dh\` varchar(256) NOT NULL,
+      \`auth\` varchar(128) NOT NULL,
+      \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT \`admin_push_subscriptions_id\` PRIMARY KEY(\`id\`),
+      UNIQUE KEY \`admin_push_subscriptions_endpoint_hash_unique\` (\`endpoint_hash\`)
+    )`,
+    columns: [
+      { name: "id", allowedTypes: ["int"], nullable: false },
+      { name: "admin_user_id", allowedTypes: ["int"], nullable: false },
+      { name: "endpoint", allowedTypes: ["text", "longtext", "mediumtext"], nullable: false },
+      { name: "endpoint_hash", allowedTypes: ["varchar"], nullable: false },
+      { name: "p256dh", allowedTypes: ["varchar"], nullable: false },
+      { name: "auth", allowedTypes: ["varchar"], nullable: false },
+      { name: "created_at", allowedTypes: ["timestamp", "datetime"], nullable: false },
+      { name: "updated_at", allowedTypes: ["timestamp", "datetime"], nullable: false },
+    ],
+    uniques: [
+      {
+        name: "admin_push_subscriptions_endpoint_hash_unique",
+        columns: ["endpoint_hash"],
+        addSql:
+          "ALTER TABLE `admin_push_subscriptions` ADD UNIQUE `admin_push_subscriptions_endpoint_hash_unique` (`endpoint_hash`)",
+      },
+    ],
+  },
 ];
 
 export function tableHasUnique(table: SchemaTableSnapshot, columns: string[]) {

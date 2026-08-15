@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock } from "lucide-react";
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { sanitizeAdminNotificationUrl } from "@/lib/admin-push";
 import { loginSchema } from "@/lib/admin-schemas";
 import {
   invalidInputClass,
@@ -15,11 +16,16 @@ import {
 import { loginAdmin } from "@/lib/api/admin/auth";
 
 export const Route = createFileRoute("/admin/login")({
+  validateSearch: (search: Record<string, unknown>): { next?: string } => {
+    const next = typeof search.next === "string" ? sanitizeAdminNotificationUrl(search.next) : null;
+    return next ? { next } : {};
+  },
   component: AdminLoginPage,
 });
 
 function AdminLoginPage() {
   const router = useRouter();
+  const { next } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -35,9 +41,9 @@ function AdminLoginPage() {
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
       if (!prev[field]) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
+      const nextErrors = { ...prev };
+      delete nextErrors[field];
+      return nextErrors;
     });
   };
 
@@ -61,7 +67,8 @@ function AdminLoginPage() {
         setFormError(result.error);
         return;
       }
-      await router.navigate({ to: "/admin" });
+      const destination = sanitizeAdminNotificationUrl(next) ?? "/admin";
+      await router.history.push(destination);
     } catch {
       setFormError("Login failed. Check database configuration.");
     } finally {
