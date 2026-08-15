@@ -120,6 +120,7 @@ export function AdminShell({
         </div>
       </aside>
 
+      {/* z-40: mobile header above page content; Sheets/dialogs use z-50 in ui components */}
       <header
         className="lg:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-4 py-3"
         style={{
@@ -179,6 +180,7 @@ export function AdminShell({
         {children}
       </main>
 
+      {/* z-40: bottom nav above content; sticky page actions use z-30 so they sit under this nav */}
       <nav
         className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}

@@ -1,9 +1,11 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { Inbox, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
-import { FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminActionError } from "@/components/admin/AdminActionError";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getAdminEnquirySummary, listAdminEnquiries } from "@/lib/api/admin/enquiries";
 import { formatAdminDateTime } from "@/lib/admin-format";
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/admin/enquiries/")({
     ]);
     return { ...list, counts: summary };
   },
+  pendingComponent: () => <AdminPagePending label="Loading enquiries…" />,
   component: AdminEnquiriesPage,
 });
 
@@ -49,10 +52,15 @@ function AdminEnquiriesPage() {
   const data = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const router = useRouter();
   const [query, setQuery] = useState(search.q ?? "");
   const items = data?.enquiries ?? [];
   const loadError = data?.error;
   const counts = data?.counts;
+
+  const hasSearch = Boolean((search.q ?? "").trim());
+  const hasStatusFilter = search.status !== "all";
+  const hasFilters = hasSearch || hasStatusFilter;
 
   useEffect(() => {
     setQuery(search.q ?? "");
@@ -80,6 +88,15 @@ function AdminEnquiriesPage() {
     void navigate({ search: (prev) => ({ ...prev, q: undefined }), replace: true });
   };
 
+  const clearFilters = () => {
+    setQuery("");
+    void navigate({ search: { status: "all", q: undefined }, replace: true });
+  };
+
+  const viewAllEnquiries = () => {
+    void navigate({ search: (prev) => ({ ...prev, status: "all" }) });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -87,7 +104,9 @@ function AdminEnquiriesPage() {
         <p className="text-sm text-muted mt-1">Customers who reached out from the website.</p>
       </div>
 
-      {loadError ? <FormErrorBanner message={loadError} /> : null}
+      {loadError ? (
+        <AdminActionError message={loadError} onRetry={() => void router.invalidate()} />
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <FilterChip
@@ -127,10 +146,53 @@ function AdminEnquiriesPage() {
       </div>
 
       {items.length === 0 && !loadError ? (
-        <div className="border border-dashed border-border rounded-xl py-16 text-center">
+        <div className="border border-dashed border-border rounded-xl py-16 text-center px-4">
           <Inbox className="w-9 h-9 text-muted mx-auto mb-3" />
-          <p className="font-display text-xl italic">No enquiries yet</p>
-          <p className="text-sm text-muted mt-1">New leads from the site will appear here.</p>
+          {!hasFilters ? (
+            <>
+              <p className="font-display text-xl italic">No enquiries yet</p>
+              <p className="text-sm text-muted mt-1">New leads from the site will appear here.</p>
+            </>
+          ) : hasSearch && hasStatusFilter ? (
+            <>
+              <p className="font-display text-xl italic">No matching enquiries</p>
+              <p className="text-sm text-muted mt-1">
+                Nothing matches this search and status. Try clearing your filters.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 min-h-11"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </Button>
+            </>
+          ) : hasSearch ? (
+            <>
+              <p className="font-display text-xl italic">No enquiries match this search.</p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 min-h-11"
+                onClick={clearSearch}
+              >
+                Clear search
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="font-display text-xl italic">No enquiries have this status.</p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 min-h-11"
+                onClick={viewAllEnquiries}
+              >
+                View all enquiries
+              </Button>
+            </>
+          )}
         </div>
       ) : null}
 

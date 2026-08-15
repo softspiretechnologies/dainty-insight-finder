@@ -286,6 +286,24 @@ test("mobile product more uses a sheet and keeps delete confirmation", async ({ 
   await expect(firstCard).toBeVisible();
 });
 
+test("admin product filters stay in the URL after opening a product and going back", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+  await visitAndCheck(page, "/admin/products");
+
+  await page.getByRole("button", { name: "Visible", exact: true }).click();
+  await expect(page).toHaveURL(/status=active/);
+
+  const firstCard = page.getByTestId("product-card-list").locator("article").first();
+  await firstCard.getByRole("link", { name: "Edit" }).click();
+  await expect(page).toHaveURL(/\/admin\/products\/\d+/);
+  await page.getByRole("button", { name: /Products/ }).click();
+  await expect(page).toHaveURL(/\/admin\/products/);
+  await expect(page).toHaveURL(/status=active/);
+});
+
 test("the desktop product table appears only with sufficient width", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await login(page);

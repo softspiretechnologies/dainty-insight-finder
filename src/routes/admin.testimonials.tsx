@@ -149,10 +149,10 @@ function AdminTestimonialsPage() {
         ) : null}
 
         {testimonials.length === 0 ? (
-          <p className="text-sm text-muted border border-dashed border-border rounded-xl p-6 text-center">
-            No testimonials yet. Click “Add testimonial” to create your first one, or run{" "}
-            <code className="font-mono text-xs">npm run db:seed</code>.
-          </p>
+          <div className="text-sm text-muted border border-dashed border-border rounded-xl p-6 text-center space-y-1">
+            <p className="font-medium text-foreground/80">No testimonials yet</p>
+            <p>Customer quotes you add will appear here.</p>
+          </div>
         ) : null}
 
         <Accordion type="single" collapsible className="space-y-3">

@@ -1,8 +1,8 @@
-import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, MessageCircle, Phone } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,15 +30,34 @@ export const Route = createFileRoute("/admin/enquiries/$enquiryId")({
     return { enquiry };
   },
   component: AdminEnquiryDetailPage,
-  notFoundComponent: () => (
+  notFoundComponent: EnquiryNotFound,
+});
+
+function goBackToEnquiries(router: ReturnType<typeof useRouter>) {
+  if (router.history.canGoBack()) {
+    router.history.back();
+    return;
+  }
+  void router.navigate({ to: "/admin/enquiries" });
+}
+
+function BackToEnquiriesLink({ className }: { className?: string }) {
+  const router = useRouter();
+  return (
+    <button type="button" onClick={() => goBackToEnquiries(router)} className={className}>
+      <ArrowLeft className="w-4 h-4" /> Back to enquiries
+    </button>
+  );
+}
+
+function EnquiryNotFound() {
+  return (
     <div className="space-y-4">
       <h1 className="font-display text-3xl italic">Enquiry not found</h1>
-      <Link to="/admin/enquiries" className="text-sm underline">
-        Back to enquiries
-      </Link>
+      <BackToEnquiriesLink className="inline-flex min-h-11 items-center gap-2 text-sm underline" />
     </div>
-  ),
-});
+  );
+}
 
 function AdminEnquiryDetailPage() {
   const { enquiry } = Route.useLoaderData();
@@ -71,8 +90,8 @@ function AdminEnquiryDetailPage() {
       });
       setSavedMessage("Saved");
       await router.invalidate();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save changes.");
+    } catch {
+      setError("Couldn't save your changes. They're still here.");
     } finally {
       setSaving(false);
     }
@@ -81,12 +100,7 @@ function AdminEnquiryDetailPage() {
   return (
     <div className="max-w-2xl space-y-6 pb-24 lg:pb-0">
       <div>
-        <Link
-          to="/admin/enquiries"
-          className="inline-flex min-h-11 items-center gap-2 text-sm text-muted hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to enquiries
-        </Link>
+        <BackToEnquiriesLink className="inline-flex min-h-11 items-center gap-2 text-sm text-muted hover:text-foreground" />
         <h1 className="font-display text-3xl md:text-5xl italic tracking-tight mt-3">
           {enquiry.name}
         </h1>
@@ -95,7 +109,7 @@ function AdminEnquiryDetailPage() {
         </p>
       </div>
 
-      {error ? <FormErrorBanner message={error} /> : null}
+      {error ? <AdminActionError message={error} onRetry={() => void saveChanges()} /> : null}
 
       {/* Desktop / tablet actions */}
       <div className="hidden sm:flex flex-row gap-2">

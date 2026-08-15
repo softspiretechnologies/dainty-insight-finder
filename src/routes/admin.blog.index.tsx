@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { Button } from "@/components/ui/button";
 import { deleteAdminBlogPost, listAdminBlogPosts, toggleAdminBlogPost } from "@/lib/api/admin/blog";
 
@@ -22,7 +23,7 @@ function BlogError({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createFileRoute("/admin/blog/")({
   loader: () => listAdminBlogPosts(),
   errorComponent: BlogError,
-  pendingComponent: () => <p className="text-sm text-muted">Loading blog posts…</p>,
+  pendingComponent: () => <AdminPagePending label="Loading blog posts…" />,
   component: AdminBlogPage,
 });
 
@@ -79,8 +80,8 @@ function AdminBlogPage() {
       {posts.length === 0 && !loadError ? (
         <div className="border border-dashed border-border rounded-xl py-16 text-center">
           <FileText className="w-9 h-9 text-muted mx-auto mb-3" />
-          <p className="font-display text-xl italic">No database posts yet</p>
-          <p className="text-sm text-muted mt-1">The existing static journal remains public.</p>
+          <p className="font-display text-xl italic">No blog posts yet</p>
+          <p className="text-sm text-muted mt-1">Create a post to publish in the journal.</p>
         </div>
       ) : null}
       {posts.length > 0 ? (

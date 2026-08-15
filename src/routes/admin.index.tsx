@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Package, Settings } from "lucide-react";
 
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { getAdminDashboardData } from "@/lib/api/catalog";
 import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
 import { formatAdminDateTime } from "@/lib/admin-format";
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/admin/")({
     ]);
     return { ...dashboard, enquiries };
   },
+  pendingComponent: () => <AdminPagePending label="Loading dashboard…" />,
   component: AdminDashboard,
 });
 

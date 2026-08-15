@@ -8,7 +8,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { AdminField, FormErrorBanner, invalidBoxClass } from "@/components/admin/AdminField";
+import { AdminActionError } from "@/components/admin/AdminActionError";
+import { AdminField, invalidBoxClass } from "@/components/admin/AdminField";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ function AdminServicesPage() {
   const [dirtyById, setDirtyById] = useState<Record<string, boolean>>({});
   const [movingId, setMovingId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [lastMove, setLastMove] = useState<{ id: string; direction: "up" | "down" } | null>(null);
 
   const sortable = useMemo(
     () => services.map((service) => ({ id: service.id, sortOrder: service.sortOrder })),
@@ -79,6 +81,7 @@ function AdminServicesPage() {
   const handleMove = async (id: string, direction: "up" | "down") => {
     if (pageDirty || movingId) return;
     setMoveError(null);
+    setLastMove({ id, direction });
     setMovingId(id);
     try {
       await moveAdminService({ data: { id, direction } });
@@ -109,9 +112,24 @@ function AdminServicesPage() {
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
           Service blocks
         </p>
-        {moveError ? <FormErrorBanner message={moveError} /> : null}
+        {moveError ? (
+          <AdminActionError
+            message={moveError}
+            onRetry={
+              lastMove && !movingId && !pageDirty
+                ? () => void handleMove(lastMove.id, lastMove.direction)
+                : undefined
+            }
+          />
+        ) : null}
         {pageDirty ? (
           <p className="text-xs text-muted mb-3">Save or discard edits before reordering.</p>
+        ) : null}
+        {services.length === 0 ? (
+          <div className="text-sm text-muted border border-dashed border-border rounded-xl p-6 text-center space-y-1 mb-3">
+            <p className="font-medium text-foreground/80">No services yet</p>
+            <p>Service blocks you edit will appear here.</p>
+          </div>
         ) : null}
         <Accordion type="single" collapsible className="space-y-3">
           {services.map((service) => {
@@ -211,6 +229,10 @@ function PageContentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await savePageContent();
+  };
+
+  const savePageContent = async () => {
     setFormError(null);
     setSavedMessage(null);
 
@@ -300,7 +322,16 @@ function PageContentForm({
         />
       </AdminField>
 
-      {formError ? <FormErrorBanner message={formError} /> : null}
+      {formError ? (
+        <AdminActionError
+          message={formError}
+          onRetry={
+            Object.keys(fieldErrors).length === 0 && !loading
+              ? () => void savePageContent()
+              : undefined
+          }
+        />
+      ) : null}
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <Button type="submit" className="h-11" disabled={loading || (!isDirty && !savedMessage)}>
@@ -403,6 +434,10 @@ function ServiceForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await saveService();
+  };
+
+  const saveService = async () => {
     setFormError(null);
     setSavedMessage(null);
 
@@ -535,7 +570,14 @@ function ServiceForm({
         />
       </AdminField>
 
-      {formError ? <FormErrorBanner message={formError} /> : null}
+      {formError ? (
+        <AdminActionError
+          message={formError}
+          onRetry={
+            Object.keys(fieldErrors).length === 0 && !loading ? () => void saveService() : undefined
+          }
+        />
+      ) : null}
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1">
         <Button

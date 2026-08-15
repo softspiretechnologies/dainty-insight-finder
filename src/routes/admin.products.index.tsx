@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import {
   Plus,
   Pencil,
@@ -11,10 +11,12 @@ import {
   EyeOff,
   MoreHorizontal,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
-import { FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
+import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,20 +33,29 @@ import {
   toggleAdminProductActive,
   toggleAdminProductHomepageFeatured,
 } from "@/lib/api/admin/products";
+import {
+  adminProductSearchHasFilters,
+  adminProductSearchSchema,
+  buildAdminProductSearch,
+  categoriesFromSearch,
+  clearAdminProductSearch,
+  statusFromSearch,
+  type AdminProductStatusFilter,
+} from "@/lib/admin-product-search";
 import { sortCategoriesWithSelectedFirst } from "@/lib/sort-categories-by-selection";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products/")({
+  validateSearch: adminProductSearchSchema,
   loader: async () => {
     const [products, categories] = await Promise.all([listAdminProducts(), listAdminCategories()]);
     return { products, categories };
   },
+  pendingComponent: AdminPagePending,
   component: AdminProductsPage,
 });
 
-type StatusFilter = "all" | "active" | "hidden" | "featured";
-
-const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
+const STATUS_FILTERS: Array<{ id: AdminProductStatusFilter; label: string }> = [
   { id: "all", label: "All" },
   { id: "active", label: "Visible" },
   { id: "hidden", label: "Hidden" },
@@ -53,6 +64,8 @@ const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
 
 function AdminProductsPage() {
   const { products, categories } = Route.useLoaderData();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -60,32 +73,124 @@ function AdminProductsPage() {
   const [featuredError, setFeaturedError] = useState<string | null>(null);
   const [statusToggleId, setStatusToggleId] = useState<number | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [query, setQuery] = useState(search.q ?? "");
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [productActionTarget, setProductActionTarget] = useState<{
     id: number;
     name: string;
   } | null>(null);
   const moreTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const savedMessageTimerRef = useRef<number | null>(null);
+
+  const statusFilter = statusFromSearch(search.status);
+  const selectedCategories = useMemo(
+    () => categoriesFromSearch(search.categories),
+    [search.categories],
+  );
+
+  useEffect(() => {
+    setQuery(search.q ?? "");
+  }, [search.q]);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = query.trim();
+      const current = (search.q ?? "").trim();
+      if (next === current) return;
+      void navigate({
+        search: (prev) =>
+          buildAdminProductSearch({
+            q: next,
+            status: statusFromSearch(prev.status),
+            categories: categoriesFromSearch(prev.categories),
+          }),
+        replace: true,
+      });
+    }, 350);
+    return () => window.clearTimeout(handle);
+  }, [navigate, query, search.q]);
+
+  useEffect(() => {
+    return () => {
+      if (savedMessageTimerRef.current !== null) {
+        window.clearTimeout(savedMessageTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showSavedMessage = (message: string) => {
+    setSavedMessage(message);
+    if (savedMessageTimerRef.current !== null) {
+      window.clearTimeout(savedMessageTimerRef.current);
+    }
+    savedMessageTimerRef.current = window.setTimeout(() => {
+      setSavedMessage(null);
+      savedMessageTimerRef.current = null;
+    }, 2500);
+  };
+
+  const setStatusFilter = (status: AdminProductStatusFilter) => {
+    void navigate({
+      search: (prev) =>
+        buildAdminProductSearch({
+          q: prev.q,
+          status,
+          categories: categoriesFromSearch(prev.categories),
+        }),
+    });
+  };
+
+  const addCategoryFilter = (categoryId: string) => {
+    void navigate({
+      search: (prev) => {
+        const next = new Set(categoriesFromSearch(prev.categories));
+        next.add(categoryId);
+        return buildAdminProductSearch({
+          q: prev.q,
+          status: statusFromSearch(prev.status),
+          categories: next,
+        });
+      },
+    });
+  };
+
+  const removeCategoryFilter = (categoryId: string) => {
+    void navigate({
+      search: (prev) => {
+        const next = new Set(categoriesFromSearch(prev.categories));
+        next.delete(categoryId);
+        return buildAdminProductSearch({
+          q: prev.q,
+          status: statusFromSearch(prev.status),
+          categories: next,
+        });
+      },
+    });
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    void navigate({
+      search: (prev) =>
+        buildAdminProductSearch({
+          q: undefined,
+          status: statusFromSearch(prev.status),
+          categories: categoriesFromSearch(prev.categories),
+        }),
+      replace: true,
+    });
+  };
+
+  const clearFilters = () => {
+    setQuery("");
+    void navigate({ search: clearAdminProductSearch() });
+  };
 
   const categoryLabels = useMemo(
     () => new Map(categories.map((category) => [category.id, category.label])),
     [categories],
   );
-
-  const addCategoryFilter = (categoryId: string) => {
-    setSelectedCategories((prev) => new Set(prev).add(categoryId));
-  };
-
-  const removeCategoryFilter = (categoryId: string) => {
-    setSelectedCategories((prev) => {
-      const next = new Set(prev);
-      next.delete(categoryId);
-      return next;
-    });
-  };
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -104,8 +209,7 @@ function AdminProductsPage() {
     });
   }, [products, query, statusFilter, selectedCategories, categoryLabels]);
 
-  const hasActiveFilters =
-    query.trim().length > 0 || statusFilter !== "all" || selectedCategories.size > 0;
+  const hasActiveFilters = adminProductSearchHasFilters(search) || query.trim().length > 0;
   const featuredCount = useMemo(
     () => products.filter((product) => product.featuredOnHomepage).length,
     [products],
@@ -126,8 +230,9 @@ function AdminProductsPage() {
     try {
       await toggleAdminProductActive({ data: { id, active } });
       await router.invalidate();
-    } catch (err) {
-      setStatusError(err instanceof Error ? err.message : "Failed to update product status");
+      showSavedMessage(active ? "Now visible on the site" : "Hidden from the site");
+    } catch {
+      setStatusError("Couldn't update visibility. Try again.");
     } finally {
       setStatusToggleId(null);
     }
@@ -139,8 +244,9 @@ function AdminProductsPage() {
     try {
       await toggleAdminProductHomepageFeatured({ data: { id, featured } });
       await router.invalidate();
-    } catch (err) {
-      setFeaturedError(err instanceof Error ? err.message : "Failed to update homepage feature");
+      showSavedMessage(featured ? "Added to homepage" : "Removed from homepage");
+    } catch {
+      setFeaturedError("Couldn't update homepage feature. Try again.");
     } finally {
       setFeaturedToggleId(null);
     }
@@ -154,8 +260,8 @@ function AdminProductsPage() {
       await deleteAdminProduct({ data: { id: deleteTarget.id } });
       setDeleteTarget(null);
       await router.invalidate();
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Failed to delete product");
+    } catch {
+      setDeleteError("Couldn't delete this product. Try again.");
     } finally {
       setDeletingId(null);
     }
@@ -183,10 +289,10 @@ function AdminProductsPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      {deleteError ? <FormErrorBanner message={deleteError} /> : null}
-      {featuredError ? <FormErrorBanner message={featuredError} /> : null}
-      {statusError ? <FormErrorBanner message={statusError} /> : null}
+      {deleteError ? <AdminActionError message={deleteError} /> : null}
+      {featuredError ? <AdminActionError message={featuredError} /> : null}
+      {statusError ? <AdminActionError message={statusError} /> : null}
+      <AdminSaveStatus message={savedMessage} />
 
       {products.length > 0 && (
         <div className="space-y-3">
@@ -196,8 +302,19 @@ function AdminProductsPage() {
               placeholder="Search by name or category…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-9 h-11"
+              className="pl-9 pr-11 h-11"
+              aria-label="Search products"
             />
+            {query ? (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-md text-muted hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : null}
           </div>
 
           <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none">
@@ -248,7 +365,17 @@ function AdminProductsPage() {
       {/* No search results */}
       {products.length > 0 && filtered.length === 0 && (
         <div className="py-12 text-center text-sm text-muted border border-dashed border-border rounded-xl">
-          {hasActiveFilters ? "No products match your filters." : "No products found."}
+          <p>{hasActiveFilters ? "No products match your filters." : "No products found."}</p>
+          {hasActiveFilters ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4 min-h-11"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </Button>
+          ) : null}
         </div>
       )}
 

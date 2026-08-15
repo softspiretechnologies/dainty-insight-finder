@@ -2,6 +2,8 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { MessageCircle, Mail, Instagram, User, MapPin, Check } from "lucide-react";
 
+import { AdminActionError } from "@/components/admin/AdminActionError";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import {
@@ -68,6 +70,8 @@ function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accountError, setAccountError] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
+  const [logoutTarget, setLogoutTarget] = useState<"current" | "all" | null>(null);
+  const [sessionEnding, setSessionEnding] = useState(false);
 
   const isDirty = useMemo(() => {
     return (
@@ -113,17 +117,19 @@ function AdminSettingsPage() {
 
   const endSession = async (all: boolean) => {
     setAccountError(null);
+    setSessionEnding(true);
     try {
       if (all) await logoutAllAdminSessions();
       else await logoutAdmin();
+      setLogoutTarget(null);
       await router.navigate({ to: "/admin/login" });
     } catch (error) {
       setAccountError(error instanceof Error ? error.message : "Failed to log out");
+      setSessionEnding(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveSettings = async () => {
     setFormError(null);
     setSavedMessage(null);
 
@@ -155,6 +161,13 @@ function AdminSettingsPage() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveSettings();
+  };
+
+  const fieldErrorsClean = Object.keys(fieldErrors).length === 0;
+
   return (
     <div className="max-w-xl space-y-6 md:space-y-8">
       <div>
@@ -178,6 +191,7 @@ function AdminSettingsPage() {
             >
               <Input
                 id="whatsappNumber"
+                type="tel"
                 value={whatsappNumber}
                 onChange={(e) => {
                   setWhatsappNumber(e.target.value);
@@ -204,6 +218,8 @@ function AdminSettingsPage() {
                   clearFieldError("email");
                 }}
                 placeholder="hello@daintyhand.in"
+                autoComplete="email"
+                inputMode="email"
                 className={`h-11 ${invalidInputClass(fieldErrors.email)}`}
               />
             </AdminField>
@@ -227,6 +243,8 @@ function AdminSettingsPage() {
                     clearFieldError("instagramUrl");
                   }}
                   placeholder="https://www.instagram.com/dainty.handd/"
+                  inputMode="url"
+                  autoComplete="url"
                   className={`h-11 ${invalidInputClass(fieldErrors.instagramUrl)}`}
                 />
               </AdminField>
@@ -301,7 +319,12 @@ function AdminSettingsPage() {
           </FieldGroup>
         </div>
 
-        {formError ? <FormErrorBanner message={formError} /> : null}
+        {formError ? (
+          <AdminActionError
+            message={formError}
+            onRetry={fieldErrorsClean && !loading ? () => void saveSettings() : undefined}
+          />
+        ) : null}
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <Button
@@ -389,7 +412,8 @@ function AdminSettingsPage() {
                 type="button"
                 variant="outline"
                 className="w-full sm:w-auto"
-                onClick={() => endSession(false)}
+                disabled={sessionEnding}
+                onClick={() => setLogoutTarget("current")}
               >
                 Log out current session
               </Button>
@@ -397,7 +421,8 @@ function AdminSettingsPage() {
                 type="button"
                 variant="outline"
                 className="w-full sm:w-auto"
-                onClick={() => endSession(true)}
+                disabled={sessionEnding}
+                onClick={() => setLogoutTarget("all")}
               >
                 Log out all sessions
               </Button>
@@ -405,6 +430,32 @@ function AdminSettingsPage() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      <AdminConfirmDialog
+        open={logoutTarget === "current"}
+        onOpenChange={(open) => {
+          if (!open && !sessionEnding) setLogoutTarget(null);
+        }}
+        title="Log out current session?"
+        description="You will need to sign in again on this device."
+        confirmLabel="Log out"
+        cancelLabel="Cancel"
+        loading={sessionEnding}
+        onConfirm={() => void endSession(false)}
+      />
+
+      <AdminConfirmDialog
+        open={logoutTarget === "all"}
+        onOpenChange={(open) => {
+          if (!open && !sessionEnding) setLogoutTarget(null);
+        }}
+        title="Log out all sessions?"
+        description="Other devices will need to sign in again."
+        confirmLabel="Log out all"
+        cancelLabel="Cancel"
+        loading={sessionEnding}
+        onConfirm={() => void endSession(true)}
+      />
     </div>
   );
 }

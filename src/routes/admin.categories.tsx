@@ -8,7 +8,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { AdminField, FormErrorBanner, invalidBoxClass } from "@/components/admin/AdminField";
+import { AdminActionError } from "@/components/admin/AdminActionError";
+import { AdminField, invalidBoxClass } from "@/components/admin/AdminField";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ function AdminCategoriesPage() {
   const [dirtyById, setDirtyById] = useState<Record<string, boolean>>({});
   const [movingId, setMovingId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [lastMove, setLastMove] = useState<{ id: string; direction: "up" | "down" } | null>(null);
 
   const sortable = useMemo(
     () => categories.map((category) => ({ id: category.id, sortOrder: category.sortOrder })),
@@ -71,6 +73,7 @@ function AdminCategoriesPage() {
   const handleMove = async (id: string, direction: "up" | "down") => {
     if (pageDirty || movingId) return;
     setMoveError(null);
+    setLastMove({ id, direction });
     setMovingId(id);
     try {
       await moveAdminCategory({ data: { id, direction } });
@@ -116,9 +119,25 @@ function AdminCategoriesPage() {
         </div>
       </section>
 
-      {moveError ? <FormErrorBanner message={moveError} /> : null}
+      {moveError ? (
+        <AdminActionError
+          message={moveError}
+          onRetry={
+            lastMove && !movingId && !pageDirty
+              ? () => void handleMove(lastMove.id, lastMove.direction)
+              : undefined
+          }
+        />
+      ) : null}
       {pageDirty ? (
         <p className="text-xs text-muted mb-3">Save or discard edits before reordering.</p>
+      ) : null}
+
+      {categories.length === 0 ? (
+        <div className="text-sm text-muted border border-dashed border-border rounded-xl p-6 text-center space-y-1 mb-3">
+          <p className="font-medium text-foreground/80">No categories yet</p>
+          <p>Categories will appear here once they are available.</p>
+        </div>
       ) : null}
 
       <Accordion type="single" collapsible className="space-y-3">
@@ -263,6 +282,10 @@ function CategoryForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await saveCategory();
+  };
+
+  const saveCategory = async () => {
     setFormError(null);
     setSavedMessage(null);
 
@@ -393,7 +416,16 @@ function CategoryForm({
         />
       </AdminField>
 
-      {formError ? <FormErrorBanner message={formError} /> : null}
+      {formError ? (
+        <AdminActionError
+          message={formError}
+          onRetry={
+            Object.keys(fieldErrors).length === 0 && !loading
+              ? () => void saveCategory()
+              : undefined
+          }
+        />
+      ) : null}
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1">
         <Button

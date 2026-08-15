@@ -1,8 +1,9 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ImagePlus, ChevronLeft, Package, Eye, EyeOff, Star } from "lucide-react";
 
-import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminActionError } from "@/components/admin/AdminActionError";
+import { AdminField } from "@/components/admin/AdminField";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,14 @@ import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { cn } from "@/lib/utils";
 import type { CategoryId } from "@/types/catalog";
+
+function goBackToProducts(router: ReturnType<typeof useRouter>) {
+  if (router.history.canGoBack()) {
+    router.history.back();
+    return;
+  }
+  void router.navigate({ to: "/admin/products" });
+}
 
 export const Route = createFileRoute("/admin/products/$productId")({
   loader: async ({ params }) => {
@@ -143,8 +152,7 @@ function AdminProductEditPage() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveProduct = async () => {
     setFormError(null);
 
     const payload = {
@@ -202,21 +210,27 @@ function AdminProductEditPage() {
         setFieldErrors({ name: message });
         scrollToFirstField({ name: message });
       } else {
-        setFormError(message);
+        setFormError("Couldn't save your changes. They're still here.");
       }
       setLoading(false);
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveProduct();
+  };
+
   return (
     <div className="max-w-5xl">
-      <Link
-        to="/admin/products"
+      <button
+        type="button"
+        onClick={() => goBackToProducts(router)}
         className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground mb-5 transition-colors"
       >
         <ChevronLeft className="w-3.5 h-3.5" />
         Products
-      </Link>
+      </button>
 
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 md:mb-8">
         <h1 className="font-display text-3xl md:text-5xl italic tracking-tight">
@@ -516,11 +530,18 @@ function AdminProductEditPage() {
         </div>
 
         <div className="mt-6 pt-6 border-t border-border flex flex-col gap-3">
-          {formError ? <FormErrorBanner message={formError} /> : null}
+          {formError ? (
+            <AdminActionError message={formError} onRetry={() => void saveProduct()} />
+          ) : null}
           <div className="hidden lg:flex gap-3 w-full sm:w-auto sm:ml-auto items-center">
             <AdminSaveStatus message={savedMessage} />
-            <Button type="button" variant="outline" className="flex-1 sm:flex-none h-11" asChild>
-              <Link to="/admin/products">Cancel</Link>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 sm:flex-none h-11"
+              onClick={() => goBackToProducts(router)}
+            >
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -547,10 +568,15 @@ function AdminProductEditPage() {
             style={{
               bottom: "calc(3.5rem + max(env(safe-area-inset-bottom), 0.5rem))",
               paddingBottom: "0.75rem",
+              paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+              paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
             }}
           >
             <div className="flex items-center gap-3 max-w-5xl mx-auto">
-              <p className="text-xs text-muted flex-1">Unsaved changes</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted">Unsaved changes</p>
+                <AdminSaveStatus message={savedMessage} />
+              </div>
               <Button type="submit" disabled={loading} className="min-h-11 px-5">
                 {loading ? "Saving…" : "Save"}
               </Button>
