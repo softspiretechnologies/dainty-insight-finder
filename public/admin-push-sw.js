@@ -1,4 +1,4 @@
-/* admin-push-sw v1 — push + notificationclick (+ optional badge) only. No fetch / cache. */
+/* admin-push-sw v1.1 — push + notificationclick (+ optional badge) only. No fetch / cache. */
 
 function sanitizeAdminUrl(candidate) {
   if (typeof candidate !== "string") return null;
@@ -50,13 +50,18 @@ self.addEventListener("push", (event) => {
   const tag = typeof parsed?.tag === "string" ? parsed.tag : undefined;
   const badgeCount = typeof parsed?.badgeCount === "number" ? parsed.badgeCount : undefined;
 
-  const show = self.registration.showNotification(title, {
+  // Same-tag replacements (e.g. admin-push-test) only re-alert when renotify is set.
+  // Limit renotify to test payloads so enquiry notifications stay quiet when replaced.
+  const options = {
     body,
     icon: "/icon-192.png",
     badge: "/favicon.png",
     tag,
     data: { url },
-  });
+    ...(parsed?.type === "test" && tag ? { renotify: true } : {}),
+  };
+
+  const show = self.registration.showNotification(title, options);
 
   event.waitUntil(Promise.all([show, applyBadge(badgeCount)]));
 });

@@ -1,4 +1,6 @@
 import { createECDH } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import webpush from "web-push";
 
@@ -369,5 +371,15 @@ describe("resolveSubscriptionForCurrentVapidKey", () => {
     expect(refreshed.ok).toBe(true);
     expect(unsubscribe).toHaveBeenCalled();
     expect(subscribe).toHaveBeenCalled();
+  });
+});
+
+describe("admin-push-sw test renotify", () => {
+  it("sets renotify only for tagged test notifications", () => {
+    const source = readFileSync(join(process.cwd(), "public/admin-push-sw.js"), "utf8");
+    expect(source).toContain('parsed?.type === "test" && tag ? { renotify: true } : {}');
+    // Must not globally force renotify on every notification.
+    expect(source).not.toMatch(/showNotification\([^)]*renotify:\s*true/);
+    expect(source.match(/renotify:\s*true/g)?.length).toBe(1);
   });
 });
