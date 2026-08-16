@@ -39,7 +39,7 @@ Keep this document concise and current. Do not append a development diary.
 
 **Tests:** Vitest (`npm run test`), Playwright Chromium + scoped WebKit (`test:e2e`), opt-in visual (`test:visual`), smoke (`npm run smoke`). CI: lint + Vitest + `build:app`; separate e2e job with ephemeral MySQL.
 
-**Admin nav performance:** Router `defaultPreload: "intent"`; short loader `staleTime` only on selected Admin routes (not global). Admin pages prefer one authenticated page-data server function per screen (badge COUNT vs full dashboard summary stay separate). Product save/bulk-create invalidate before returning to cached lists.
+**Admin nav performance:** Public `getRootPageData()` is skipped on `/admin` paths. Admin `beforeLoad` validates the UI session on Admin-tree **enter** only (`stay` does not call `getSessionAdmin()`). Child page-data loaders start immediately; shell user/badge refresh via `getAdminShellData` (COUNT only) with 15s staleTime. Server functions still `requireAdmin()`. No global `defaultStaleTime`.
 
 **Safety:** Never print secrets/VAPID private keys. Trust code over stale docs. Prefer `docs/database.md` + `docs/PRODUCTION_OPERATIONS.md` for DB/deploy details.
 
@@ -78,8 +78,9 @@ Keep this document concise and current. Do not append a development diary.
 - **SSR app** via TanStack Start + Nitro `node-server`.
 - **File-based routes** in `src/routes/` → `src/routeTree.gen.ts` (generated; do not hand-edit).
 - **Data access:** `createServerFn` in `src/lib/api/*` so MySQL/Sharp/web-push stay server-side.
-- **Admin page loads:** Prefer consolidated page-data server functions (one `requireAdmin()` + concurrent queries) over multiple independent `createServerFn` calls per route. Shell badge uses `getAdminNewEnquiryCount` (COUNT only); dashboard uses `getAdminDashboardPageData`; products list/editor and enquiries list use matching page-data endpoints.
-- **Router:** `defaultPreload: "intent"` with `defaultPreloadStaleTime: 30_000`. No global `defaultStaleTime` (public stays fresh). Admin-only short windows: `/admin`, dashboard, products list/editor (`15_000`); enquiries list (`10_000`). Mutations that leave for a cached Admin list call `router.invalidate()` first.
+- **Admin page loads:** Prefer consolidated page-data server functions (one `requireAdmin()` + concurrent queries) over multiple independent `createServerFn` calls per route. Shell uses `getAdminShellData` (user + COUNT-only badge); dashboard uses `getAdminDashboardPageData`; products list/editor and enquiries list use matching page-data endpoints. Products/enquiries **list** queries project only columns the list UI renders.
+- **Router:** `defaultPreload: "intent"` with `defaultPreloadStaleTime: 30_000`. No global `defaultStaleTime` (public stays fresh). Admin-only short windows: `/admin` shell, dashboard, products list/editor (`15_000`); enquiries list (`10_000`). Mutations that leave for a cached Admin list call `router.invalidate()` first.
+- **Admin navigation guards:** Root `beforeLoad` does not fetch public categories/settings under `/admin`. Admin `beforeLoad` runs `getSessionAdmin()` on enter/preload of the Admin tree, not on `stay` child transitions. This is a UI guard only — private endpoints still `requireAdmin()` (including `session_version`).
 - **Public layout:** `PageShell` (header, footer, floating WhatsApp).
 - **Admin layout:** `AdminShell` (desktop sidebar + mobile bottom nav + “More” sheet); login route without shell chrome.
 - **Config:** `src/lib/site.ts` (brand defaults), `src/lib/config.server.ts` (server env), path alias `@/*` → `src/*`.
@@ -208,7 +209,8 @@ Details: `docs/enquiries.md`.
 - Session payload includes `sessionVersion`; must match `admin_users.session_version`.
 - Password change / logout-all increments version (revokes other sessions).
 - Cookie: httpOnly, SameSite=Lax, Secure in production, ~7-day maxAge.
-- All mutating/private admin server functions call `requireAdmin()` (enforced in authorization tests).
+- All mutating/private admin server functions call `requireAdmin()` (enforced in authorization tests). Skipping the Admin-tree `stay` UI session fetch does **not** skip this check.
+- Direct unauthenticated `/admin/*` (except login) still redirects to `/admin/login` with a safe `?next=`.
 - Security headers / CSP report-only behavior described in `docs/PRODUCTION_OPERATIONS.md`.
 - Logs redact secrets and sensitive enquiry fields.
 
@@ -256,7 +258,7 @@ See `docs/database.md`.
 - Used for public list/settings-style reads in `data.server.ts`.
 - Product detail intentionally bypasses cache for visibility correctness.
 - Admin mutations call `clearDataCache()` in the handling process.
-- TanStack Router: intent preload stale **30s**. Loader `staleTime` is **Admin-route-specific** (15s shell/dashboard/products; 10s enquiries list) — not a global default. Product editor save and Bulk Add invalidate before returning to the products list. Not Infinity.
+- TanStack Router: intent preload stale **30s**. Loader `staleTime` is **Admin-route-specific** (15s shell/dashboard/products; 10s enquiries list) — not a global default. Product editor save and Bulk Add invalidate before returning to the products list. Not Infinity. Shell badge may refresh in the background and must not block child loaders.
 - Not shared across Node workers; acceptable for single Hostinger process.
 
 ---
@@ -362,6 +364,7 @@ GitHub Actions (`.github/workflows/ci.yml`): lint + Vitest + `build:app`; e2e jo
 | `src/lib/data.server.ts` | Public catalog/settings reads + fallback |
 | `src/lib/api/catalog.ts` / `api/admin/*` | Server functions |
 | `src/lib/admin-enquiry-queries.server.ts` | Shared enquiry COUNT/summary queries for Admin page-data |
+| `src/lib/admin-nav-load.ts` | Pure helpers: skip public root data on Admin; UI session check on enter only |
 | `src/lib/auth.server.ts` | Sessions |
 | `src/lib/uploads.server.ts` | Image save/copy/delete |
 | `src/lib/admin-push.server.ts` | VAPID + send |

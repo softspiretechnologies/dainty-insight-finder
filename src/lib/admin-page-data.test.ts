@@ -96,9 +96,11 @@ describe("admin page-data server functions", () => {
   });
 
   it("shell badge uses the cheap new-count endpoint, not full summary", () => {
-    expect(adminLayout).toContain("getAdminNewEnquiryCount");
+    expect(adminLayout).toContain("getAdminShellData");
     expect(adminLayout).not.toContain("getAdminEnquirySummary");
-    expect(enquiriesApi).toMatch(/getAdminNewEnquiryCount[\s\S]*safeNewEnquiryCount/);
+    expect(adminLayout).toContain("shouldValidateAdminSession");
+    expect(enquiriesApi).toMatch(/getAdminShellData[\s\S]*await requireAdmin\(\)/);
+    expect(enquiriesApi).toMatch(/getAdminShellData[\s\S]*safeNewEnquiryCount/);
   });
 
   it("dashboard uses a single page-data call without a second summary fetch", () => {
@@ -113,12 +115,22 @@ describe("admin page-data server functions", () => {
     expect(productsIndex).not.toContain("listAdminCategories");
     expect(productEditor).toContain("getAdminProductEditorData");
     expect(productEditor).not.toContain("listAdminCategories");
+    expect(productsApi).toMatch(
+      /getAdminProductsPageData[\s\S]*imagePath: productsTable\.imagePath[\s\S]*featuredOnHomepage/,
+    );
+    expect(productsApi).not.toMatch(/getAdminProductsPageData[\s\S]*description: productsTable/);
   });
 
   it("enquiries list uses one page-data endpoint", () => {
     expect(enquiriesIndex).toContain("getAdminEnquiriesPageData");
     expect(enquiriesIndex).not.toContain("listAdminEnquiries");
     expect(enquiriesIndex).not.toContain("getAdminEnquirySummary");
+    expect(enquiriesApi).toMatch(
+      /getAdminEnquiriesPageData[\s\S]*productNameSnapshot: enquiries\.productNameSnapshot/,
+    );
+    expect(enquiriesApi).not.toMatch(
+      /getAdminEnquiriesPageData[\s\S]*adminNotes: enquiries\.adminNotes/,
+    );
   });
 
   it("enables intent route preloading without a global defaultStaleTime", () => {

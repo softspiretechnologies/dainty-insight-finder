@@ -69,6 +69,24 @@ test("tampered admin session cannot open protected routes", async ({ context, pa
   await expect(page).toHaveURL(/\/admin\/login/);
 });
 
+test("unauthenticated direct Admin URLs redirect to login", async ({ page }) => {
+  await page.goto("/admin/products");
+  await expect(page).toHaveURL(/\/admin\/login/);
+});
+
+test("authenticated Admin can move between primary pages", async ({ page }) => {
+  await login(page);
+  await page.goto("/admin/products");
+  await waitForHydration(page);
+  await expect(page.getByRole("heading", { name: "Products" })).toBeVisible();
+  await page.goto("/admin/enquiries");
+  await waitForHydration(page);
+  await expect(page.getByRole("heading", { name: "Enquiries" })).toBeVisible();
+  await page.goto("/admin");
+  await waitForHydration(page);
+  await expect(page.getByRole("heading", { name: /DaintyHand Admin/i })).toBeVisible();
+});
+
 test("admin can create, edit, and hide a product", async ({ page }) => {
   const suffix = Date.now();
   const originalName = `E2E Gift ${suffix}`;

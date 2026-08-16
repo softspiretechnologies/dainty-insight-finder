@@ -67,6 +67,15 @@ export const getAdminNewEnquiryCount = createServerFn({ method: "GET" }).handler
   return { count: await safeNewEnquiryCount() };
 });
 
+/** Admin chrome: signed-in user + new-enquiry badge. One requireAdmin, no full summary. */
+export const getAdminShellData = createServerFn({ method: "GET" }).handler(async () => {
+  const session = await requireAdmin();
+  return {
+    user: { userId: session.userId, name: session.name, email: session.email },
+    newEnquiryCount: await safeNewEnquiryCount(),
+  };
+});
+
 /**
  * Dashboard page data: product count + full enquiry summary in one auth check.
  * Does not replace the shell badge endpoint.
@@ -108,10 +117,38 @@ export const getAdminEnquiriesPageData = createServerFn({ method: "GET" })
       }
       const where = conditions.length > 0 ? and(...conditions) : undefined;
       const [rows, counts] = await Promise.all([
-        db.select().from(enquiries).where(where).orderBy(desc(enquiries.createdAt)).limit(200),
+        db
+          .select({
+            id: enquiries.id,
+            name: enquiries.name,
+            phone: enquiries.phone,
+            eventDate: enquiries.eventDate,
+            source: enquiries.source,
+            productNameSnapshot: enquiries.productNameSnapshot,
+            serviceTitleSnapshot: enquiries.serviceTitleSnapshot,
+            status: enquiries.status,
+            createdAt: enquiries.createdAt,
+          })
+          .from(enquiries)
+          .where(where)
+          .orderBy(desc(enquiries.createdAt))
+          .limit(200),
         safeEnquiryStatusCounts(),
       ]);
-      return { enquiries: rows.map(serializeEnquiry), counts };
+      return {
+        enquiries: rows.map((row) => ({
+          id: row.id,
+          name: row.name,
+          phone: row.phone,
+          eventDate: row.eventDate,
+          source: row.source,
+          productNameSnapshot: row.productNameSnapshot,
+          serviceTitleSnapshot: row.serviceTitleSnapshot,
+          status: row.status,
+          createdAt: row.createdAt.toISOString(),
+        })),
+        counts,
+      };
     } catch (error) {
       logError("admin.enquiries.page_failed", error);
       return {

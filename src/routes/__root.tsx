@@ -11,6 +11,7 @@ import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { ADMIN_EARLY_BOOT_SCRIPT, ADMIN_EARLY_BOOT_STYLE } from "../lib/admin-early-boot";
+import { EMPTY_ADMIN_ROOT_CONTEXT, shouldLoadPublicRootContext } from "../lib/admin-nav-load";
 import { getRootPageData } from "../lib/api/catalog";
 import { matchesIncludeAdmin, resolvePwaIdentity } from "../lib/pwa-identity";
 import { siteUrl } from "../lib/site";
@@ -85,7 +86,10 @@ export const Route = createRootRouteWithContext<{
   categories: CatalogCategory[];
   siteSettings: SiteSettingsData;
 }>()({
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
+    if (!shouldLoadPublicRootContext(location.pathname)) {
+      return EMPTY_ADMIN_ROOT_CONTEXT;
+    }
     const { categories, siteSettings } = await getRootPageData();
     return { categories, siteSettings };
   },

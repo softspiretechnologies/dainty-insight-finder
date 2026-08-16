@@ -29,6 +29,10 @@ describe("admin server function authorization", () => {
     expect(source).toMatch(
       /export const getAdminDashboardPageData = createServerFn[\s\S]*?await requireAdmin\(\)/,
     );
+    expect(source).toContain("export const getAdminShellData");
+    expect(source).toMatch(
+      /export const getAdminShellData = createServerFn[\s\S]*?await requireAdmin\(\)/,
+    );
   });
 
   it("protects admin push subscription endpoints", () => {

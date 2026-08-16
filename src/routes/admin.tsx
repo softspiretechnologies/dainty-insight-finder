@@ -2,38 +2,43 @@ import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/rea
 
 import { AdminLaunchSplash } from "@/components/admin/AdminLaunchSplash";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { isAdminLoginPath, shouldValidateAdminSession } from "@/lib/admin-nav-load";
 import { sanitizeAdminNotificationUrl } from "@/lib/admin-push";
 import { getSessionAdmin } from "@/lib/api/admin/auth";
-import { getAdminNewEnquiryCount } from "@/lib/api/admin/enquiries";
+import { getAdminShellData } from "@/lib/api/admin/enquiries";
+
+function loginRedirect(pathname: string, searchStr: string) {
+  const nextCandidate = `${pathname}${searchStr || ""}`;
+  const next = sanitizeAdminNotificationUrl(nextCandidate);
+  return redirect({
+    to: "/admin/login",
+    search: next ? { next } : {},
+  });
+}
 
 export const Route = createFileRoute("/admin")({
-  beforeLoad: async ({ location }) => {
-    if (location.pathname === "/admin/login") {
-      return { session: null };
+  beforeLoad: async ({ location, cause }) => {
+    if (!shouldValidateAdminSession(location.pathname, cause)) {
+      return;
     }
 
     const session = await getSessionAdmin();
     if (!session) {
-      const nextCandidate = `${location.pathname}${location.searchStr || ""}`;
-      const next = sanitizeAdminNotificationUrl(nextCandidate);
-      throw redirect({
-        to: "/admin/login",
-        search: next ? { next } : {},
-      });
+      throw loginRedirect(location.pathname, location.searchStr || "");
     }
-
-    return { session };
   },
   staleTime: 15_000,
   loader: async ({ location }) => {
-    if (location.pathname === "/admin/login") {
-      return { newEnquiryCount: 0 };
+    if (isAdminLoginPath(location.pathname)) {
+      return { user: null, newEnquiryCount: 0 };
     }
     try {
-      const result = await getAdminNewEnquiryCount();
-      return { newEnquiryCount: result.count };
-    } catch {
-      return { newEnquiryCount: 0 };
+      return await getAdminShellData();
+    } catch (error) {
+      if (error instanceof Error && error.message === "Unauthorized") {
+        throw loginRedirect(location.pathname, location.searchStr || "");
+      }
+      throw error;
     }
   },
   head: () => ({
@@ -49,18 +54,17 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
-  const { session } = Route.useRouteContext();
-  const { newEnquiryCount } = Route.useLoaderData();
+  const { user, newEnquiryCount } = Route.useLoaderData();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <>
       {/* Installed-app brand moment only; does not remount on child route changes. */}
       <AdminLaunchSplash />
-      {pathname === "/admin/login" ? (
+      {isAdminLoginPath(pathname) ? (
         <Outlet />
       ) : (
-        <AdminShell userName={session?.name} newEnquiryCount={newEnquiryCount}>
+        <AdminShell userName={user?.name} newEnquiryCount={newEnquiryCount}>
           <Outlet />
         </AdminShell>
       )}

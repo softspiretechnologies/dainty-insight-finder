@@ -65,8 +65,26 @@ export const getAdminProductsPageData = createServerFn({ method: "GET" }).handle
   await requireAdmin();
   const db = getDb();
   const [products, categories] = await Promise.all([
-    db.select().from(productsTable).orderBy(productsTable.name),
-    db.select().from(categoriesTable).orderBy(categoriesTable.sortOrder),
+    db
+      .select({
+        id: productsTable.id,
+        slug: productsTable.slug,
+        name: productsTable.name,
+        categoryId: productsTable.categoryId,
+        imagePath: productsTable.imagePath,
+        priceFrom: productsTable.priceFrom,
+        isActive: productsTable.isActive,
+        featuredOnHomepage: productsTable.featuredOnHomepage,
+      })
+      .from(productsTable)
+      .orderBy(productsTable.name),
+    db
+      .select({
+        id: categoriesTable.id,
+        label: categoriesTable.label,
+      })
+      .from(categoriesTable)
+      .orderBy(categoriesTable.sortOrder),
   ]);
   return { products, categories };
 });
