@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { formatSiteCopyrightYear } from "@/lib/admin-format";
 import { site } from "@/lib/site";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
@@ -15,7 +16,7 @@ export function SiteFooter() {
             Handcrafted gifting &amp; wedding celebration studio based in Perinthalmanna, Kerala.
           </p>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
-            © {new Date().getFullYear()} · {site.location}
+            © {formatSiteCopyrightYear()} · {site.location}
           </p>
         </div>
 

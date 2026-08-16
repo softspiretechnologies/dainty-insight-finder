@@ -7,10 +7,16 @@ import { enquirySourceLabel } from "@/lib/enquiries";
 import { adminSettingsFormSchema } from "@/lib/admin-schemas";
 
 describe("admin format helpers", () => {
-  it("formats today and yesterday", () => {
-    const now = new Date("2026-08-15T15:00:00");
-    expect(formatAdminDateTime("2026-08-15T11:20:00", now)).toMatch(/^Today,/);
-    expect(formatAdminDateTime("2026-08-14T16:35:00", now)).toMatch(/^Yesterday,/);
+  it("formats today and yesterday in Asia/Kolkata", () => {
+    const now = new Date("2026-08-15T15:00:00+05:30");
+    expect(formatAdminDateTime("2026-08-15T11:20:00+05:30", now)).toMatch(/^Today,/);
+    expect(formatAdminDateTime("2026-08-14T16:35:00+05:30", now)).toMatch(/^Yesterday,/);
+  });
+
+  it("formats times in Asia/Kolkata so SSR and the browser match", () => {
+    const iso = "2026-08-16T10:00:00.000Z";
+    const now = new Date("2026-08-16T12:00:00.000Z");
+    expect(formatAdminDateTime(iso, now)).toBe("Today, 3:30 pm");
   });
 
   it("caps enquiry badges", () => {
