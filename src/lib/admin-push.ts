@@ -270,9 +270,21 @@ export function extractPushDeliveryDiagnostic(
 }
 
 export function friendlyTestPushErrorMessage(diagnostic: PushDeliveryDiagnostic): string {
+  const reason = (diagnostic.reason ?? "").toLowerCase();
   switch (diagnostic.category) {
-    case "vapid_auth":
-      return "This device's push subscription does not match the server VAPID key. Disable notifications on this device, then Enable again.";
+    case "vapid_auth": {
+      if (reason.includes("vapidpkhashmismatch") || reason.includes("pkhash")) {
+        return "This device's push subscription does not match the server VAPID key. Disable notifications on this device, then Enable again.";
+      }
+      if (reason.includes("badjwttoken") || reason.includes("jwt")) {
+        return "Apple rejected the VAPID login token (JWT). Confirm WEB_PUSH_VAPID_SUBJECT is a real mailto: or https: address, and that the Hostinger server clock is correct.";
+      }
+      // 403/401 without a clear body — often Apple JWT; key mismatch is less likely when diagnostics say match Yes.
+      if (diagnostic.provider === "apple") {
+        return "Apple Push rejected VAPID authentication (HTTP 403/401). Check WEB_PUSH_VAPID_SUBJECT (mailto:/https:) and Hostinger server time. If Device subscription matches server is No, Disable then Enable.";
+      }
+      return "Push provider rejected VAPID authentication. If Device subscription matches server is No, Disable then Enable; if Yes, check VAPID subject and server clock.";
+    }
     case "stale_subscription":
       return "This device's notification subscription expired. Disable and enable notifications again.";
     case "network":

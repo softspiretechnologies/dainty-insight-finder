@@ -426,8 +426,13 @@ export function AdminPushNotificationsSettings() {
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {diagnostic?.statusCode ? (
-        <p className="text-xs font-mono text-muted">Diagnostic: HTTP {diagnostic.statusCode}</p>
+      {diagnostic?.statusCode || diagnostic?.reason || diagnostic?.provider ? (
+        <p className="text-xs font-mono text-muted">
+          Diagnostic:
+          {diagnostic.statusCode ? ` HTTP ${diagnostic.statusCode}` : ""}
+          {diagnostic.provider ? ` · ${diagnostic.provider}` : ""}
+          {diagnostic.reason ? ` · ${diagnostic.reason}` : ""}
+        </p>
       ) : null}
       {message && !error ? <p className="text-sm text-muted">{message}</p> : null}
     </section>

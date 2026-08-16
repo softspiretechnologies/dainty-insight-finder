@@ -257,7 +257,15 @@ describe("extractPushDeliveryDiagnostic", () => {
       reason: "BadJwtToken",
       provider: "apple",
     });
-    expect(friendlyTestPushErrorMessage(diagnostic)).toMatch(/Disable notifications/i);
+    expect(friendlyTestPushErrorMessage(diagnostic)).toMatch(/JWT|subject|clock/i);
+    expect(
+      friendlyTestPushErrorMessage({
+        category: "vapid_auth",
+        statusCode: 403,
+        reason: "VapidPkHashMismatch",
+        provider: "apple",
+      }),
+    ).toMatch(/Disable notifications/i);
   });
 });
 
