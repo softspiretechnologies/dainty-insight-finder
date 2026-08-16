@@ -131,13 +131,29 @@ export function buildVapidEnvDiagnostics(
 }
 
 export function isValidVapidSubject(subject: string): boolean {
+  return normalizeVapidSubject(subject) !== null;
+}
+
+/**
+ * Normalize VAPID subject for JWT `sub` (Apple is strict).
+ * Accepts MAILTO:/Mailto: and returns canonical mailto:/https: form.
+ */
+export function normalizeVapidSubject(subject: string): string | null {
   const trimmed = subject.trim();
-  if (!trimmed) return false;
+  if (!trimmed) return null;
   try {
     const parsed = new URL(trimmed);
-    return parsed.protocol === "mailto:" || parsed.protocol === "https:";
+    if (parsed.protocol === "mailto:") {
+      const email = decodeURIComponent(parsed.pathname).trim();
+      if (!email.includes("@")) return null;
+      return `mailto:${email}`;
+    }
+    if (parsed.protocol === "https:") {
+      return parsed.href;
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -150,9 +166,10 @@ export function getWebPushVapidConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): WebPushVapidConfig | null {
   const privateKey = env.WEB_PUSH_VAPID_PRIVATE_KEY?.trim();
-  const subject = env.WEB_PUSH_VAPID_SUBJECT?.trim();
-  if (!privateKey || !subject) return null;
-  if (!isValidVapidSubject(subject)) return null;
+  const subjectRaw = env.WEB_PUSH_VAPID_SUBJECT?.trim();
+  if (!privateKey || !subjectRaw) return null;
+  const subject = normalizeVapidSubject(subjectRaw);
+  if (!subject) return null;
   const publicKey = deriveVapidPublicKeyBase64UrlFromPrivate(privateKey);
   if (!publicKey) return null;
   return { publicKey, privateKey, subject };

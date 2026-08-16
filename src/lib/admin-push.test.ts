@@ -23,6 +23,7 @@ import {
   getWebPushVapidConfig,
   hashPushEndpoint,
   isStalePushSubscriptionError,
+  normalizeVapidSubject,
   validateVapidKeyPair,
 } from "@/lib/admin-push.server";
 
@@ -115,6 +116,18 @@ describe("getWebPushVapidConfig (derive-only)", () => {
       privateKey: keys.privateKey,
       subject: "mailto:admin@daintyhand.in",
     });
+  });
+
+  it("normalizes uppercase MAILTO subject for Apple JWT compatibility", () => {
+    const keys = webpush.generateVAPIDKeys();
+    expect(normalizeVapidSubject("MAILTO:ADMIN@DAINTYHAND.IN")).toBe(
+      "mailto:ADMIN@DAINTYHAND.IN",
+    );
+    const config = getWebPushVapidConfig({
+      WEB_PUSH_VAPID_PRIVATE_KEY: keys.privateKey,
+      WEB_PUSH_VAPID_SUBJECT: "MAILTO:ADMIN@DAINTYHAND.IN",
+    });
+    expect(config?.subject).toBe("mailto:ADMIN@DAINTYHAND.IN");
   });
 
   it("ignores legacy public env and still uses derived public", () => {
