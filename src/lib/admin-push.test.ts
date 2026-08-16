@@ -228,7 +228,7 @@ describe("getAdminPushStatusPayload", () => {
     if (!status.configured) return;
     expect(status.vapidPublicKey).toBe(b.publicKey);
     expect(status.vapidPairValid).toBe(true);
-    expect(status.vapidDiagnostics.legacyPublicMatchesDerived).toBe(false);
+    expect("vapidDiagnostics" in status).toBe(false);
   });
 });
 

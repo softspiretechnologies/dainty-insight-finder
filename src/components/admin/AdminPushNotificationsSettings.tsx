@@ -20,26 +20,12 @@ import {
   sendAdminPushTest,
 } from "@/lib/api/admin/push";
 
-type VapidDiagnosticsUi = {
-  derivedPublicFingerprint: string | null;
-  derivedPublicLength: number | null;
-  privateLength: number | null;
-  privateKeyValid: boolean;
-  subjectValid: boolean;
-  legacyPublicFingerprint: string | null;
-  legacyPublicLength: number | null;
-  legacyPublicMatchesDerived: boolean | null;
-};
-
 type UiState = {
   configured: boolean;
   vapidPublicKey?: string;
-  vapidDiagnostics: VapidDiagnosticsUi | null;
   browser: AdminPushBrowserSnapshot["browser"];
   permission: AdminPushBrowserSnapshot["permission"];
   enabledOnDevice: boolean;
-  /** Whether this device's PushSubscription applicationServerKey matches server derived public. */
-  subscriptionMatchesServer: boolean | null;
   statusLabel: string;
 };
 
@@ -57,11 +43,7 @@ function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
   if (state.permission === "denied") {
     return "Notifications are blocked on this device";
   }
-  // Local subscription wins over server-config messaging so Disable remains discoverable.
   if (state.enabledOnDevice) {
-    if (state.subscriptionMatchesServer === false) {
-      return "Enabled, but subscription key is outdated — Disable then Enable";
-    }
     return "Enabled on this device";
   }
   if (!state.configured) {
@@ -70,17 +52,11 @@ function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
   return "Not enabled on this device";
 }
 
-function yesNo(value: boolean | null | undefined): string {
-  if (value === null || value === undefined) return "—";
-  return value ? "Yes" : "No";
-}
-
 export function AdminPushNotificationsSettings() {
   const [state, setState] = useState<UiState | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [diagnostic, setDiagnostic] = useState<PushDeliveryDiagnostic | null>(null);
 
   const refresh = async () => {
     const [status, browser] = await Promise.all([
@@ -90,49 +66,12 @@ export function AdminPushNotificationsSettings() {
     const configured = Boolean(status.configured);
     const vapidPublicKey =
       status.configured && "vapidPublicKey" in status ? status.vapidPublicKey : undefined;
-    const vapidDiagnostics =
-      "vapidDiagnostics" in status && status.vapidDiagnostics
-        ? (status.vapidDiagnostics as VapidDiagnosticsUi)
-        : null;
-
-    let subscriptionMatchesServer: boolean | null = null;
-    if (vapidPublicKey && browser.localSubscription?.endpoint) {
-      const live = await getCurrentPushSubscription();
-      subscriptionMatchesServer = subscriptionMatchesVapidPublicKey(
-        live?.options?.applicationServerKey,
-        vapidPublicKey,
-      );
-    }
-
-    // #region agent log
-    fetch("http://127.0.0.1:7278/ingest/68b4041a-7dab-4ccf-9f80-2b4b1a1fa764", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "dfeff6" },
-      body: JSON.stringify({
-        sessionId: "dfeff6",
-        runId: "iphone-403",
-        hypothesisId: "J",
-        location: "AdminPushNotificationsSettings.tsx:refresh",
-        message: "subscription vs server key check",
-        data: {
-          configured,
-          enabledOnDevice: Boolean(browser.localSubscription?.endpoint),
-          subscriptionMatchesServer,
-          hasVapidPublicKey: Boolean(vapidPublicKey),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
     const next: UiState = {
       configured,
       vapidPublicKey,
-      vapidDiagnostics,
       browser: browser.browser,
       permission: browser.permission,
       enabledOnDevice: Boolean(browser.localSubscription?.endpoint),
-      subscriptionMatchesServer,
       statusLabel: "",
     };
     next.statusLabel = statusLabelFor(next);
@@ -168,12 +107,10 @@ export function AdminPushNotificationsSettings() {
     setBusy(true);
     setError(null);
     setMessage(null);
-    setDiagnostic(null);
     try {
       const result = await action();
       if (!result.ok) {
         setError(result.error);
-        if (result.diagnostic) setDiagnostic(result.diagnostic);
       } else {
         setMessage("Done.");
       }
@@ -202,12 +139,6 @@ export function AdminPushNotificationsSettings() {
   const showEnable = canUsePushRuntime && !state.enabledOnDevice && state.permission !== "denied";
   const showTest = state.enabledOnDevice && canUsePushRuntime && state.permission !== "denied";
   const showDisable = state.enabledOnDevice;
-
-  const diagnostics = state.vapidDiagnostics;
-  const legacyMismatch =
-    diagnostics?.legacyPublicMatchesDerived === false &&
-    Boolean(diagnostics.legacyPublicFingerprint);
-  const subscriptionMismatch = state.subscriptionMatchesServer === false;
 
   return (
     <section className="border border-border rounded-xl p-4 sm:p-5 space-y-4 bg-surface/20">
@@ -241,9 +172,7 @@ export function AdminPushNotificationsSettings() {
 
       {!state.configured && state.browser === "available" && !state.enabledOnDevice ? (
         <p className="text-sm text-muted">
-          Push notifications are not configured for this deployment. Set{" "}
-          <span className="font-mono text-xs">WEB_PUSH_VAPID_PRIVATE_KEY</span> and{" "}
-          <span className="font-mono text-xs">WEB_PUSH_VAPID_SUBJECT</span>.
+          Push notifications are not configured for this deployment.
         </p>
       ) : null}
 
@@ -254,67 +183,11 @@ export function AdminPushNotificationsSettings() {
         </p>
       ) : null}
 
-      {subscriptionMismatch ? (
-        <p className="text-sm text-muted">
-          This device subscription was created with an older VAPID public key. That causes HTTP 403
-          from the push provider when sending. Tap Disable on this device, then Enable notifications
-          again (no Hostinger key changes needed for this).
-        </p>
-      ) : null}
-
-      {legacyMismatch ? (
-        <p className="text-sm text-muted">
-          Legacy configured public key mismatch:{" "}
-          <span className="font-mono text-xs">WEB_PUSH_VAPID_PUBLIC_KEY</span> does not match the
-          public key derived from the private key. Runtime uses the derived key; you can remove the
-          legacy public env after redeploy. This does not block Enable or Disable.
-        </p>
-      ) : null}
-
       {state.permission === "denied" ? (
         <p className="text-sm text-muted">
           Notifications are blocked for this site. Open your device or browser notification
           settings, allow notifications for DaintyHand Admin, then return here to enable them.
         </p>
-      ) : null}
-
-      {diagnostics ? (
-        <div className="space-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
-            VAPID diagnostics
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Derived public fingerprint: {diagnostics.derivedPublicFingerprint ?? "—"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Derived public length: {diagnostics.derivedPublicLength ?? "—"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Private length: {diagnostics.privateLength ?? "—"}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Private key valid: {yesNo(diagnostics.privateKeyValid)}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Subject valid: {yesNo(diagnostics.subjectValid)}
-          </p>
-          <p className="text-xs font-mono text-foreground">
-            Device subscription matches server: {yesNo(state.subscriptionMatchesServer)}
-          </p>
-          {diagnostics.legacyPublicFingerprint ? (
-            <>
-              <p className="text-xs font-mono text-foreground">
-                Legacy public fingerprint: {diagnostics.legacyPublicFingerprint}
-              </p>
-              <p className="text-xs font-mono text-foreground">
-                Legacy public length: {diagnostics.legacyPublicLength ?? "—"}
-              </p>
-              <p className="text-xs font-mono text-foreground">
-                Legacy public matches derived: {yesNo(diagnostics.legacyPublicMatchesDerived)}
-              </p>
-            </>
-          ) : null}
-        </div>
       ) : null}
 
       <div className="flex flex-col sm:flex-row flex-wrap gap-3">
@@ -358,30 +231,11 @@ export function AdminPushNotificationsSettings() {
                     subscription.options?.applicationServerKey,
                     state.vapidPublicKey,
                   );
-                  // #region agent log
-                  fetch("http://127.0.0.1:7278/ingest/68b4041a-7dab-4ccf-9f80-2b4b1a1fa764", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-Debug-Session-Id": "dfeff6",
-                    },
-                    body: JSON.stringify({
-                      sessionId: "dfeff6",
-                      runId: "iphone-403",
-                      hypothesisId: "J",
-                      location: "AdminPushNotificationsSettings.tsx:sendTest",
-                      message: "pre-send subscription key check",
-                      data: { matches },
-                      timestamp: Date.now(),
-                    }),
-                  }).catch(() => {});
-                  // #endregion
                   if (matches === false) {
                     return {
                       ok: false,
                       error:
-                        "This device's push subscription does not match the server VAPID key. Disable notifications on this device, then Enable again.",
-                      diagnostic: { category: "vapid_auth", statusCode: 403 },
+                        "This device's push subscription is out of date. Disable notifications, then Enable again.",
                     };
                   }
                 }
@@ -426,14 +280,6 @@ export function AdminPushNotificationsSettings() {
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {diagnostic?.statusCode || diagnostic?.reason || diagnostic?.provider ? (
-        <p className="text-xs font-mono text-muted">
-          Diagnostic:
-          {diagnostic.statusCode ? ` HTTP ${diagnostic.statusCode}` : ""}
-          {diagnostic.provider ? ` · ${diagnostic.provider}` : ""}
-          {diagnostic.reason ? ` · ${diagnostic.reason}` : ""}
-        </p>
-      ) : null}
       {message && !error ? <p className="text-sm text-muted">{message}</p> : null}
     </section>
   );

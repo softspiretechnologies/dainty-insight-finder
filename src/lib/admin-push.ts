@@ -281,9 +281,9 @@ export function friendlyTestPushErrorMessage(diagnostic: PushDeliveryDiagnostic)
       }
       // 403/401 without a clear body — often Apple JWT; key mismatch is less likely when diagnostics say match Yes.
       if (diagnostic.provider === "apple") {
-        return "Apple Push rejected VAPID authentication (HTTP 403/401). Check WEB_PUSH_VAPID_SUBJECT (mailto:/https:) and Hostinger server time. If Device subscription matches server is No, Disable then Enable.";
+        return "Apple Push rejected VAPID authentication. Confirm WEB_PUSH_VAPID_SUBJECT uses mailto: or https:, then try Disable and Enable on this device.";
       }
-      return "Push provider rejected VAPID authentication. If Device subscription matches server is No, Disable then Enable; if Yes, check VAPID subject and server clock.";
+      return "Push provider rejected VAPID authentication. Try Disable and Enable on this device, and confirm WEB_PUSH_VAPID_SUBJECT is a mailto: or https: address.";
     }
     case "stale_subscription":
       return "This device's notification subscription expired. Disable and enable notifications again.";

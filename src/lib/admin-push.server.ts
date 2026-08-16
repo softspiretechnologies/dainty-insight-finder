@@ -243,13 +243,11 @@ export async function countNewEnquiries(): Promise<number> {
 }
 
 export function getAdminPushStatusPayload() {
-  const vapidDiagnostics = buildVapidEnvDiagnostics();
   const assessment = assessWebPushVapidConfig();
   if (!assessment.configured || !assessment.publicKey) {
     return {
       configured: false as const,
       vapidPairValid: null as boolean | null,
-      vapidDiagnostics,
     };
   }
   return {
@@ -257,7 +255,6 @@ export function getAdminPushStatusPayload() {
     /** Always the derived public key — never the legacy env value. */
     vapidPublicKey: assessment.publicKey,
     vapidPairValid: true as const,
-    vapidDiagnostics,
   };
 }
 
