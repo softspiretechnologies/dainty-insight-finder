@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Layers, Trash2, Upload } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
@@ -43,6 +43,7 @@ type BulkDraftItem = {
 function AdminProductsBulkPage() {
   const { categories } = Route.useLoaderData();
   const navigate = useNavigate();
+  const router = useRouter();
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -179,6 +180,7 @@ function AdminProductsBulkPage() {
       const result = await bulkCreateAdminProducts({ data: parsed.data });
       for (const item of items) URL.revokeObjectURL(item.previewUrl);
       setItems([]);
+      await router.invalidate();
       setSuccessCount(result.count);
       setProgress(null);
     } catch (err) {

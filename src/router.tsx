@@ -13,8 +13,8 @@ export const getRouter = () => {
     /** Preload matched route code + loaders on Link hover/focus/touch intent. */
     defaultPreload: "intent",
     defaultPreloadStaleTime: 30_000,
-    /** Brief freshness window for back/forward Admin navigation; mutations still invalidate. */
-    defaultStaleTime: 15_000,
+    // Public routes keep the framework default freshness (0). Admin routes set
+    // short staleTime explicitly where back-nav caching helps.
   });
 
   return router;

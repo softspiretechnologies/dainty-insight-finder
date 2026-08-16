@@ -62,8 +62,16 @@ describe("admin page-data server functions", () => {
     path.join(process.cwd(), "src/routes/admin.products.$productId.tsx"),
     "utf8",
   );
+  const productsBulk = readFileSync(
+    path.join(process.cwd(), "src/routes/admin.products.bulk.tsx"),
+    "utf8",
+  );
   const enquiriesIndex = readFileSync(
     path.join(process.cwd(), "src/routes/admin.enquiries.index.tsx"),
+    "utf8",
+  );
+  const blogEditor = readFileSync(
+    path.join(process.cwd(), "src/routes/admin.blog.$postId.tsx"),
     "utf8",
   );
   const router = readFileSync(path.join(process.cwd(), "src/router.tsx"), "utf8");
@@ -113,9 +121,38 @@ describe("admin page-data server functions", () => {
     expect(enquiriesIndex).not.toContain("getAdminEnquirySummary");
   });
 
-  it("enables intent route preloading with a short default staleTime", () => {
+  it("enables intent route preloading without a global defaultStaleTime", () => {
     expect(router).toContain('defaultPreload: "intent"');
-    expect(router).toContain("defaultStaleTime: 15_000");
     expect(router).toContain("defaultPreloadStaleTime: 30_000");
+    expect(router).not.toMatch(/defaultStaleTime\s*:/);
+  });
+
+  it("keeps short staleTime only on selected Admin routes", () => {
+    expect(adminLayout).toContain("staleTime: 15_000");
+    expect(adminIndex).toContain("staleTime: 15_000");
+    expect(productsIndex).toContain("staleTime: 15_000");
+    expect(productEditor).toContain("staleTime: 15_000");
+    expect(enquiriesIndex).toContain("staleTime: 10_000");
+  });
+
+  it("invalidates router data before returning to the cached products list after save", () => {
+    expect(productEditor).toMatch(
+      /saveAdminProduct\([\s\S]*?await router\.invalidate\(\);[\s\S]*?navigate\(\{\s*to:\s*"\/admin\/products"/,
+    );
+  });
+
+  it("invalidates router data after successful bulk create before View products", () => {
+    expect(productsBulk).toMatch(
+      /bulkCreateAdminProducts\([\s\S]*?await router\.invalidate\(\);[\s\S]*?setSuccessCount/,
+    );
+  });
+
+  it("does not require blog save invalidation while blog list uses default staleTime 0", () => {
+    expect(blogEditor).toContain('navigate({ to: "/admin/blog" })');
+    const blogIndex = readFileSync(
+      path.join(process.cwd(), "src/routes/admin.blog.index.tsx"),
+      "utf8",
+    );
+    expect(blogIndex).not.toMatch(/staleTime:\s*\d/);
   });
 });

@@ -199,6 +199,7 @@ function AdminProductEditPage() {
         },
       });
       setSavedMessage("Saved");
+      await router.invalidate();
       await router.navigate({ to: "/admin/products" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to save product";
