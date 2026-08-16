@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Package, Settings } from "lucide-react";
 
 import { AdminPagePending } from "@/components/admin/AdminSkeleton";
-import { getAdminDashboardData } from "@/lib/api/catalog";
-import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
+import { getAdminDashboardPageData } from "@/lib/api/admin/enquiries";
 import { formatAdminDateTime } from "@/lib/admin-format";
 import {
   ENQUIRY_STATUS_LABELS,
@@ -14,13 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
-  loader: async () => {
-    const [dashboard, enquiries] = await Promise.all([
-      getAdminDashboardData(),
-      getAdminEnquirySummary(),
-    ]);
-    return { ...dashboard, enquiries };
-  },
+  staleTime: 15_000,
+  loader: async () => getAdminDashboardPageData(),
   pendingComponent: () => <AdminPagePending label="Loading dashboard…" />,
   component: AdminDashboard,
 });

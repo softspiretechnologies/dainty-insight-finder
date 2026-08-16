@@ -17,8 +17,7 @@ import {
   validateForm,
   type FieldErrors,
 } from "@/lib/admin-validation";
-import { getAdminProduct, saveAdminProduct } from "@/lib/api/admin/products";
-import { listAdminCategories } from "@/lib/api/admin/categories";
+import { getAdminProductEditorData, saveAdminProduct } from "@/lib/api/admin/products";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { productPriceInputValue } from "@/lib/product-price";
@@ -34,15 +33,9 @@ function goBackToProducts(router: ReturnType<typeof useRouter>) {
 }
 
 export const Route = createFileRoute("/admin/products/$productId")({
-  loader: async ({ params }) => {
-    const categories = await listAdminCategories();
-    if (params.productId === "new") {
-      return { product: null, categories };
-    }
-
-    const product = await getAdminProduct({ data: { id: Number(params.productId) } });
-    return { product, categories };
-  },
+  staleTime: 15_000,
+  loader: async ({ params }) =>
+    getAdminProductEditorData({ data: { productId: params.productId } }),
   component: AdminProductEditPage,
 });
 

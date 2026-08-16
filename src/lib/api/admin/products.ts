@@ -3,7 +3,7 @@ import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
-import { products as productsTable } from "@/db/schema";
+import { categories as categoriesTable, products as productsTable } from "@/db/schema";
 import { isValidUploadPath } from "@/lib/admin-upload-path";
 import { buildBulkQuickProductInsertRows } from "@/lib/admin-product-bulk";
 import {
@@ -60,6 +60,17 @@ export const listAdminProducts = createServerFn({ method: "GET" }).handler(async
   return db.select().from(productsTable).orderBy(productsTable.name);
 });
 
+/** Products list page — products + categories in one authenticated round-trip. */
+export const getAdminProductsPageData = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const db = getDb();
+  const [products, categories] = await Promise.all([
+    db.select().from(productsTable).orderBy(productsTable.name),
+    db.select().from(categoriesTable).orderBy(categoriesTable.sortOrder),
+  ]);
+  return { products, categories };
+});
+
 export const getAdminProduct = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.number().int().positive() }))
   .handler(async ({ data }) => {
@@ -71,6 +82,39 @@ export const getAdminProduct = createServerFn({ method: "GET" })
       .where(eq(productsTable.id, data.id))
       .limit(1);
     return rows[0] ?? null;
+  });
+
+const productEditorIdSchema = z.object({
+  productId: z.union([
+    z.literal("new"),
+    z
+      .string()
+      .regex(/^\d+$/, "Invalid product id")
+      .transform((value) => Number(value))
+      .pipe(z.number().int().positive()),
+  ]),
+});
+
+/**
+ * Product editor page — categories + product (or null for create) without sequential
+ * requireAdmin/session resolution across two server functions.
+ */
+export const getAdminProductEditorData = createServerFn({ method: "GET" })
+  .validator(productEditorIdSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const db = getDb();
+    const categoriesQuery = db.select().from(categoriesTable).orderBy(categoriesTable.sortOrder);
+
+    if (data.productId === "new") {
+      return { product: null, categories: await categoriesQuery };
+    }
+
+    const [categories, productRows] = await Promise.all([
+      categoriesQuery,
+      db.select().from(productsTable).where(eq(productsTable.id, data.productId)).limit(1),
+    ]);
+    return { product: productRows[0] ?? null, categories };
   });
 
 async function resolveHomepageFeaturedState(

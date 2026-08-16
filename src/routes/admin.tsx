@@ -4,7 +4,7 @@ import { AdminLaunchSplash } from "@/components/admin/AdminLaunchSplash";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { sanitizeAdminNotificationUrl } from "@/lib/admin-push";
 import { getSessionAdmin } from "@/lib/api/admin/auth";
-import { getAdminEnquirySummary } from "@/lib/api/admin/enquiries";
+import { getAdminNewEnquiryCount } from "@/lib/api/admin/enquiries";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async ({ location }) => {
@@ -24,13 +24,14 @@ export const Route = createFileRoute("/admin")({
 
     return { session };
   },
+  staleTime: 15_000,
   loader: async ({ location }) => {
     if (location.pathname === "/admin/login") {
       return { newEnquiryCount: 0 };
     }
     try {
-      const summary = await getAdminEnquirySummary();
-      return { newEnquiryCount: summary.new };
+      const result = await getAdminNewEnquiryCount();
+      return { newEnquiryCount: result.count };
     } catch {
       return { newEnquiryCount: 0 };
     }

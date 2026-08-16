@@ -24,9 +24,11 @@ describe("admin server function authorization", () => {
   });
 
   it("protects the admin dashboard server function", () => {
-    const source = readFileSync(path.join(process.cwd(), "src/lib/api/catalog.ts"), "utf8");
-    expect(source).toContain("await requireAdmin()");
-    expect(source).toMatch(/getAdminDashboardData[\s\S]*await requireAdmin\(\)/);
+    const source = readFileSync(path.join(adminApiDir, "enquiries.ts"), "utf8");
+    expect(source).toContain("export const getAdminDashboardPageData");
+    expect(source).toMatch(
+      /export const getAdminDashboardPageData = createServerFn[\s\S]*?await requireAdmin\(\)/,
+    );
   });
 
   it("protects admin push subscription endpoints", () => {

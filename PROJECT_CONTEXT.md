@@ -39,6 +39,8 @@ Keep this document concise and current. Do not append a development diary.
 
 **Tests:** Vitest (`npm run test`), Playwright Chromium + scoped WebKit (`test:e2e`), opt-in visual (`test:visual`), smoke (`npm run smoke`). CI: lint + Vitest + `build:app`; separate e2e job with ephemeral MySQL.
 
+**Admin nav performance:** Router `defaultPreload: "intent"` + short loader `staleTime`; Admin pages prefer one authenticated page-data server function per screen (badge COUNT vs full dashboard summary stay separate).
+
 **Safety:** Never print secrets/VAPID private keys. Trust code over stale docs. Prefer `docs/database.md` + `docs/PRODUCTION_OPERATIONS.md` for DB/deploy details.
 
 **Canonical docs:** this file (current state) · `README.md` (entrypoint) · `docs/database.md` · `docs/PRODUCTION_OPERATIONS.md` · `docs/enquiries.md` · `docs/BACKUP_AND_RESTORE.md`
@@ -76,6 +78,8 @@ Keep this document concise and current. Do not append a development diary.
 - **SSR app** via TanStack Start + Nitro `node-server`.
 - **File-based routes** in `src/routes/` → `src/routeTree.gen.ts` (generated; do not hand-edit).
 - **Data access:** `createServerFn` in `src/lib/api/*` so MySQL/Sharp/web-push stay server-side.
+- **Admin page loads:** Prefer consolidated page-data server functions (one `requireAdmin()` + concurrent queries) over multiple independent `createServerFn` calls per route. Shell badge uses `getAdminNewEnquiryCount` (COUNT only); dashboard uses `getAdminDashboardPageData`; products list/editor and enquiries list use matching page-data endpoints.
+- **Router:** `defaultPreload: "intent"` with `defaultPreloadStaleTime: 30_000` and `defaultStaleTime: 15_000` (enquiries list uses `10_000`). Mutations still `router.invalidate()`.
 - **Public layout:** `PageShell` (header, footer, floating WhatsApp).
 - **Admin layout:** `AdminShell` (desktop sidebar + mobile bottom nav + “More” sheet); login route without shell chrome.
 - **Config:** `src/lib/site.ts` (brand defaults), `src/lib/config.server.ts` (server env), path alias `@/*` → `src/*`.
@@ -252,6 +256,7 @@ See `docs/database.md`.
 - Used for public list/settings-style reads in `data.server.ts`.
 - Product detail intentionally bypasses cache for visibility correctness.
 - Admin mutations call `clearDataCache()` in the handling process.
+- TanStack Router loader cache: default `staleTime` **15s** (intent preload stale **30s**); Admin enquiries list **10s**. Not Infinity; invalidate after mutations.
 - Not shared across Node workers; acceptable for single Hostinger process.
 
 ---
@@ -356,6 +361,7 @@ GitHub Actions (`.github/workflows/ci.yml`): lint + Vitest + `build:app`; e2e jo
 | --- | --- |
 | `src/lib/data.server.ts` | Public catalog/settings reads + fallback |
 | `src/lib/api/catalog.ts` / `api/admin/*` | Server functions |
+| `src/lib/admin-enquiry-queries.server.ts` | Shared enquiry COUNT/summary queries for Admin page-data |
 | `src/lib/auth.server.ts` | Sessions |
 | `src/lib/uploads.server.ts` | Image save/copy/delete |
 | `src/lib/admin-push.server.ts` | VAPID + send |

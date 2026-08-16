@@ -1,18 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, count, desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, like, or } from "drizzle-orm";
 import { z } from "zod";
 
 import { getDb } from "@/db/index.server";
 import { enquiries } from "@/db/schema";
+import {
+  emptyEnquiryStatusCounts,
+  emptyEnquirySummary,
+  queryAdminProductCount,
+  queryEnquirySummary,
+  safeEnquiryStatusCounts,
+  safeEnquirySummary,
+  safeNewEnquiryCount,
+} from "@/lib/admin-enquiry-queries.server";
 import { requireAdmin } from "@/lib/auth.server";
 import {
-  ENQUIRY_STATUSES,
   adminEnquiryListFilterSchema,
   adminEnquiryNotesSchema,
   adminEnquiryStatusSchema,
   adminEnquiryUpdateSchema,
   serializeEnquiry,
-  type EnquiryStatus,
 } from "@/lib/enquiries";
 import { logError } from "@/lib/logger.server";
 
@@ -51,6 +58,67 @@ export const listAdminEnquiries = createServerFn({ method: "GET" })
     } catch (error) {
       logError("admin.enquiries.list_failed", error);
       return { enquiries: [], error: TABLE_ERROR };
+    }
+  });
+
+/** Cheap badge count for AdminShell — one COUNT, no recent rows. */
+export const getAdminNewEnquiryCount = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  return { count: await safeNewEnquiryCount() };
+});
+
+/**
+ * Dashboard page data: product count + full enquiry summary in one auth check.
+ * Does not replace the shell badge endpoint.
+ */
+export const getAdminDashboardPageData = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const db = getDb();
+  const [productCount, enquirySummary] = await Promise.all([
+    queryAdminProductCount(db).catch((error) => {
+      logError("admin.dashboard.product_count_failed", error);
+      return 0;
+    }),
+    safeEnquirySummary(),
+  ]);
+  return { productCount, enquiries: enquirySummary };
+});
+
+/** Enquiries list page: filtered list + status counts (no recent rows). */
+export const getAdminEnquiriesPageData = createServerFn({ method: "GET" })
+  .validator(adminEnquiryListFilterSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    try {
+      const db = getDb();
+      const conditions = [];
+      if (data.status !== "all") {
+        conditions.push(eq(enquiries.status, data.status));
+      }
+      if (data.q) {
+        const term = `%${data.q.replace(/[%_]/g, "")}%`;
+        conditions.push(
+          or(
+            like(enquiries.name, term),
+            like(enquiries.phone, term),
+            like(enquiries.productNameSnapshot, term),
+            like(enquiries.serviceTitleSnapshot, term),
+          ),
+        );
+      }
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
+      const [rows, counts] = await Promise.all([
+        db.select().from(enquiries).where(where).orderBy(desc(enquiries.createdAt)).limit(200),
+        safeEnquiryStatusCounts(),
+      ]);
+      return { enquiries: rows.map(serializeEnquiry), counts };
+    } catch (error) {
+      logError("admin.enquiries.page_failed", error);
+      return {
+        enquiries: [],
+        counts: emptyEnquiryStatusCounts(),
+        error: TABLE_ERROR,
+      };
     }
   });
 
@@ -112,40 +180,13 @@ export const updateAdminEnquiry = createServerFn({ method: "POST" })
     }
   });
 
+/** Full status breakdown + recent rows (kept for callers that need recent). */
 export const getAdminEnquirySummary = createServerFn({ method: "GET" }).handler(async () => {
   await requireAdmin();
-  const empty = {
-    all: 0,
-    new: 0,
-    contacted: 0,
-    quoted: 0,
-    confirmed: 0,
-    lost: 0,
-    recent: [] as ReturnType<typeof serializeEnquiry>[],
-  };
   try {
-    const db = getDb();
-    const counts = await db
-      .select({ status: enquiries.status, value: count() })
-      .from(enquiries)
-      .groupBy(enquiries.status);
-    const summary = { ...empty };
-    for (const row of counts) {
-      if ((ENQUIRY_STATUSES as readonly string[]).includes(row.status)) {
-        summary[row.status as EnquiryStatus] = Number(row.value);
-      }
-    }
-    summary.all =
-      summary.new + summary.contacted + summary.quoted + summary.confirmed + summary.lost;
-    const recentRows = await db
-      .select()
-      .from(enquiries)
-      .orderBy(desc(enquiries.createdAt))
-      .limit(5);
-    summary.recent = recentRows.map(serializeEnquiry);
-    return summary;
+    return await queryEnquirySummary();
   } catch (error) {
     logError("admin.enquiries.summary_failed", error);
-    return empty;
+    return emptyEnquirySummary();
   }
 });

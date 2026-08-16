@@ -29,11 +29,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { listAdminCategories } from "@/lib/api/admin/categories";
 import {
   deleteAdminProduct,
   duplicateAdminProduct,
-  listAdminProducts,
+  getAdminProductsPageData,
   toggleAdminProductActive,
   toggleAdminProductHomepageFeatured,
 } from "@/lib/api/admin/products";
@@ -52,10 +51,8 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products/")({
   validateSearch: adminProductSearchSchema,
-  loader: async () => {
-    const [products, categories] = await Promise.all([listAdminProducts(), listAdminCategories()]);
-    return { products, categories };
-  },
+  staleTime: 15_000,
+  loader: async () => getAdminProductsPageData(),
   pendingComponent: AdminPagePending,
   component: AdminProductsPage,
 });

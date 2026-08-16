@@ -7,7 +7,7 @@ import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getAdminEnquirySummary, listAdminEnquiries } from "@/lib/api/admin/enquiries";
+import { getAdminEnquiriesPageData } from "@/lib/api/admin/enquiries";
 import { formatAdminDateTime } from "@/lib/admin-format";
 import {
   ENQUIRY_STATUSES,
@@ -26,15 +26,12 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/admin/enquiries/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => ({ status: search.status, q: search.q }),
-  loader: async ({ deps }) => {
-    const [list, summary] = await Promise.all([
-      listAdminEnquiries({
-        data: { status: deps.status, q: deps.q || undefined },
-      }),
-      getAdminEnquirySummary(),
-    ]);
-    return { ...list, counts: summary };
-  },
+  /** Shorter than default so status filters stay relatively fresh. */
+  staleTime: 10_000,
+  loader: async ({ deps }) =>
+    getAdminEnquiriesPageData({
+      data: { status: deps.status, q: deps.q || undefined },
+    }),
   pendingComponent: () => <AdminPagePending label="Loading enquiries…" />,
   component: AdminEnquiriesPage,
 });

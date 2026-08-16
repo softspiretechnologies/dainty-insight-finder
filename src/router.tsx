@@ -10,7 +10,11 @@ export const getRouter = () => {
       siteSettings: {} as SiteSettingsData,
     },
     scrollRestoration: true,
+    /** Preload matched route code + loaders on Link hover/focus/touch intent. */
+    defaultPreload: "intent",
     defaultPreloadStaleTime: 30_000,
+    /** Brief freshness window for back/forward Admin navigation; mutations still invalidate. */
+    defaultStaleTime: 15_000,
   });
 
   return router;
