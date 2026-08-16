@@ -33,9 +33,14 @@ export const adminPushSubscriptionInputSchema = z.object({
 
 export type AdminPushSubscriptionInput = z.infer<typeof adminPushSubscriptionInputSchema>;
 
+/** True only for `/admin` or `/admin/...` — not `/administrator` or `/admin-other`. */
+export function isSafeAdminNotificationPathname(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
 /**
  * Allow only same-origin Admin paths for notification navigation.
- * Rejects protocol-relative, absolute, and non-/admin destinations.
+ * Rejects protocol-relative, absolute, and non-`/admin` / `/admin/...` destinations.
  */
 export function sanitizeAdminNotificationUrl(candidate: unknown): string | null {
   if (typeof candidate !== "string") return null;
@@ -48,11 +53,25 @@ export function sanitizeAdminNotificationUrl(candidate: unknown): string | null 
   try {
     const parsed = new URL(raw, "https://daintyhand.invalid");
     if (parsed.origin !== "https://daintyhand.invalid") return null;
-    if (!parsed.pathname.startsWith("/admin")) return null;
+    if (!isSafeAdminNotificationPathname(parsed.pathname)) return null;
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
   } catch {
     return null;
   }
+}
+
+/** Settings UI success copy after enable / test / disable. Never a generic "Done." */
+export const ADMIN_PUSH_SETTINGS_SUCCESS = {
+  enable: "Notifications enabled.",
+  test: "Test notification sent.",
+  disable: "Notifications disabled.",
+} as const;
+
+export function resolvePushSettingsSuccessMessage(
+  result: { ok: boolean },
+  successMessage: string,
+): string | null {
+  return result.ok ? successMessage : null;
 }
 
 /** Convert VAPID public key (URL-safe base64) to Uint8Array for PushManager.subscribe. */

@@ -1,16 +1,19 @@
 import { createECDH } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { createContext, runInContext } from "node:vm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import webpush from "web-push";
 
 import {
+  ADMIN_PUSH_SETTINGS_SUCCESS,
   adminPushSubscriptionInputSchema,
   classifyPushDeliveryFailure,
   detectAdminPushBrowserSupport,
   extractPushDeliveryDiagnostic,
   friendlyTestPushErrorMessage,
   inferPushProviderFromEndpoint,
+  resolvePushSettingsSuccessMessage,
   sanitizeAdminNotificationUrl,
   subscriptionMatchesVapidPublicKey,
   vapidPublicKeyToUint8Array,
@@ -47,12 +50,161 @@ function sampleVapidPair() {
   };
 }
 
+const SANITIZER_ACCEPT: Array<[string, string]> = [
+  ["/admin", "/admin"],
+  ["/admin/", "/admin/"],
+  ["/admin/enquiries/123", "/admin/enquiries/123"],
+  ["/admin/enquiries/123?source=push#detail", "/admin/enquiries/123?source=push#detail"],
+];
+
+const SANITIZER_REJECT = [
+  "/administrator",
+  "/admin-other",
+  "/admin2",
+  "//evil.example/admin",
+  "https://evil.example/admin",
+  "javascript:alert(1)",
+  "/admin\\other",
+  "/admin\n/enquiries",
+  "/admin\r/enquiries",
+  "/admin\0/enquiries",
+];
+
+type SwClient = {
+  focus?: () => Promise<void>;
+  navigate?: (url: string) => Promise<unknown>;
+};
+
+function loadAdminPushSw(clients: SwClient[] = []) {
+  const source = readFileSync(join(process.cwd(), "public/admin-push-sw.js"), "utf8");
+  const listeners = new Map<string, (event: unknown) => void>();
+  const openWindow = vi.fn(async () => null);
+  const self = {
+    location: { origin: "https://daintyhand.example" },
+    addEventListener(type: string, handler: (event: unknown) => void) {
+      listeners.set(type, handler);
+    },
+    clients: {
+      matchAll: async () => clients,
+      openWindow,
+    },
+    registration: { showNotification: vi.fn() },
+    navigator: {},
+    skipWaiting() {},
+    sanitizeAdminUrl: undefined as undefined | ((candidate: unknown) => string | null),
+  };
+  const context = createContext({ self, URL });
+  runInContext(`${source}\nself.sanitizeAdminUrl = sanitizeAdminUrl;`, context);
+  return { self, listeners, openWindow };
+}
+
+async function fireNotificationClick(
+  listeners: Map<string, (event: unknown) => void>,
+  dataUrl: unknown,
+) {
+  let waited: Promise<unknown> | undefined;
+  const handler = listeners.get("notificationclick");
+  if (!handler) throw new Error("notificationclick listener missing");
+  handler({
+    notification: {
+      close: vi.fn(),
+      data: { url: dataUrl },
+    },
+    waitUntil(promise: Promise<unknown>) {
+      waited = promise;
+    },
+  });
+  await waited;
+}
+
 describe("sanitizeAdminNotificationUrl", () => {
-  it("allows Admin paths and rejects unsafe destinations", () => {
-    expect(sanitizeAdminNotificationUrl("/admin/enquiries/123")).toBe("/admin/enquiries/123");
-    expect(sanitizeAdminNotificationUrl("https://evil.example")).toBeNull();
-    expect(sanitizeAdminNotificationUrl("//evil.example")).toBeNull();
-    expect(sanitizeAdminNotificationUrl("javascript:alert(1)")).toBeNull();
+  it("accepts /admin and /admin/... including enquiry deep links", () => {
+    for (const [input, expected] of SANITIZER_ACCEPT) {
+      expect(sanitizeAdminNotificationUrl(input)).toBe(expected);
+    }
+  });
+
+  it("rejects prefix lookalikes, absolute URLs, schemes, and control characters", () => {
+    for (const input of SANITIZER_REJECT) {
+      expect(sanitizeAdminNotificationUrl(input), input).toBeNull();
+    }
+  });
+});
+
+describe("admin-push-sw sanitizeAdminUrl", () => {
+  it("matches the TypeScript sanitizer accept/reject boundaries", () => {
+    const { self } = loadAdminPushSw();
+    const sanitize = self.sanitizeAdminUrl;
+    expect(sanitize).toEqual(expect.any(Function));
+    for (const [input, expected] of SANITIZER_ACCEPT) {
+      expect(sanitize!(input)).toBe(expected);
+    }
+    for (const input of SANITIZER_REJECT) {
+      expect(sanitize!(input), input).toBeNull();
+    }
+  });
+});
+
+describe("admin-push-sw notificationclick", () => {
+  it("does not openWindow when navigate succeeds", async () => {
+    const navigate = vi.fn(async () => undefined);
+    const focus = vi.fn(async () => undefined);
+    const { listeners, openWindow } = loadAdminPushSw([{ focus, navigate }]);
+    await fireNotificationClick(listeners, "/admin/enquiries/123");
+    expect(focus).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith("https://daintyhand.example/admin/enquiries/123");
+    expect(openWindow).not.toHaveBeenCalled();
+  });
+
+  it("opens the enquiry deep link when navigate throws", async () => {
+    const navigate = vi.fn(async () => {
+      throw new Error("navigate failed");
+    });
+    const focus = vi.fn(async () => undefined);
+    const { listeners, openWindow } = loadAdminPushSw([{ focus, navigate }]);
+    await fireNotificationClick(listeners, "/admin/enquiries/123");
+    expect(navigate).toHaveBeenCalled();
+    expect(openWindow).toHaveBeenCalledWith("https://daintyhand.example/admin/enquiries/123");
+  });
+
+  it("opens a window when no client is available", async () => {
+    const { listeners, openWindow } = loadAdminPushSw([]);
+    await fireNotificationClick(listeners, "/admin/enquiries/123");
+    expect(openWindow).toHaveBeenCalledWith("https://daintyhand.example/admin/enquiries/123");
+  });
+
+  it("falls back to /admin for an unsafe URL", async () => {
+    const { listeners, openWindow } = loadAdminPushSw([]);
+    await fireNotificationClick(listeners, "https://evil.example/admin");
+    expect(openWindow).toHaveBeenCalledWith("https://daintyhand.example/admin");
+  });
+});
+
+describe("push settings success messages", () => {
+  it("keeps the test notification copy instead of overwriting with Done.", () => {
+    expect(resolvePushSettingsSuccessMessage({ ok: true }, ADMIN_PUSH_SETTINGS_SUCCESS.test)).toBe(
+      "Test notification sent.",
+    );
+    expect(
+      resolvePushSettingsSuccessMessage({ ok: true }, ADMIN_PUSH_SETTINGS_SUCCESS.test),
+    ).not.toBe("Done.");
+    expect(
+      resolvePushSettingsSuccessMessage({ ok: true }, ADMIN_PUSH_SETTINGS_SUCCESS.enable),
+    ).toBe("Notifications enabled.");
+    expect(
+      resolvePushSettingsSuccessMessage({ ok: true }, ADMIN_PUSH_SETTINGS_SUCCESS.disable),
+    ).toBe("Notifications disabled.");
+    expect(
+      resolvePushSettingsSuccessMessage({ ok: false }, ADMIN_PUSH_SETTINGS_SUCCESS.test),
+    ).toBeNull();
+
+    const settingsSource = readFileSync(
+      join(process.cwd(), "src/components/admin/AdminPushNotificationsSettings.tsx"),
+      "utf8",
+    );
+    expect(settingsSource).not.toContain('setMessage("Done.")');
+    expect(settingsSource).toContain("ADMIN_PUSH_SETTINGS_SUCCESS.test");
+    expect(settingsSource).toContain("resolvePushSettingsSuccessMessage");
   });
 });
 
@@ -400,6 +552,7 @@ describe("admin-push-sw test renotify", () => {
     expect(source).toContain("requireInteraction: true");
     expect(source).toContain("renotify: true");
     expect(source).toContain("skipWaiting");
+    expect(source).not.toMatch(/addEventListener\(\s*["']fetch["']/);
     // Must not globally force renotify on every notification.
     expect(source.match(/renotify:\s*true/g)?.length).toBe(1);
   });

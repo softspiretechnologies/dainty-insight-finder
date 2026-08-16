@@ -185,7 +185,10 @@ Secondary Admin list/editor routes (categories, services, testimonials, blog, se
 
 ### Push Notifications
 
-- Settings UI + `admin-push-sw.js`.
+- Settings UI + `admin-push-sw.js` (push-only; no fetch cache).
+- Notification URLs must be `/admin` or `/admin/...` (same-origin). Prefixes like `/administrator` are rejected.
+- Click: reuse a focused Admin window when `navigate` succeeds; if `navigate` throws or no window exists, `openWindow`.
+- Settings success copy: enabled / test sent / disabled.
 - Subscriptions stored per admin user; test send; enquiry-triggered notify.
 - Missing/malformed VAPID → Admin still works; push marked unavailable; public enquiry unaffected.
 

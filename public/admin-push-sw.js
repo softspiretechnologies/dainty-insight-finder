@@ -1,4 +1,4 @@
-/* admin-push-sw v1.4 — push + notificationclick (+ optional badge) only. No fetch / cache. */
+/* admin-push-sw v1.5 — push + notificationclick (+ optional badge) only. No fetch / cache. */
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
@@ -7,6 +7,10 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
+
+function isSafeAdminPathname(pathname) {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
 
 function sanitizeAdminUrl(candidate) {
   if (typeof candidate !== "string") return null;
@@ -19,7 +23,7 @@ function sanitizeAdminUrl(candidate) {
   try {
     const parsed = new URL(raw, self.location.origin);
     if (parsed.origin !== self.location.origin) return null;
-    if (!parsed.pathname.startsWith("/admin")) return null;
+    if (!isSafeAdminPathname(parsed.pathname)) return null;
     return parsed.pathname + parsed.search + parsed.hash;
   } catch {
     return null;
@@ -79,34 +83,34 @@ self.addEventListener("push", (event) => {
   event.waitUntil(Promise.all([show, applyBadge(badgeCount)]));
 });
 
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  const url = sanitizeAdminUrl(event.notification.data && event.notification.data.url) || "/admin";
+async function openNotificationUrl(candidate) {
+  const url = sanitizeAdminUrl(candidate) || "/admin";
   const absolute = new URL(url, self.location.origin).href;
 
-  event.waitUntil(
-    (async () => {
-      const allClients = await self.clients.matchAll({
-        type: "window",
-        includeUncontrolled: true,
-      });
-      for (const client of allClients) {
-        if ("focus" in client) {
-          await client.focus();
-          if ("navigate" in client) {
-            try {
-              await client.navigate(absolute);
-              return;
-            } catch {
-              // Fall through to openWindow.
-            }
-          }
-          return;
-        }
+  const allClients = await self.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true,
+  });
+  for (const client of allClients) {
+    if (!("focus" in client)) continue;
+    await client.focus();
+    if ("navigate" in client) {
+      try {
+        await client.navigate(absolute);
+        return;
+      } catch {
+        break;
       }
-      if (self.clients.openWindow) {
-        await self.clients.openWindow(absolute);
-      }
-    })(),
-  );
+    }
+    break;
+  }
+  if (self.clients.openWindow) {
+    await self.clients.openWindow(absolute);
+  }
+}
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const candidate = event.notification.data && event.notification.data.url;
+  event.waitUntil(openNotificationUrl(candidate));
 });

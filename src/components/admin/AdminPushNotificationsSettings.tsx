@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { subscriptionMatchesVapidPublicKey, type PushDeliveryDiagnostic } from "@/lib/admin-push";
+import {
+  ADMIN_PUSH_SETTINGS_SUCCESS,
+  resolvePushSettingsSuccessMessage,
+  subscriptionMatchesVapidPublicKey,
+  type PushDeliveryDiagnostic,
+} from "@/lib/admin-push";
 import {
   enableAdminPushOnDevice,
   getAdminPushBrowserSnapshot,
@@ -100,7 +105,7 @@ export function AdminPushNotificationsSettings() {
     };
   }, []);
 
-  const run = async (action: () => Promise<ActionResult>) => {
+  const run = async (action: () => Promise<ActionResult>, successMessage: string) => {
     setBusy(true);
     setError(null);
     setMessage(null);
@@ -109,7 +114,8 @@ export function AdminPushNotificationsSettings() {
       if (!result.ok) {
         setError(result.error);
       } else {
-        setMessage("Done.");
+        const next = resolvePushSettingsSuccessMessage(result, successMessage);
+        if (next) setMessage(next);
       }
       await refresh();
     } catch {
@@ -204,7 +210,7 @@ export function AdminPushNotificationsSettings() {
                 const enabled = await enableAdminPushOnDevice(state.vapidPublicKey);
                 if (!enabled.ok) return enabled;
                 return saveAdminPushSubscription({ data: enabled.subscription });
-              })
+              }, ADMIN_PUSH_SETTINGS_SUCCESS.enable)
             }
           >
             {busy ? "Working…" : "Enable notifications"}
@@ -236,12 +242,10 @@ export function AdminPushNotificationsSettings() {
                     };
                   }
                 }
-                const result = await sendAdminPushTest({
+                return sendAdminPushTest({
                   data: { endpoint: subscription.endpoint },
                 });
-                if (result.ok) setMessage("Test notification sent.");
-                return result;
-              })
+              }, ADMIN_PUSH_SETTINGS_SUCCESS.test)
             }
           >
             Send test notification
@@ -268,7 +272,7 @@ export function AdminPushNotificationsSettings() {
                 }
                 await unsubscribeAdminPushOnDevice();
                 return { ok: true };
-              })
+              }, ADMIN_PUSH_SETTINGS_SUCCESS.disable)
             }
           >
             Disable on this device
