@@ -48,6 +48,13 @@ test("public product and blog details have no serious axe violations", async ({ 
   await visit(page, productHref!);
   await expectNoSeriousAccessibilityViolations(page);
 
+  await page.getByRole("button", { name: "Get a Quote" }).click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Send enquiry" }).click();
+  await expect(sheet.getByLabel("Name")).toHaveAttribute("aria-invalid", "true");
+  await expectNoSeriousAccessibilityViolations(page);
+
   await visit(page, "/blog");
   const postHref = await page.locator('article a[href^="/blog/"]').first().getAttribute("href");
   expect(postHref).toBeTruthy();

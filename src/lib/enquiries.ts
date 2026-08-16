@@ -90,7 +90,7 @@ export const publicEnquirySchema = z
     message: z
       .string()
       .trim()
-      .min(10, "Tell us a little about what you need")
+      .min(10, "Please tell us a little more — at least 10 characters.")
       .max(4000, "Message is too long"),
     source: z.enum(ENQUIRY_SOURCES).default("general"),
     productId: z.number().int().positive().optional(),

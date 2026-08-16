@@ -108,7 +108,7 @@ src/
 - **Product (`/catalog/$slug`)** — detail, details list, price-from display (₹ formatting), quote sheet → enquiry.
 - **Services (`/services`)** — celebration services from DB (fallback static); enquiry from service context.
 - **Blog / Journal (`/blog`, `/blog/$slug`)** — published posts from MySQL (static fallback available).
-- **Contact (`/contact`)** — channels + enquiry form.
+- **Contact (`/contact`)** — channels + enquiry form (required markers, invalid field rings, submit summary, focus first error). Same form in product/service enquiry sheets.
 - **Custom order (`/custom`)** — validated client form that opens WhatsApp with a prefilled brief (**does not** insert an `enquiries` row).
 - **Floating WhatsApp** — guided prompts; uses site settings / categories from root context.
 - **SEO** — per-route `head()` meta; `/sitemap.xml` (static + products + blog); `/robots.txt`.
@@ -193,7 +193,7 @@ Secondary Admin list/editor routes (categories, services, testimonials, blog, se
 
 ## Enquiry / Lead Flow
 
-1. Contact / product / service enquiry UI validates and calls `submitEnquiry`.
+1. Contact / product / service enquiry UI validates (required `*` on name, WhatsApp, message; destructive invalid rings; submit-level alert after a failed send; focus/scroll to the first customer-visible error) and calls `submitEnquiry`.
 2. Server inserts `enquiries` (honeypot + IP rate limit); resolves product/service names server-side.
 3. Returns `{ id, whatsappMessage }`; UI offers optional WhatsApp continue.
 4. Best-effort Admin Web Push; failures logged only.

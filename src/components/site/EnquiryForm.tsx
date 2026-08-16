@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useId, useState } from "react";
-import { useForm } from "react-hook-form";
+import { CircleAlert } from "lucide-react";
+import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
+import { useForm, type FieldErrors, type SubmitErrorHandler } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,17 @@ const formSchema = publicEnquirySchema.omit({ website: true }).extend({
 });
 
 type FormValues = z.input<typeof formSchema>;
+
+/** Customer-visible fields in form order. Never includes the honeypot. */
+const CUSTOMER_FIELD_ORDER = [
+  "name",
+  "phone",
+  "eventType",
+  "eventDate",
+  "budget",
+  "email",
+  "message",
+] as const;
 
 export type EnquiryFormProps = {
   source: EnquirySource;
@@ -48,7 +60,7 @@ export function EnquiryForm({
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isSubmitted },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,6 +88,33 @@ export function EnquiryForm({
     onOpened?.();
   }, [onOpened, productSlug, source]);
 
+  const focusFirstInvalidField = useCallback(
+    (fieldErrors: FieldErrors<FormValues>) => {
+      const first = CUSTOMER_FIELD_ORDER.find((name) => fieldErrors[name]);
+      if (!first) return;
+      const el = document.getElementById(`${formId}-${first}`);
+      if (!(el instanceof HTMLElement)) return;
+
+      let reduced = false;
+      try {
+        reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      } catch {
+        reduced = false;
+      }
+      el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+      el.focus({ preventScroll: true });
+    },
+    [formId],
+  );
+
+  const onInvalid: SubmitErrorHandler<FormValues> = useCallback(
+    (fieldErrors) => {
+      setServerError(null);
+      requestAnimationFrame(() => focusFirstInvalidField(fieldErrors));
+    },
+    [focusFirstInvalidField],
+  );
+
   const onSubmit = handleSubmit(async (values) => {
     setServerError(null);
     try {
@@ -102,7 +141,7 @@ export function EnquiryForm({
           : "We could not save your enquiry. Please try again.",
       );
     }
-  });
+  }, onInvalid);
 
   if (success) {
     const continueHref = waLink(success.whatsappMessage);
@@ -135,6 +174,12 @@ export function EnquiryForm({
   }
 
   const interest = productName || serviceTitle ? `About ${productName || serviceTitle}` : null;
+  const visibleErrorCount = CUSTOMER_FIELD_ORDER.filter((name) => errors[name]).length;
+  const showValidationSummary = isSubmitted && visibleErrorCount > 0;
+  const validationSummary =
+    visibleErrorCount === 1
+      ? "Please check the highlighted field below."
+      : "Please check the highlighted fields.";
 
   return (
     <form onSubmit={onSubmit} className={cn("relative space-y-4", className)} noValidate>
@@ -158,38 +203,36 @@ export function EnquiryForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${formId}-name`}>Name</Label>
+        <FieldLabel htmlFor={`${formId}-name`} required invalid={Boolean(errors.name)}>
+          Name
+        </FieldLabel>
         <Input
           id={`${formId}-name`}
           autoComplete="name"
+          aria-required="true"
+          {...register("name")}
           aria-invalid={errors.name ? true : undefined}
           aria-describedby={errors.name ? `${formId}-name-error` : undefined}
-          {...register("name")}
         />
-        {errors.name ? (
-          <p id={`${formId}-name-error`} className="text-xs text-destructive">
-            {errors.name.message}
-          </p>
-        ) : null}
+        <FieldError id={`${formId}-name-error`} message={errors.name?.message} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${formId}-phone`}>WhatsApp number</Label>
+        <FieldLabel htmlFor={`${formId}-phone`} required invalid={Boolean(errors.phone)}>
+          WhatsApp number
+        </FieldLabel>
         <Input
           id={`${formId}-phone`}
           type="tel"
           inputMode="tel"
           autoComplete="tel"
           placeholder="9876543210"
+          aria-required="true"
+          {...register("phone")}
           aria-invalid={errors.phone ? true : undefined}
           aria-describedby={errors.phone ? `${formId}-phone-error` : undefined}
-          {...register("phone")}
         />
-        {errors.phone ? (
-          <p id={`${formId}-phone-error`} className="text-xs text-destructive">
-            {errors.phone.message}
-          </p>
-        ) : null}
+        <FieldError id={`${formId}-phone-error`} message={errors.phone?.message} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -209,11 +252,20 @@ export function EnquiryForm({
           </select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`${formId}-eventDate`}>Event date (optional)</Label>
-          <Input id={`${formId}-eventDate`} type="date" {...register("eventDate")} />
-          {errors.eventDate ? (
-            <p className="text-xs text-destructive">{errors.eventDate.message}</p>
-          ) : null}
+          <Label
+            htmlFor={`${formId}-eventDate`}
+            className={cn(errors.eventDate && "text-destructive")}
+          >
+            Event date (optional)
+          </Label>
+          <Input
+            id={`${formId}-eventDate`}
+            type="date"
+            {...register("eventDate")}
+            aria-invalid={errors.eventDate ? true : undefined}
+            aria-describedby={errors.eventDate ? `${formId}-eventDate-error` : undefined}
+          />
+          <FieldError id={`${formId}-eventDate-error`} message={errors.eventDate?.message} />
         </div>
       </div>
 
@@ -227,38 +279,83 @@ export function EnquiryForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`${formId}-email`}>Email (optional)</Label>
+          <Label htmlFor={`${formId}-email`} className={cn(errors.email && "text-destructive")}>
+            Email (optional)
+          </Label>
           <Input
             id={`${formId}-email`}
             type="email"
             autoComplete="email"
-            aria-invalid={errors.email ? true : undefined}
             {...register("email")}
+            aria-invalid={errors.email ? true : undefined}
+            aria-describedby={errors.email ? `${formId}-email-error` : undefined}
           />
-          {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
+          <FieldError id={`${formId}-email-error`} message={errors.email?.message} />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${formId}-message`}>What are you looking for?</Label>
+        <FieldLabel htmlFor={`${formId}-message`} required invalid={Boolean(errors.message)}>
+          What are you looking for?
+        </FieldLabel>
         <Textarea
           id={`${formId}-message`}
           rows={4}
           className="min-h-28 text-base md:text-sm"
+          aria-required="true"
+          {...register("message")}
           aria-invalid={errors.message ? true : undefined}
           aria-describedby={errors.message ? `${formId}-message-error` : undefined}
-          {...register("message")}
         />
-        {errors.message ? (
-          <p id={`${formId}-message-error`} className="text-xs text-destructive">
-            {errors.message.message}
-          </p>
-        ) : null}
+        <FieldError id={`${formId}-message-error`} message={errors.message?.message} />
       </div>
+
+      {showValidationSummary ? (
+        <p
+          className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+          role="alert"
+        >
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{validationSummary}</span>
+        </p>
+      ) : null}
 
       <Button type="submit" disabled={isSubmitting} className="min-h-11 w-full rounded-full">
         {isSubmitting ? "Sending…" : "Send enquiry"}
       </Button>
     </form>
+  );
+}
+
+function FieldLabel({
+  htmlFor,
+  required,
+  invalid,
+  children,
+}: {
+  htmlFor: string;
+  required?: boolean;
+  invalid?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Label htmlFor={htmlFor} className={cn(invalid && "text-destructive")}>
+      {children}
+      {required ? (
+        <span className="text-destructive ml-0.5" aria-hidden="true">
+          *
+        </span>
+      ) : null}
+    </Label>
+  );
+}
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} className="flex items-start gap-1.5 text-sm text-destructive">
+      <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+      <span>{message}</span>
+    </p>
   );
 }

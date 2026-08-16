@@ -26,7 +26,13 @@ describe("publicEnquirySchema", () => {
   });
 
   it("rejects short messages and invalid phones", () => {
-    expect(publicEnquirySchema.safeParse({ ...valid, message: "Hi" }).success).toBe(false);
+    const shortMessage = publicEnquirySchema.safeParse({ ...valid, message: "Hi" });
+    expect(shortMessage.success).toBe(false);
+    if (!shortMessage.success) {
+      expect(
+        shortMessage.error.issues.find((issue) => issue.path.includes("message"))?.message,
+      ).toBe("Please tell us a little more — at least 10 characters.");
+    }
     expect(publicEnquirySchema.safeParse({ ...valid, phone: "123" }).success).toBe(false);
   });
 
