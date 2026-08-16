@@ -25,8 +25,10 @@ describe("admin mobile section", () => {
     expect(resolveAdminMobileSection("/admin")).toBe("home");
     expect(resolveAdminMobileSection("/admin/enquiries/12")).toBe("enquiries");
     expect(resolveAdminMobileSection("/admin/products/new")).toBe("products");
+    expect(resolveAdminMobileSection("/admin/products/bulk")).toBe("products");
     expect(resolveAdminMobileSection("/admin/settings")).toBe("more");
     expect(adminPageTitle("/admin/blog")).toBe("Blog");
+    expect(adminPageTitle("/admin/products/bulk")).toBe("Products");
   });
 });
 

@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  subscriptionMatchesVapidPublicKey,
-  type PushDeliveryDiagnostic,
-} from "@/lib/admin-push";
+import { subscriptionMatchesVapidPublicKey, type PushDeliveryDiagnostic } from "@/lib/admin-push";
 import {
   enableAdminPushOnDevice,
   getAdminPushBrowserSnapshot,

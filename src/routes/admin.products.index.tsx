@@ -10,6 +10,8 @@ import {
   Eye,
   EyeOff,
   MoreHorizontal,
+  Copy,
+  Layers,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -30,6 +32,7 @@ import {
 import { listAdminCategories } from "@/lib/api/admin/categories";
 import {
   deleteAdminProduct,
+  duplicateAdminProduct,
   listAdminProducts,
   toggleAdminProductActive,
   toggleAdminProductHomepageFeatured,
@@ -71,6 +74,8 @@ function AdminProductsPage() {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<number | null>(null);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [featuredToggleId, setFeaturedToggleId] = useState<number | null>(null);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
   const [statusToggleId, setStatusToggleId] = useState<number | null>(null);
@@ -269,6 +274,24 @@ function AdminProductsPage() {
     }
   };
 
+  const handleDuplicate = async (id: number) => {
+    setDuplicatingId(id);
+    setDuplicateError(null);
+    setProductActionTarget(null);
+    try {
+      const result = await duplicateAdminProduct({ data: { id } });
+      await router.invalidate();
+      void navigate({
+        to: "/admin/products/$productId",
+        params: { productId: String(result.id) },
+      });
+    } catch {
+      setDuplicateError("Couldn't duplicate this product. Try again.");
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
+
   return (
     <div className="space-y-5 md:space-y-6">
       {/* Header */}
@@ -283,15 +306,24 @@ function AdminProductsPage() {
             {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : null}
           </p>
         </div>
-        <Button asChild className="w-full sm:w-auto h-11 shrink-0">
-          <Link to="/admin/products/$productId" params={{ productId: "new" }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add product
-          </Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+          <Button asChild className="w-full sm:w-auto h-11">
+            <Link to="/admin/products/$productId" params={{ productId: "new" }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add product
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full sm:w-auto h-11">
+            <Link to="/admin/products/bulk">
+              <Layers className="w-4 h-4 mr-2" />
+              Bulk add
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {deleteError ? <AdminActionError message={deleteError} /> : null}
+      {duplicateError ? <AdminActionError message={duplicateError} /> : null}
       {featuredError ? <AdminActionError message={featuredError} /> : null}
       {statusError ? <AdminActionError message={statusError} /> : null}
       <AdminSaveStatus message={savedMessage} />
@@ -359,6 +391,12 @@ function AdminProductsPage() {
             <Link to="/admin/products/$productId" params={{ productId: "new" }}>
               <Plus className="w-4 h-4 mr-2" />
               Add product
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="mt-3">
+            <Link to="/admin/products/bulk">
+              <Layers className="w-4 h-4 mr-2" />
+              Bulk add
             </Link>
           </Button>
         </div>
@@ -652,6 +690,21 @@ function AdminProductsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="h-8 px-3 gap-1.5"
+                        disabled={duplicatingId === product.id}
+                        onClick={() => void handleDuplicate(product.id)}
+                        aria-label={`Duplicate ${product.name}`}
+                      >
+                        {duplicatingId === product.id ? (
+                          <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                        Duplicate
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="h-8 px-3 text-destructive hover:text-destructive hover:border-destructive/50"
                         disabled={deletingId === product.id}
                         onClick={() => setDeleteTarget({ id: product.id, name: product.name })}
@@ -691,6 +744,23 @@ function AdminProductsPage() {
             </SheetDescription>
           </SheetHeader>
           <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full justify-start gap-2"
+              disabled={duplicatingId === productActionTarget?.id}
+              onClick={() => {
+                if (!productActionTarget) return;
+                void handleDuplicate(productActionTarget.id);
+              }}
+            >
+              {duplicatingId === productActionTarget?.id ? (
+                <span className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              Duplicate product
+            </Button>
             <Button
               type="button"
               variant="outline"

@@ -120,9 +120,7 @@ describe("getWebPushVapidConfig (derive-only)", () => {
 
   it("normalizes uppercase MAILTO subject for Apple JWT compatibility", () => {
     const keys = webpush.generateVAPIDKeys();
-    expect(normalizeVapidSubject("MAILTO:ADMIN@DAINTYHAND.IN")).toBe(
-      "mailto:ADMIN@DAINTYHAND.IN",
-    );
+    expect(normalizeVapidSubject("MAILTO:ADMIN@DAINTYHAND.IN")).toBe("mailto:ADMIN@DAINTYHAND.IN");
     const config = getWebPushVapidConfig({
       WEB_PUSH_VAPID_PRIVATE_KEY: keys.privateKey,
       WEB_PUSH_VAPID_SUBJECT: "MAILTO:ADMIN@DAINTYHAND.IN",

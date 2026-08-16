@@ -97,6 +97,32 @@ export const productInputSchema = z.object({
   image: imageUploadPayloadSchema.optional(),
 });
 
+/** Max products per bulk quick-add request (payload size + UX). */
+export const MAX_BULK_QUICK_PRODUCTS = 20;
+
+export const bulkProductQuickCreateItemSchema = z.object({
+  name: z.string().trim().min(1, "Product name is required").max(256),
+  categoryId: z.enum(categoryIds, { message: "Select a category" }),
+  priceFrom: priceFromSchema,
+  image: imageUploadPayloadSchema,
+});
+
+export const bulkProductQuickCreateSchema = z.object({
+  items: z
+    .array(bulkProductQuickCreateItemSchema)
+    .min(1, "Add at least one product")
+    .max(
+      MAX_BULK_QUICK_PRODUCTS,
+      `You can add up to ${MAX_BULK_QUICK_PRODUCTS} products at a time`,
+    ),
+});
+
+export type BulkProductQuickCreateInput = z.infer<typeof bulkProductQuickCreateSchema>;
+
+export const duplicateProductInputSchema = z.object({
+  id: z.number().int().positive(),
+});
+
 export const categoryInputSchema = z.object({
   id: z.enum(categoryIds),
   label: z.string().min(1).max(128),

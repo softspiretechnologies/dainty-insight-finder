@@ -43,4 +43,16 @@ describe("admin server function authorization", () => {
     expect(source).toMatch(/saveAdminPushSubscription[\s\S]*session\.userId/);
     expect(source).toMatch(/removeAdminPushSubscription[\s\S]*session\.userId/);
   });
+
+  it("protects bulk create and duplicate product endpoints", () => {
+    const source = readFileSync(path.join(adminApiDir, "products.ts"), "utf8");
+    expect(source).toContain("export const bulkCreateAdminProducts");
+    expect(source).toContain("export const duplicateAdminProduct");
+    expect(source).toMatch(
+      /export const bulkCreateAdminProducts = createServerFn[\s\S]*?await requireAdmin\(\)/,
+    );
+    expect(source).toMatch(
+      /export const duplicateAdminProduct = createServerFn[\s\S]*?await requireAdmin\(\)/,
+    );
+  });
 });

@@ -35,6 +35,7 @@ import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminProductsIndexRouteImport } from './routes/admin.products.index'
 import { Route as AdminEnquiriesIndexRouteImport } from './routes/admin.enquiries.index'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
+import { Route as AdminProductsBulkRouteImport } from './routes/admin.products.bulk'
 import { Route as AdminProductsProductIdRouteImport } from './routes/admin.products.$productId'
 import { Route as AdminEnquiriesEnquiryIdRouteImport } from './routes/admin.enquiries.$enquiryId'
 import { Route as AdminBlogPostIdRouteImport } from './routes/admin.blog.$postId'
@@ -169,6 +170,11 @@ const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminBlogRoute,
 } as any)
+const AdminProductsBulkRoute = AdminProductsBulkRouteImport.update({
+  id: '/bulk',
+  path: '/bulk',
+  getParentRoute: () => AdminProductsRoute,
+} as any)
 const AdminProductsProductIdRoute = AdminProductsProductIdRouteImport.update({
   id: '/$productId',
   path: '/$productId',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog/$postId': typeof AdminBlogPostIdRoute
   '/admin/enquiries/$enquiryId': typeof AdminEnquiriesEnquiryIdRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
+  '/admin/products/bulk': typeof AdminProductsBulkRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/enquiries/': typeof AdminEnquiriesIndexRoute
   '/admin/products/': typeof AdminProductsIndexRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/admin/blog/$postId': typeof AdminBlogPostIdRoute
   '/admin/enquiries/$enquiryId': typeof AdminEnquiriesEnquiryIdRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
+  '/admin/products/bulk': typeof AdminProductsBulkRoute
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/enquiries': typeof AdminEnquiriesIndexRoute
   '/admin/products': typeof AdminProductsIndexRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/admin/blog/$postId': typeof AdminBlogPostIdRoute
   '/admin/enquiries/$enquiryId': typeof AdminEnquiriesEnquiryIdRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
+  '/admin/products/bulk': typeof AdminProductsBulkRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/enquiries/': typeof AdminEnquiriesIndexRoute
   '/admin/products/': typeof AdminProductsIndexRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/admin/blog/$postId'
     | '/admin/enquiries/$enquiryId'
     | '/admin/products/$productId'
+    | '/admin/products/bulk'
     | '/admin/blog/'
     | '/admin/enquiries/'
     | '/admin/products/'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/admin/blog/$postId'
     | '/admin/enquiries/$enquiryId'
     | '/admin/products/$productId'
+    | '/admin/products/bulk'
     | '/admin/blog'
     | '/admin/enquiries'
     | '/admin/products'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/admin/blog/$postId'
     | '/admin/enquiries/$enquiryId'
     | '/admin/products/$productId'
+    | '/admin/products/bulk'
     | '/admin/blog/'
     | '/admin/enquiries/'
     | '/admin/products/'
@@ -564,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogIndexRouteImport
       parentRoute: typeof AdminBlogRoute
     }
+    '/admin/products/bulk': {
+      id: '/admin/products/bulk'
+      path: '/bulk'
+      fullPath: '/admin/products/bulk'
+      preLoaderRoute: typeof AdminProductsBulkRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
     '/admin/products/$productId': {
       id: '/admin/products/$productId'
       path: '/$productId'
@@ -618,11 +637,13 @@ const AdminEnquiriesRouteWithChildren = AdminEnquiriesRoute._addFileChildren(
 
 interface AdminProductsRouteChildren {
   AdminProductsProductIdRoute: typeof AdminProductsProductIdRoute
+  AdminProductsBulkRoute: typeof AdminProductsBulkRoute
   AdminProductsIndexRoute: typeof AdminProductsIndexRoute
 }
 
 const AdminProductsRouteChildren: AdminProductsRouteChildren = {
   AdminProductsProductIdRoute: AdminProductsProductIdRoute,
+  AdminProductsBulkRoute: AdminProductsBulkRoute,
   AdminProductsIndexRoute: AdminProductsIndexRoute,
 }
 

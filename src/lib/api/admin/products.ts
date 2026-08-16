@@ -5,7 +5,12 @@ import { z } from "zod";
 import { getDb } from "@/db/index.server";
 import { products as productsTable } from "@/db/schema";
 import { isValidUploadPath } from "@/lib/admin-upload-path";
-import { productInputSchema } from "@/lib/admin-schemas";
+import { buildBulkQuickProductInsertRows } from "@/lib/admin-product-bulk";
+import {
+  bulkProductQuickCreateSchema,
+  duplicateProductInputSchema,
+  productInputSchema,
+} from "@/lib/admin-schemas";
 import { stripBulletPrefix } from "@/lib/bullet-lines";
 import { requireAdmin } from "@/lib/auth.server";
 import { clearDataCache } from "@/lib/data.server";
@@ -14,7 +19,12 @@ import {
   featuredDisabledState,
   wantsHomepageFeature,
 } from "@/lib/homepage-featured";
-import { deleteUploadedImage, saveUploadedImageFromPayload } from "@/lib/uploads.server";
+import { allocateUniqueProductSlugs, duplicateProductDisplayName } from "@/lib/product-slug";
+import {
+  copyUploadedProductImage,
+  deleteUploadedImage,
+  saveUploadedImageFromPayload,
+} from "@/lib/uploads.server";
 import type { CategoryId } from "@/types/catalog";
 
 function parseDetails(raw: string) {
@@ -279,4 +289,150 @@ export const deleteAdminProduct = createServerFn({ method: "POST" })
     await deleteUploadedImage(product.imagePath);
     clearDataCache();
     return { ok: true as const };
+  });
+
+export const bulkCreateAdminProducts = createServerFn({ method: "POST" })
+  .validator(bulkProductQuickCreateSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+
+    const db = getDb();
+    const existing = await db.select({ slug: productsTable.slug }).from(productsTable);
+    const rows = buildBulkQuickProductInsertRows(
+      data.items,
+      existing.map((row) => row.slug),
+    );
+
+    const uploadedPaths: string[] = [];
+    const createdIds: number[] = [];
+
+    try {
+      for (let index = 0; index < data.items.length; index += 1) {
+        const item = data.items[index]!;
+        const meta = rows[index]!;
+        const imagePath = await saveUploadedImageFromPayload(item.image, "products");
+        uploadedPaths.push(imagePath);
+
+        const result = await db.insert(productsTable).values({
+          ...meta,
+          imagePath,
+        });
+        const header = Array.isArray(result) ? result[0] : result;
+        let insertId = Number((header as { insertId?: number }).insertId);
+        if (!insertId) {
+          const found = await db
+            .select({ id: productsTable.id })
+            .from(productsTable)
+            .where(eq(productsTable.slug, meta.slug))
+            .limit(1);
+          insertId = found[0]?.id ?? 0;
+        }
+        if (!insertId) {
+          throw new Error("Product could not be created.");
+        }
+        createdIds.push(insertId);
+      }
+
+      clearDataCache();
+      return { ids: createdIds, count: createdIds.length };
+    } catch (error) {
+      for (const id of [...createdIds].reverse()) {
+        try {
+          const found = await db
+            .select({ imagePath: productsTable.imagePath })
+            .from(productsTable)
+            .where(eq(productsTable.id, id))
+            .limit(1);
+          await db.delete(productsTable).where(eq(productsTable.id, id));
+          await deleteUploadedImage(found[0]?.imagePath);
+        } catch {
+          // continue cleanup
+        }
+      }
+      for (const orphanPath of uploadedPaths.slice(createdIds.length)) {
+        try {
+          await deleteUploadedImage(orphanPath);
+        } catch {
+          // ignore
+        }
+      }
+
+      if (isDuplicateKeyError(error)) {
+        throw new Error(
+          "A product with this name already exists. Change a product name and try again.",
+        );
+      }
+      throw error instanceof Error ? error : new Error("Bulk create failed.");
+    }
+  });
+
+export const duplicateAdminProduct = createServerFn({ method: "POST" })
+  .validator(duplicateProductInputSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, data.id))
+      .limit(1);
+    const source = rows[0];
+    if (!source) throw new Error("Product not found");
+
+    const name = duplicateProductDisplayName(source.name);
+    const existing = await db.select({ slug: productsTable.slug }).from(productsTable);
+    const [slug] = allocateUniqueProductSlugs(
+      [name],
+      existing.map((row) => row.slug),
+    );
+
+    if (!source.imagePath || !isValidUploadPath(source.imagePath, "products")) {
+      throw new Error("Source product image is missing or invalid.");
+    }
+
+    let imagePath = "";
+    try {
+      imagePath = await copyUploadedProductImage(source.imagePath);
+    } catch {
+      throw new Error("Could not copy the product image for the duplicate.");
+    }
+
+    try {
+      const details = Array.isArray(source.details) ? source.details : [];
+      const result = await db.insert(productsTable).values({
+        slug: slug!,
+        name,
+        categoryId: source.categoryId as CategoryId,
+        blurb: source.blurb,
+        description: source.description,
+        details,
+        imagePath,
+        priceFrom: source.priceFrom,
+        isActive: false,
+        featuredOnHomepage: false,
+        homepageSortOrder: 0,
+      });
+      const header = Array.isArray(result) ? result[0] : result;
+      let insertId = Number((header as { insertId?: number }).insertId);
+      if (!insertId) {
+        const found = await db
+          .select({ id: productsTable.id })
+          .from(productsTable)
+          .where(eq(productsTable.slug, slug!))
+          .limit(1);
+        insertId = found[0]?.id ?? 0;
+      }
+      if (!insertId) {
+        await deleteUploadedImage(imagePath);
+        throw new Error("Duplicate product could not be created.");
+      }
+      clearDataCache();
+      return { id: insertId };
+    } catch (error) {
+      await deleteUploadedImage(imagePath);
+      if (isDuplicateKeyError(error)) {
+        throw new Error("A product with this name already exists. Rename and try again.");
+      }
+      throw error;
+    }
   });

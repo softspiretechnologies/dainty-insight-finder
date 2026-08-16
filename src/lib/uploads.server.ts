@@ -134,6 +134,62 @@ export async function saveUploadedImageFromPayload(
   return `/uploads/${subdir}/${largest.filename}`;
 }
 
+/**
+ * Copy a product-owned upload to a new unique path so duplicates can be deleted independently.
+ * Reads the stored file and re-encodes via the same Sharp pipeline when possible;
+ * falls back to a byte copy with a new filename when the source is already WebP.
+ */
+export async function copyUploadedProductImage(sourceImagePath: string): Promise<string> {
+  if (!sourceImagePath.startsWith("/uploads/products/")) {
+    throw new Error("Invalid product image path");
+  }
+  const relative = sourceImagePath.replace(/^\/uploads\//, "");
+  const sourceFull = resolveUploadFile(relative);
+  if (!sourceFull) {
+    throw new Error("Source product image not found");
+  }
+
+  const buffer = await readFile(sourceFull);
+  const uploadId = `copy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const dir = path.join(uploadsWriteRoot(), "products");
+  await mkdir(dir, { recursive: true });
+
+  try {
+    const metadata = await sharp(buffer, { failOn: "error" }).metadata();
+    const sourceWidth =
+      metadata.orientation && metadata.orientation >= 5 ? metadata.height : metadata.width;
+    if (sourceWidth) {
+      const maximumOutputWidth = Math.min(sourceWidth, 1440);
+      const filename = `${uploadId}-${maximumOutputWidth}.webp`;
+      const fullPath = path.join(dir, filename);
+      await sharp(buffer, { failOn: "error" })
+        .rotate()
+        .resize({ width: maximumOutputWidth, withoutEnlargement: true })
+        .webp({ quality: 82, effort: 4 })
+        .toFile(fullPath);
+      try {
+        await mirrorUploadToPublicBundle(fullPath, "products", filename);
+      } catch (error) {
+        logError("uploads.bundle_mirror_failure", error, { operation: "copyUploadedProductImage" });
+      }
+      return `/uploads/products/${filename}`;
+    }
+  } catch {
+    // Fall through to raw copy.
+  }
+
+  const ext = path.extname(sourceFull) || ".webp";
+  const filename = `${uploadId}${ext}`;
+  const fullPath = path.join(dir, filename);
+  await writeFile(fullPath, buffer);
+  try {
+    await mirrorUploadToPublicBundle(fullPath, "products", filename);
+  } catch (error) {
+    logError("uploads.bundle_mirror_failure", error, { operation: "copyUploadedProductImage" });
+  }
+  return `/uploads/products/${filename}`;
+}
+
 export async function deleteUploadedImage(imagePath: string | null | undefined) {
   if (!imagePath || !imagePath.startsWith("/uploads/")) return;
 
