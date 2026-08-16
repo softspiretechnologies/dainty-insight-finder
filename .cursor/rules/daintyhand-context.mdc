@@ -1,0 +1,45 @@
+---
+description: DaintyHand project workflow and documentation contract
+alwaysApply: true
+---
+
+# DaintyHand project workflow
+
+Before making changes:
+
+1. Treat source code as the final authority.
+2. Read `PROJECT_CONTEXT.md` **selectively**, not automatically in full.
+3. Start with its `Quick Context`.
+4. Then search/open only the section relevant to the requested work.
+5. Do not load unrelated docs merely for background context.
+6. Do **not** @-include or paste the full `PROJECT_CONTEXT.md` into prompts or rules.
+
+Topic-specific docs:
+
+- Database/schema/migrations: relevant `PROJECT_CONTEXT.md` section + `docs/database.md`
+- Production/Hostinger/env/deployment: relevant context + `docs/PRODUCTION_OPERATIONS.md`
+- Enquiries/leads: relevant context + `docs/enquiries.md`
+- Backup/restore: `docs/BACKUP_AND_RESTORE.md`
+
+Important operational rules:
+
+- Never run `db:migrate` on production merely because a migration exists.
+- Never run `db:seed` as routine production deployment.
+- Never expose secrets, session keys, database credentials, VAPID private keys, push subscription keys, or auth tokens.
+- Reuse existing project patterns before creating new infrastructure.
+- Prefer the simplest solution appropriate for this small production app.
+- Preserve existing auth, validation, upload, deployment, schema-safety, responsive, accessibility, and test protections unless the task explicitly requires changing them.
+
+Documentation synchronization:
+
+If a change modifies user-facing functionality, Admin functionality, routes, database/schema, authentication/security, uploads, notifications/integrations, environment variables, deployment behavior, testing architecture, or major implementation architecture — update the appropriate section of `PROJECT_CONTEXT.md` in the same change.
+
+Update README or specialized docs only when their specific subject changes.
+
+Do not turn `PROJECT_CONTEXT.md` into a changelog. Describe the resulting CURRENT state.
+
+Before finishing a task:
+
+- verify code and documentation do not contradict each other
+- mention documentation files changed in the final report
+- do not commit/push unless explicitly requested

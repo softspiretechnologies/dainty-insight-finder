@@ -9,6 +9,8 @@ Simple lead capture for DaintyHand. Not a CRM, checkout, or quoting system.
 3. Success screen offers **Continue on WhatsApp** with a prefilled message.
 4. WhatsApp is optional — the lead is already stored.
 
+Note: the **Custom Order** page (`/custom`) opens WhatsApp with a prefilled brief and does **not** insert an enquiry row.
+
 ## Admin workflow
 
 1. Open **Admin → Enquiries**.

@@ -2,13 +2,15 @@
 
 Marketing and catalog website for **DaintyHand** — a Kerala-based handcrafted gifting and celebration studio. Built with TanStack Start, React 19, and Tailwind CSS.
 
-The public site reads catalog data from **MySQL** (with a static fallback when `DATABASE_URL` is not set). Orders are still handled via WhatsApp.
+The public site reads catalog data from **MySQL/MariaDB** (with a static fallback when `DATABASE_URL` is not set). Leads can be saved as enquiries; customers may continue on WhatsApp. There is no checkout.
+
+**Canonical current-state reference:** [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) (architecture, Admin features, safety rules). This README is the developer/ops entrypoint only.
 
 ## Prerequisites
 
 - Node.js 22+
 - npm
-- MySQL 8+ (Hostinger database in production)
+- MySQL 8+ / MariaDB (Hostinger database in production)
 
 ## Install
 
@@ -31,7 +33,7 @@ VITE_SITE_URL=https://your-domain.com
 # MySQL (required for admin + live catalog)
 DATABASE_URL=mysql://user:password@localhost:3306/daintyhand
 
-# Admin session signing (long random string)
+# Admin session signing (long random string, ≥32 chars)
 ADMIN_SESSION_SECRET=your-long-random-secret
 
 # Used by db:seed to create the admin user
@@ -40,7 +42,15 @@ ADMIN_PASSWORD=choose-a-strong-password
 
 # Optional: persistent upload directory (recommended on Hostinger)
 # Default on Hostinger: ../uploads next to the nodejs app folder
-# UPLOADS_DIR=/home/u249731825/domains/dainty-hand.softspiretechnologies.com/uploads
+# UPLOADS_DIR=/absolute/path/to/uploads
+
+# Optional analytics
+# VITE_GA_ID=G-XXXXXXXX
+
+# Optional Admin Web Push (public key is derived from the private key at runtime)
+# WEB_PUSH_VAPID_PRIVATE_KEY=...
+# WEB_PUSH_VAPID_SUBJECT=mailto:admin@example.com
+# WEB_PUSH_VAPID_PUBLIC_KEY is legacy/optional and is not the runtime source of truth
 ```
 
 Without `DATABASE_URL`, the site falls back to static data in `src/data/products.ts` and admin login will not work.
@@ -70,7 +80,7 @@ Optional: `npm run db:studio` opens Drizzle Studio.
 npm run dev
 ```
 
-Opens the Vite dev server (default port `8080`).
+Opens the Vite dev server (default port `8080`). Runs `db:ensure` first when configured.
 
 ## Build
 
@@ -102,24 +112,28 @@ The production build uses **Nitro `node-server`** and outputs to `dist/`.
 3. Export/backup the MySQL database
 4. Confirm `DATABASE_URL` is available to the Hostinger build
 5. Deploy with Hostinger Build Command `npm run build` (`db:ensure` → `db:verify` → `build:app`)
-6. Smoke test homepage, catalog, `/admin/login`, and Admin → Blog
+6. Smoke test homepage, catalog, `/admin/login`, Admin → Blog / Enquiries
 
 Do **not** run `npm run db:seed` during routine deploys. Seed only for a brand-new empty database, as an explicit admin step.
+
+Full ops notes (push VAPID, Playwright, caching): `docs/PRODUCTION_OPERATIONS.md`.
 
 ### hPanel environment variables (production)
 
 Set these in **Websites → your site → Environment variables**, then **Save and redeploy**:
 
 ```env
-VITE_SITE_URL=https://dainty-hand.softspiretechnologies.com
+VITE_SITE_URL=https://your-production-origin.example
 HOST=0.0.0.0
 NITRO_HOST=0.0.0.0
 DATABASE_URL=mysql://USER:PASSWORD@127.0.0.1:3306/DATABASE
 ADMIN_SESSION_SECRET=<long random string>
-ADMIN_EMAIL=admin@daintyhand.in
+ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=<strong password>
-UPLOADS_DIR=/home/u249731825/domains/dainty-hand.softspiretechnologies.com/uploads
+UPLOADS_DIR=/absolute/path/to/persistent/uploads
 ```
+
+Optional push vars: see `docs/PRODUCTION_OPERATIONS.md`. Generate keys with `npm run generate:vapid-keys` (never commit private keys).
 
 Set WhatsApp and other contact details in **Admin → Settings** (`/admin/settings`). The public site reads them from MySQL.
 
@@ -142,25 +156,28 @@ Admin uploads are saved **outside** `dist/` so redeploys do not wipe them:
 2. Push latest code
 3. Confirm env vars in hPanel, including `DATABASE_URL` at build time
 4. Build with Hostinger command `npm run build` and wait for `Database schema verified.`
-5. Smoke test: homepage, `/catalog`, `/admin/login`, Admin → Blog
+5. Smoke test: homepage, `/catalog`, `/admin/login`, Admin → Blog, Enquiries
 6. Confirm WhatsApp in **Admin → Settings**
 
 If ensure/verify fail, the deploy stops. Fix schema first. Do not replace `npm run build` with `build:app` on Hostinger — that would skip schema checks.
 
-One-time production checks and commented additive SQL: `docs/production-schema-checks.sql` and `docs/production-schema-reconcile.sql`. Full strategy: `docs/database.md`.
-
-Local development uses its own MySQL database via `.env` — keep `DATABASE_URL` pointed at `localhost`, not the production server.
+One-time production checks and commented additive SQL: `docs/production-schema-checks.sql` and `docs/production-schema-reconcile.sql` (if present). Full strategy: `docs/database.md`.
 
 ## Admin portal
 
-| Path                | Purpose                                       |
-| ------------------- | --------------------------------------------- |
-| `/admin/login`      | Admin sign-in                                 |
-| `/admin`            | Dashboard (includes enquiry summary)          |
-| `/admin/enquiries`  | Lead / enquiry list + status filters          |
-| `/admin/products`   | Product list + add/edit/delete                |
-| `/admin/categories` | Edit category labels, blurbs, images          |
-| `/admin/settings`   | WhatsApp, email, Instagram, founder, location |
+| Path                      | Purpose                                              |
+| ------------------------- | ---------------------------------------------------- |
+| `/admin/login`            | Admin sign-in                                        |
+| `/admin`                  | Dashboard (enquiry summary)                          |
+| `/admin/enquiries`        | Lead list + status filters                           |
+| `/admin/products`         | Product list, visibility, featured, duplicate        |
+| `/admin/products/bulk`    | Bulk Quick Add (hidden drafts, multi-image)          |
+| `/admin/products/$id`     | Create/edit product                                  |
+| `/admin/categories`       | Category labels, blurbs, images                      |
+| `/admin/services`         | Celebration services + page copy                     |
+| `/admin/blog`             | Journal posts                                        |
+| `/admin/testimonials`     | Homepage testimonials                                |
+| `/admin/settings`         | Contact settings, password, push notifications       |
 
 ### Enquiries (leads)
 
@@ -168,19 +185,35 @@ Visitors can send an enquiry from **Contact**, product pages (**Get a Quote**), 
 
 Statuses: `new` → `contacted` → `quoted` → `confirmed` (or `lost`).
 
-Admin notes are internal only. See `docs/enquiries.md`. The `enquiries` table is created on deploy by `db:ensure` (Hostinger Build Command remains `npm run build`).
+Admin notes are internal only. See `docs/enquiries.md`.
 
 Product and category images use **file upload only** (no URL paste). Images are saved to the persistent uploads folder and served at `/uploads/*`.
+
+## Tests
+
+```bash
+npm run test                 # Vitest unit tests
+npm run lint                 # ESLint
+npx tsc --noEmit             # Typecheck
+npm run test:e2e             # Playwright (Chromium + scoped WebKit)
+npm run test:e2e:chromium    # Chromium only
+npm run test:e2e:webkit      # WebKit matrix
+npm run test:visual          # Opt-in visual regression
+npm run smoke                # Deployed-origin smoke (set SITE_URL)
+```
+
+WebKit e2e does not replace real-device iOS Safari checks. See `docs/PRODUCTION_OPERATIONS.md`.
 
 ## Other commands
 
 ```bash
-npm run lint              # ESLint
-npm run format            # Prettier
-npm run db:ensure         # additive schema reconciliation
-npm run db:verify         # read-only schema check
-npm run build             # Hostinger: ensure + verify + compile
-npm run build:app         # compile only (no database)
+npm run format               # Prettier
+npm run db:ensure            # additive schema reconciliation
+npm run db:verify            # read-only schema check
+npm run build                # Hostinger: ensure + verify + compile
+npm run build:app            # compile only (no database)
+npm run generate:vapid-keys  # create Web Push VAPID keypair (local)
+npm run validate:vapid-keys  # validate push env without printing secrets
 ```
 
 ## Configuration
@@ -191,31 +224,34 @@ npm run build:app         # compile only (no database)
 | Products & categories (fallback)  | `src/data/products.ts`                      |
 | Live catalog                      | MySQL via `src/lib/data.server.ts`          |
 | Site URL (canonical, OG, sitemap) | `VITE_SITE_URL` env var                     |
+| Full architecture / current state | `PROJECT_CONTEXT.md`                        |
 
 ## Project structure
 
 - `src/routes/` — file-based pages (TanStack Router)
 - `src/routes/admin*.tsx` — protected admin portal
 - `src/components/site/` — public layout (header, footer, shell)
-- `src/components/admin/` — admin layout shell
+- `src/components/admin/` — admin shell, settings helpers, push UI
 - `src/db/` — Drizzle schema and MySQL connection
-- `src/lib/api/admin/` — admin server functions (auth, CRUD, uploads)
-- `src/data/products.ts` — static catalog fallback
-- `public/uploads/` — runtime product/category images
-- `drizzle/migrations/` — SQL migrations
-- `scripts/seed.ts` — initial data migration
-
-See `PROJECT_CONTEXT.md` for a full architecture overview.
+- `src/lib/api/` — public + admin server functions
+- `src/data/` — static catalog/blog fallback
+- `public/uploads/` — bundled seed images
+- `drizzle/migrations/` — SQL migrations (history may lag production; prefer ensure/verify)
+- `scripts/` — ensure/verify/seed/smoke/vapid/Hostinger entry
 
 ## Public routes
 
 | Path             | Page                                                              |
 | ---------------- | ----------------------------------------------------------------- |
 | `/`              | Home                                                              |
-| `/catalog`       | Product catalog (supports `?category=` and `?page=` query params) |
+| `/catalog`       | Product catalog (`?category=`, `?page=`)                          |
 | `/catalog/:slug` | Product detail                                                    |
 | `/services`      | Celebration services                                              |
-| `/custom`        | Custom order form → WhatsApp                                      |
-| `/contact`       | Contact & delivery info                                           |
+| `/blog`          | Journal index                                                     |
+| `/blog/:slug`    | Journal post                                                      |
+| `/custom`        | Custom order form → WhatsApp (no enquiry DB row)                  |
+| `/contact`       | Contact & enquiry form                                            |
 | `/sitemap.xml`   | Dynamic sitemap                                                   |
 | `/robots.txt`    | Dynamic robots.txt                                                |
+| `/health`        | DB + uploads readiness                                            |
+| `/uploads/*`     | Uploaded / seed images                                            |

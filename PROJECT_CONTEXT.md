@@ -1,305 +1,426 @@
-# Project Overview
+# DaintyHand Project Context
 
-- **Project name:** DaintyHand (repo/package: `tanstack_start_ts`, Lovable project: `dainty-insight-finder`)
-- **Framework and language:** TanStack Start (React 19 + TypeScript) with Vite 7, TanStack Router, TanStack Query, and Nitro for SSR/deployment
-- **Main purpose:** A marketing and catalog website for **DaintyHand**, a Kerala-based handcrafted gifting and celebration studio founded by Nafisa. The site showcases past creations and celebration services, drives enquiries via WhatsApp/Instagram, and includes a **protected admin portal** for catalog management backed by **MySQL**. There is no checkout or customer accounts.
+## Documentation contract
 
-# Architecture
+`PROJECT_CONTEXT.md` is the canonical current-state technical and product reference for DaintyHand.
 
-## Folder structure
+Source code is authoritative if documentation and implementation disagree.
+
+Any change affecting user-visible behavior, Admin functionality, routes,
+database/schema, authentication/security, uploads, integrations,
+environment variables, deployment, testing strategy, or major architecture
+must update the relevant section of this document in the same change.
+
+Keep this document concise and current. Do not append a development diary.
+
+---
+
+## Quick Context
+
+**Product:** Marketing + catalog site for **DaintyHand** (Kerala handcrafted gifting / celebration studio). No checkout, no customer accounts. Orders/leads continue via WhatsApp after optional DB enquiry capture.
+
+**Stack:** TanStack Start (React 19 + TypeScript), Vite 7, TanStack Router, Nitro SSR, Tailwind CSS v4, Zod, Drizzle ORM + mysql2, Sharp, web-push. Package name: `daintyhand`.
+
+**Production:** Hostinger Node.js (`npm run build` → `db:ensure` → `db:verify` → `build:app`). Entry: `dist/server/hostinger-entry.mjs`. Do **not** run `db:migrate` or `db:seed` as routine production deploy.
+
+**Public vs Admin:** Public site under `/`, `/catalog`, `/services`, `/blog`, `/contact`, `/custom`. Admin under `/admin/*` (session cookie + `requireAdmin()` on server functions).
+
+**Database:** MySQL/MariaDB. Tables: `categories`, `products`, `site_settings`, `testimonials`, `services`, `admin_users`, `admin_login_attempts`, `blog_posts`, `enquiries`, `admin_push_subscriptions`. Static fallback when `DATABASE_URL` unset (`src/data/products.ts`).
+
+**Uploads:** Persistent dir (`UPLOADS_DIR` or Hostinger `../uploads`) + bundled `public/uploads`. Served at `/uploads/*`. Admin uploads → Sharp WebP variants. Product delete removes that product’s `imagePath`.
+
+**Auth:** bcrypt + signed httpOnly cookie `dainty_admin_session`; `session_version` for revocation; login rate limits in DB.
+
+**Enquiries:** Saved to MySQL first; WhatsApp continue is optional. Push after insert is best-effort and must never fail the customer response.
+
+**Push:** VAPID public key **derived from** `WEB_PUSH_VAPID_PRIVATE_KEY` at runtime. `WEB_PUSH_VAPID_PUBLIC_KEY` is legacy/optional (not runtime source of truth). Admin SW `public/admin-push-sw.js` is push-only (no fetch cache).
+
+**Products Admin:** Full editor + visibility (`isActive`) + homepage featured (cap 6) + **Bulk Quick Add** (`/admin/products/bulk`, hidden drafts, max 20) + **Duplicate** (copies image file to new path).
+
+**Tests:** Vitest (`npm run test`), Playwright Chromium + scoped WebKit (`test:e2e`), opt-in visual (`test:visual`), smoke (`npm run smoke`). CI: lint + Vitest + `build:app`; separate e2e job with ephemeral MySQL.
+
+**Safety:** Never print secrets/VAPID private keys. Trust code over stale docs. Prefer `docs/database.md` + `docs/PRODUCTION_OPERATIONS.md` for DB/deploy details.
+
+**Canonical docs:** this file (current state) · `README.md` (entrypoint) · `docs/database.md` · `docs/PRODUCTION_OPERATIONS.md` · `docs/enquiries.md` · `docs/BACKUP_AND_RESTORE.md`
+
+---
+
+## Context Index
+
+| Task | Read |
+| --- | --- |
+| Products / bulk / duplicate | Admin Features → Products |
+| Enquiries / leads | Enquiry / Lead Flow |
+| Push / VAPID | Notifications; Admin PWA |
+| Database / migrations | Database & Schema; `docs/database.md` |
+| Uploads / images | Upload & Image Architecture |
+| Deployment / Hostinger | Deployment / Hostinger; `docs/PRODUCTION_OPERATIONS.md` |
+| Auth / sessions | Authentication & Security |
+| Tests / CI | Testing & CI |
+| Env vars | Environment Variables |
+| Routes map | Important Routes |
+
+---
+
+## Product / Business Scope
+
+- Brand: DaintyHand — handcrafted gifts, hampers, invitations, celebration services (founder Nafisa; based in Perinthalmanna, Kerala).
+- Public goal: showcase catalog/services/journal and convert to WhatsApp enquiries.
+- Admin goal: manage catalog, leads, content, and site contact settings on mobile (including installed Admin PWA).
+- Out of scope (current): ecommerce checkout, payments, customer accounts, inventory, CRM automation beyond enquiry statuses + WhatsApp, Instagram scraping, AI generation, CSV import.
+
+---
+
+## Architecture
+
+- **SSR app** via TanStack Start + Nitro `node-server`.
+- **File-based routes** in `src/routes/` → `src/routeTree.gen.ts` (generated; do not hand-edit).
+- **Data access:** `createServerFn` in `src/lib/api/*` so MySQL/Sharp/web-push stay server-side.
+- **Public layout:** `PageShell` (header, footer, floating WhatsApp).
+- **Admin layout:** `AdminShell` (desktop sidebar + mobile bottom nav + “More” sheet); login route without shell chrome.
+- **Config:** `src/lib/site.ts` (brand defaults), `src/lib/config.server.ts` (server env), path alias `@/*` → `src/*`.
+- **UI:** Tailwind v4 tokens in `src/styles.css`; self-hosted `@fontsource` (Playfair Display, Inter, JetBrains Mono); shadcn-style primitives under `src/components/ui/`.
+- **Not used:** TanStack Query; Google Fonts CDN; Cloudflare as production target.
 
 ```
-dainty-insight-finder/
-├── public/                  # Static assets (og-image.jpg, favicon.svg)
-├── src/
-│   ├── assets/              # Product/service images (imported by routes & data)
-│   ├── components/
-│   │   ├── site/            # App-specific layout (header, footer, shell, WhatsApp bot)
-│   │   ├── admin/           # Admin portal layout (AdminShell)
-│   │   └── ui/              # shadcn/ui primitives used by admin (7 components)
-│   ├── data/
-│   │   └── products.ts      # Static catalog fallback (when DATABASE_URL unset)
-│   ├── db/
-│   │   ├── schema.ts        # Drizzle MySQL tables
-│   │   └── index.server.ts  # Connection pool
-│   ├── lib/
-│   │   ├── site.ts          # Brand/contact config + whatsappLink() + siteUrl()
-│   │   ├── config.server.ts # Server-only env helpers
-│   │   ├── utils.ts         # cn() Tailwind class merger
-│   │   ├── cache.server.ts  # In-memory TTL cache for catalog reads
-│   │   ├── data.server.ts   # getCategories/getProducts/getSiteSettings (+ fallback)
-│   │   ├── auth.server.ts   # Admin session cookie + bcrypt
-│   │   ├── uploads.server.ts # Image upload validation + disk storage
-│   │   ├── api/
-│   │   │   ├── catalog.ts   # Public catalog server functions (loaders)
-│   │   │   └── admin/       # Admin auth, CRUD server functions
-│   │   └── error-page.ts    # SSR error HTML fallback
-│   ├── routes/              # File-based TanStack Start routes
-│   ├── router.tsx           # Router factory
-│   ├── server.ts            # Custom SSR entry (error wrapper)
-│   ├── start.ts             # TanStack Start middleware config
-│   ├── routeTree.gen.ts     # Auto-generated route tree (do not edit)
-│   └── styles.css           # Tailwind v4 theme tokens & base styles
-├── drizzle/migrations/      # SQL migrations (Drizzle Kit)
-├── scripts/seed.ts          # Seed MySQL + copy images to public/uploads/
-├── public/uploads/          # Runtime product/category images (gitignored except .gitkeep)
-├── vite.config.ts           # Lovable TanStack config wrapper
-├── components.json          # shadcn/ui config
-├── package.json
-├── package-lock.json
-└── tsconfig.json            # Path alias: @/* → src/*
+src/
+  routes/           # public + admin pages, sitemap, robots, health, uploads
+  components/site/  # public chrome
+  components/admin/ # AdminShell, push settings, field helpers, splash
+  components/ui/    # shared primitives + OptimizedImage
+  lib/api/          # createServerFn catalog + admin modules
+  lib/*.server.ts   # auth, data, uploads, push, rate limits, cache
+  db/               # schema + pool
+  data/             # static fallback catalog / blog seed content
 ```
 
-## Important modules
+---
 
-| Module                              | Role                                                           |
-| ----------------------------------- | -------------------------------------------------------------- |
-| `src/routes/`                       | All pages and the XML sitemap handler                          |
-| `src/data/products.ts`              | Static catalog fallback when `DATABASE_URL` is unset           |
-| `src/lib/data.server.ts`            | Live catalog reads from MySQL with static fallback             |
-| `src/lib/site.ts`                   | Brand defaults, `whatsappLink()` and `siteUrl()` helpers       |
-| `src/routes/admin*.tsx`             | Protected admin portal (login, products, categories, settings) |
-| `src/components/site/PageShell.tsx` | Shared layout: header, main, footer, floating WhatsApp bot     |
-| `src/server.ts` + `src/start.ts`    | SSR error handling middleware                                  |
-| `@lovable.dev/vite-tanstack-config` | Bundles Vite plugins (TanStack Start, Nitro, Tailwind, etc.)   |
+## Public Features
 
-## Design patterns used
+- **Home (`/`)** — editorial marketing: categories, featured products (from DB when configured), services/moments, testimonials, CTAs.
+- **Catalog (`/catalog`)** — category + page search params; paginated grid; enquire / quote entry points.
+- **Product (`/catalog/$slug`)** — detail, details list, price-from display (₹ formatting), quote sheet → enquiry.
+- **Services (`/services`)** — celebration services from DB (fallback static); enquiry from service context.
+- **Blog / Journal (`/blog`, `/blog/$slug`)** — published posts from MySQL (static fallback available).
+- **Contact (`/contact`)** — channels + enquiry form.
+- **Custom order (`/custom`)** — validated client form that opens WhatsApp with a prefilled brief (**does not** insert an `enquiries` row).
+- **Floating WhatsApp** — guided prompts; uses site settings / categories from root context.
+- **SEO** — per-route `head()` meta; `/sitemap.xml` (static + products + blog); `/robots.txt`.
+- **Images** — `OptimizedImage` + `/uploads/$` handler; responsive `sizes` / WebP where available.
+- **Analytics** — optional `VITE_GA_ID` gtag in root head.
+- **Health** — `GET /health` (DB + uploads readiness; no secrets).
 
-- **File-based routing** — TanStack Router; one `.tsx` file per route under `src/routes/`
-- **Layout composition** — `PageShell` wraps page content; `catalog.tsx` is a layout route with `<Outlet />`
-- **Route loaders** — Product detail (`catalog.$slug.tsx`) loads product data server-side and throws `notFound()` for invalid slugs
-- **Per-route SEO** — Each route defines `head()` with title, description, OG/Twitter tags, canonical URLs, and JSON-LD where relevant
-- **Route loaders** — Public catalog/homepage use `createServerFn` wrappers in `src/lib/api/catalog.ts` to avoid bundling MySQL into the client
-- **Static data fallback** — `src/data/products.ts` used when `DATABASE_URL` is missing (local dev without MySQL)
-- **Admin auth** — bcrypt password + signed httpOnly session cookie (`ADMIN_SESSION_SECRET`)
-- **File uploads** — Product/category images uploaded via `FormData` server functions; stored under `public/uploads/`; no URL paste fields
-- **URL search params** — Catalog uses TanStack Router `validateSearch` + `useNavigate` for `?category=` and `?page=` (bookmarkable, shareable)
-- **Form validation** — Custom order form uses `react-hook-form` + `zodResolver` for client-side validation before opening WhatsApp
-- **WhatsApp-as-CRM** — Custom order form and all CTAs build a pre-filled message and open `wa.me`
-- **Server handlers** — `sitemap[.]xml.ts` and `robots[.]txt.ts` expose Nitro `GET` handlers for dynamic generation
-- **Error boundaries** — Root `errorComponent` and `notFoundComponent` styled to match site theme; custom SSR error page; Lovable error reporting hook
+---
 
-# Features
+## Admin Features
 
-## Major functionalities
+### Dashboard
 
-1. **Home (`/`)** — Centered editorial hero, 8-category grid, Why DaintyHand feature strip, moments gallery, How It Works (dark section), credibility stats, gallery, testimonials, closing CTA
-2. **Catalog (`/catalog`)** — Filter by 8 categories (`?category=`), paginated product grid (12/page, `?page=`), per-product WhatsApp enquire CTA
-3. **Product detail (`/catalog/$slug`)** — Image, description, details list, customization options, WhatsApp CTA with prefilled product name
-4. **Celebration services (`/services`)** — Save-the-date shoots, proposals, birthday surprises, couple shoots, memory reels; alternating two-column layout
-5. **Custom order (`/custom`)** — Validated form (name, phone, email, service, event type/date, budget, location, notes) → opens WhatsApp with prefilled brief
-6. **Contact (`/contact`)** — Hero, contact channel grid (WhatsApp highlighted), delivery & shipping strip, closing CTA
-7. **Sitemap (`/sitemap.xml`)** — Auto-generated from static routes + all product slugs
-8. **robots.txt (`/robots.txt`)** — Dynamically served via Nitro handler using `site.baseUrl`
-9. **Floating WhatsApp bot** — Persistent chat widget on all pages; guided conversation tree (Browse, Custom Order, How It Works, Delivery Info) with pre-filled WhatsApp CTAs; categories from MySQL via root loader context
-10. **Admin portal (`/admin`)** — Login, dashboard, products CRUD, categories editor, site settings. Images via file upload only.
+`/admin` — summary cards including new enquiry count; recent activity; links into sections.
 
-## Removed pages
+### Enquiries
 
-- **`/about`** (`src/routes/about.tsx`) — Deleted. "Our Story" removed from nav.
+`/admin/enquiries`, `/admin/enquiries/$enquiryId` — list/filter/search; statuses `new | contacted | quoted | confirmed | lost`; WhatsApp/call actions; internal notes; summary badge in nav.
 
-## Product categories (8)
+### Products
 
-`hampers`, `bouquets`, `invitations`, `engagement`, `frames`, `albums`, `calligraphy`, `celebrations`
+`/admin/products`, `/admin/products/$productId` (`new` for create).
 
-## User roles
+#### Standard product editor
 
-**Admin only (v1).** One admin user created by `npm run db:seed` from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Public visitors have no accounts.
+- Fields: name, slug, category, blurb, description, details, priceFrom, image upload, `isActive`, `featuredOnHomepage`.
+- Validation via `productInputSchema` (full content required for this path).
+- Homepage featured capped (helpers in `homepage-featured.ts`; UI enforces/feedback).
+- Toggle active / featured from list without full edit.
 
-# Database
+#### Bulk Quick Add
 
-**MySQL via Drizzle ORM** (`drizzle-orm` + `mysql2`). Migrations in `drizzle/migrations/`. Seed script: `scripts/seed.ts`.
+- Route: `/admin/products/bulk` (linked from products list).
+- Multi-image select → per-image cards (name, category, optional price).
+- Batch “apply to all” for category/price; max **20** items (`MAX_BULK_QUICK_PRODUCTS`).
+- Server: `bulkCreateAdminProducts` — one request; unique slugs; **`isActive: false`**, **`featuredOnHomepage: false`**; blurb/description default to name; `details: []`.
+- Failure: reverse-delete created rows + orphan uploads when practical.
+- Success: hidden drafts messaging; leave-guard when unsaved.
 
-| Table           | Purpose                                                                       |
-| --------------- | ----------------------------------------------------------------------------- |
-| `categories`    | 8 category slugs, labels, blurbs, `image_path`, sort order                    |
-| `products`      | Catalog items (slug, name, category, copy, details JSON, `image_path`, price) |
-| `site_settings` | Single row: WhatsApp, email, Instagram, founder, location                     |
-| `admin_users`   | Admin login (email + bcrypt `password_hash`)                                  |
+#### Duplicate Product
 
-**Fallback:** If `DATABASE_URL` is not set, `src/lib/data.server.ts` reads from `src/data/products.ts` and `src/lib/site.ts`.
+- List action (mobile sheet + desktop): `duplicateAdminProduct`.
+- Copies category, blurb, description, details, priceFrom; name `"{name} Copy"`; new unique slug; hidden + not featured.
+- **Copies image file** to a new path (`copyUploadedProductImage`) so deleting one product does not remove the other’s image.
 
-| Concept        | Live source           | Fallback                                         |
-| -------------- | --------------------- | ------------------------------------------------ |
-| Products       | MySQL `products`      | `Product[]` in `src/data/products.ts`            |
-| Categories     | MySQL `categories`    | `categories[]` in same file                      |
-| Gallery images | Static                | `galleryImages[]` in same file (not in admin v1) |
-| Site config    | MySQL `site_settings` | `site` object in `src/lib/site.ts`               |
+### Categories
 
-Uploaded images live on disk at `public/uploads/` (paths like `/uploads/products/slug.jpg`).
+`/admin/categories` — labels, blurbs, images, reorder.
 
-# APIs and Integrations
+### Services
 
-## External services
+`/admin/services` — service cards + page intro/footer copy; reorder; image upload.
 
-| Service                  | Usage                                                                |
-| ------------------------ | -------------------------------------------------------------------- |
-| **WhatsApp** (`wa.me`)   | Primary order/enquiry channel; `whatsappLink()` in `src/lib/site.ts` |
-| **Instagram**            | Social link (`@dainty.handd`) in header, footer, contact             |
-| **Google Fonts**         | Playfair Display, Inter, JetBrains Mono (loaded in `__root.tsx`)     |
-| **Lovable platform**     | Hosting, error reporting (`window.__lovableEvents`), build config    |
-| **Cloudflare** (Assumed) | Nitro default deploy target per `vite.config.ts` comments            |
+### Testimonials
 
-## Authentication methods
+`/admin/testimonials` — quotes + section heading.
 
-**Admin session cookie** — `loginAdmin` server function verifies bcrypt hash, sets signed httpOnly cookie. Admin layout `beforeLoad` redirects unauthenticated users to `/admin/login`.
+### Blog
 
-## Server functions
+`/admin/blog`, `/admin/blog/$postId` — draft/publish, slug, excerpt, content, featured image, SEO fields.
 
-| Module                            | Purpose                                                   |
-| --------------------------------- | --------------------------------------------------------- |
-| `src/lib/api/catalog.ts`          | Public data loaders (categories, products, site settings) |
-| `src/lib/api/admin/auth.ts`       | Login, logout, session check                              |
-| `src/lib/api/admin/products.ts`   | Admin product CRUD (JSON + base64 image upload)           |
-| `src/lib/api/admin/categories.ts` | Admin category save (JSON + base64 image upload)          |
-| `src/lib/api/admin/settings.ts`   | Site settings CRUD                                        |
+### Settings / Account
 
-## Environment variables
+`/admin/settings` — WhatsApp, email, Instagram, founder, location; **change password**; logout-all-sessions (bumps `session_version`); **push notification** enable/test UI.
 
-| Variable                         | Purpose                                                                      |
-| -------------------------------- | ---------------------------------------------------------------------------- |
-| `VITE_SITE_URL`                  | Canonical base URL (client + server)                                         |
-| `DATABASE_URL`                   | MySQL connection string                                                      |
-| `ADMIN_SESSION_SECRET`           | Signs admin session cookie                                                   |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Used by `db:seed` to create/update admin user                                |
-| `UPLOADS_DIR`                    | Persistent upload path (default on Hostinger: `../uploads` beside `nodejs/`) |
+### Admin PWA
 
-Server config pattern in `src/lib/config.server.ts` reads `process.env` inside functions.
+- Manifest: `public/admin.webmanifest` (`start_url` `/admin`, scope `/admin`).
+- Public manifest: `public/manifest.webmanifest`.
+- Route-aware manifest selection (`pwa-identity`).
+- Installed-app launch: early boot script + `AdminLaunchSplash` (once per session); standalone hides redundant mobile top chrome via CSS.
 
-# Development Commands
+### Push Notifications
 
-Package manager: **npm** (`package-lock.json`).
+- Settings UI + `admin-push-sw.js`.
+- Subscriptions stored per admin user; test send; enquiry-triggered notify.
+- Missing/malformed VAPID → Admin still works; push marked unavailable; public enquiry unaffected.
 
-| Command               | Purpose                                                               |
-| --------------------- | --------------------------------------------------------------------- |
-| `npm install`         | Install dependencies                                                  |
-| `npm run dev`         | Start Vite dev server                                                 |
-| `npm run build`       | Hostinger production build: `db:ensure` → `db:verify` → `build:app`   |
-| `npm run build:app`   | Vite + Nitro compile only (no database; used by GitHub CI)            |
-| `npm run build:dev`   | Development-mode compile                                              |
-| `npm run preview`     | Preview production build locally                                      |
-| `npm run lint`        | ESLint check                                                          |
-| `npm run format`      | Prettier format all files                                             |
-| `npm run db:generate` | Generate Drizzle SQL migrations                                       |
-| `npm run db:migrate`  | Apply migrations to MySQL                                             |
-| `npm run db:seed`     | Seed DB + copy images to `public/uploads/` and persistent uploads dir |
-| `npm run db:studio`   | Drizzle Studio (optional)                                             |
+---
 
-> If using npm and you hit peer dependency errors: `npm install --legacy-peer-deps`
+## Enquiry / Lead Flow
 
-**Tests:** No test runner or test scripts are configured (no Vitest, Jest, or Playwright).
+1. Contact / product / service enquiry UI validates and calls `submitEnquiry`.
+2. Server inserts `enquiries` (honeypot + IP rate limit); resolves product/service names server-side.
+3. Returns `{ id, whatsappMessage }`; UI offers optional WhatsApp continue.
+4. Best-effort Admin Web Push; failures logged only.
+5. Admin manages status/notes; never public.
 
-# Important Files
+Custom order page remains WhatsApp-only (no lead row).
 
-| File                                       | Purpose                                                                                            |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `package.json`                             | Dependencies, scripts, project metadata                                                            |
-| `vite.config.ts`                           | TanStack Start server entry override (`src/server.ts`)                                             |
-| `src/routes/__root.tsx`                    | HTML shell, global meta/OG, root catalog context, themed 404/error UI                              |
-| `src/routes/index.tsx`                     | Homepage (hero, categories, why, moments, how-it-works, stats, gallery, testimonials, closing CTA) |
-| `src/routes/catalog.index.tsx`             | Catalog listing with URL search param filters & pagination                                         |
-| `src/routes/catalog.$slug.tsx`             | Product detail with loader + JSON-LD                                                               |
-| `src/routes/custom.tsx`                    | Custom order form with react-hook-form + Zod validation                                            |
-| `src/routes/services.tsx`                  | Celebration services page                                                                          |
-| `src/routes/contact.tsx`                   | Contact page (channels, delivery strip, closing CTA)                                               |
-| `src/routes/sitemap[.]xml.ts`              | Dynamic XML sitemap server handler                                                                 |
-| `src/routes/robots[.]txt.ts`               | Dynamic robots.txt server handler                                                                  |
-| `src/routes/admin.tsx`                     | Admin layout + auth guard                                                                          |
-| `src/routes/admin.login.tsx`               | Admin login form                                                                                   |
-| `src/routes/admin.products.tsx`            | Products layout (`<Outlet />`)                                                                     |
-| `src/routes/admin.products.index.tsx`      | Product list                                                                                       |
-| `src/routes/admin.products.$productId.tsx` | Product add/edit with image upload                                                                 |
-| `src/routes/uploads/$.tsx`                 | Serves uploaded images from disk                                                                   |
-| `src/routes/admin.categories.tsx`          | Category editor with file upload                                                                   |
-| `src/routes/admin.settings.tsx`            | Site settings editor                                                                               |
-| `src/data/products.ts`                     | Static catalog fallback — prefer admin/MySQL in production                                         |
-| `src/lib/site.ts`                          | Brand defaults; live settings in MySQL `site_settings`                                             |
-| `src/components/site/PageShell.tsx`        | Shared page layout                                                                                 |
-| `src/components/site/SiteHeader.tsx`       | Navigation (desktop + mobile sheet); no "Our Story" link                                           |
-| `src/components/site/SiteFooter.tsx`       | Footer with brand name, Instagram, WhatsApp                                                        |
-| `src/components/site/FloatingWhatsApp.tsx` | Guided chat bot widget (Browse / Custom / How It Works / Delivery)                                 |
-| `src/styles.css`                           | Design tokens (warm editorial palette)                                                             |
-| `components.json`                          | shadcn/ui configuration (new-york style)                                                           |
-| `src/routeTree.gen.ts`                     | Auto-generated — never edit manually                                                               |
-| `public/og-image.jpg`                      | Default Open Graph image used across all pages                                                     |
-| `public/favicon.svg`                       | SVG favicon ("D" in terracotta)                                                                    |
-| `.lovable/plan.md`                         | Original product requirements and scope                                                            |
+Details: `docs/enquiries.md`.
 
-# Coding Conventions
+---
 
-## Naming standards
+## Authentication & Security
 
-- **Routes:** kebab-case filenames (`catalog.$slug.tsx`, `sitemap[.]xml.ts`); export `Route` via `createFileRoute()`
-- **Components:** PascalCase (`PageShell`, `SiteHeader`); site components in `components/site/`, UI primitives in `components/ui/`
-- **Data/types:** PascalCase types (`Product`, `Category`); camelCase fields (`priceFrom`, `slug`)
-- **Server-only modules:** `.server.ts` suffix (e.g. `config.server.ts`) — prevents client bundling
-- **Path alias:** `@/` maps to `src/` (e.g. `@/lib/site`, `@/data/products`)
+- Login: `loginAdmin` — bcrypt verify, rate limits (`admin_login_attempts` scopes), sets signed cookie.
+- Session payload includes `sessionVersion`; must match `admin_users.session_version`.
+- Password change / logout-all increments version (revokes other sessions).
+- Cookie: httpOnly, SameSite=Lax, Secure in production, ~7-day maxAge.
+- All mutating/private admin server functions call `requireAdmin()` (enforced in authorization tests).
+- Security headers / CSP report-only behavior described in `docs/PRODUCTION_OPERATIONS.md`.
+- Logs redact secrets and sensitive enquiry fields.
 
-## Folder organization
+---
 
-- **Do not** create `src/pages/` or Next.js-style layouts — use `src/routes/` only (see `src/routes/README.md`)
-- **Site-specific components** go in `components/site/`; reusable UI in `components/ui/` (shadcn)
-- **Static content** lives in `src/data/`; **brand config** in `src/lib/site.ts`
-- **Images** imported from `src/assets/` as Vite static imports
+## Database & Schema
 
-## Styling
+| Table | Role |
+| --- | --- |
+| `categories` | Catalog categories |
+| `products` | Catalog; `is_active`, `featured_on_homepage`, `homepage_sort_order` |
+| `site_settings` | Contact + services/testimonials section copy |
+| `services` | Celebration services |
+| `testimonials` | Homepage quotes |
+| `blog_posts` | Journal |
+| `enquiries` | Leads |
+| `admin_users` | Auth + `session_version` |
+| `admin_login_attempts` | Login + enquiry IP throttles |
+| `admin_push_subscriptions` | Web Push endpoints |
 
-- Tailwind CSS v4 with custom `@theme` tokens in `styles.css`
-- Typography: `font-display` (Playfair Display), `font-body` (Inter), `font-mono` (JetBrains Mono)
-- Color palette: warm off-white background (`#fdfbf7`), terracotta primary (`#c17f6a`), dark foreground for section contrast
-- Utility: `cn()` from `src/lib/utils.ts` for conditional class merging
-- **Button style:** rounded-full pills (`rounded-full`) with `uppercase tracking-widest text-xs` — always use this pattern, never `rounded-md`
-- **Section pattern:** alternate between `bg-background`, `bg-surface/40` (with `border-y border-border`), and `bg-foreground text-background` (dark) for visual rhythm
+- Source of truth for shape: `src/db/schema.ts` + `src/lib/schema-expectations.ts`.
+- Production path: **`db:ensure`** (additive) + **`db:verify`** (read-only).
+- **`db:migrate` unsafe** while `__drizzle_migrations` history lags physical schema (historically recorded early tags only on production even when columns exist). Do not fake journal rows casually.
+- On-disk SQL: `0000`–`0009`; journal includes through `0008` and **skips orphan `0004`**; `0009` push SQL may be applied via ensure rather than migrate.
+- Hostinger is typically **MariaDB**; JSON columns may appear as LONGTEXT + `JSON_VALID` — treated as compatible by verify.
 
-## Common helper functions
+See `docs/database.md`.
 
-```ts
-// src/lib/site.ts
-whatsappLink(message?: string)  // Builds wa.me URL with optional encoded message
-siteUrl(path?: string)           // Builds absolute URL from a path (uses VITE_SITE_URL or fallback)
+---
 
-// src/lib/utils.ts
-cn(...inputs)                    // clsx + tailwind-merge
+## Upload & Image Architecture
 
-// src/lib/config.server.ts
-getServerConfig()                // Server-only env reads (per-request)
-```
+- Client: `fileToUploadPayload` (browser resize/compress before send).
+- Server: MIME/magic-byte validation; Sharp WebP variants; write to persistent uploads root; optional mirror into bundle for local/prod serving.
+- Read: multi-root resolve (`uploads-path`) via `/uploads/$`.
+- Duplicate products: **file copy**, never shared destructive ownership.
+- Bulk create: same upload validation pipeline as single save.
+- Seed/build: `scripts/prepare-uploads.ts` copies seed assets into targets.
 
-## Route conventions
+---
 
-- Each route file exports `Route = createFileRoute("...")({ ... })`
-- Use `head()` for per-page SEO meta — always include `title`, `description`, `og:title`, `og:description`, `og:image` (use `siteUrl("/og-image.jpg")`), `og:url` (use `siteUrl("/path")`), and `canonical` link
-- Use `loader` for data fetching (product detail)
-- Use `component` for the page UI
-- Layout routes render children via `<Outlet />`
-- Catalog uses `validateSearch` with a Zod schema for `category` and `page` URL params
+## Caching
 
-## SEO checklist for new routes
+- Process-local Map in `cache.server.ts`, default TTL **10s**.
+- Used for public list/settings-style reads in `data.server.ts`.
+- Product detail intentionally bypasses cache for visibility correctness.
+- Admin mutations call `clearDataCache()` in the handling process.
+- Not shared across Node workers; acceptable for single Hostinger process.
 
-1. `title` — `"Page Name — DaintyHand"`
-2. `description` — concise, keyword-aware
-3. `og:title`, `og:description`, `og:image` (`siteUrl("/og-image.jpg")`), `og:url` (`siteUrl("/path")`)
-4. `twitter:card: "summary_large_image"`, `twitter:image`
-5. `canonical` link using `siteUrl("/path")`
-6. JSON-LD if relevant (Product, Service, LocalBusiness)
-7. Add path to `staticPaths` in `src/routes/sitemap[.]xml.ts`
+---
 
-# Notes for Future AI Sessions
+## PWA / Service Worker
 
-1. **Catalog is MySQL-backed in production** — set `DATABASE_URL`, run `db:migrate` + `db:seed`. Static `products.ts` is fallback only.
-2. **To add/edit products:** use `/admin/products` (file upload for images). Or edit `src/data/products.ts` for offline fallback.
-3. **To update contact info:** use `/admin/settings` when DB is configured; otherwise edit `src/lib/site.ts`.
-4. **Do not edit** `src/routeTree.gen.ts` — it regenerates from route files automatically.
-5. **Do not add duplicate Vite plugins** in `vite.config.ts` — `@lovable.dev/vite-tanstack-config` already includes TanStack Start, React, Tailwind, Nitro, etc.
-6. **Routing is TanStack Start**, not Next.js. Root layout is `src/routes/__root.tsx`; child routes need `<Outlet />` in parents.
-7. **shadcn/ui is installed** but most pages use custom Tailwind markup; shadcn components (`Sheet`, `Button`, etc.) are used sparingly (e.g. mobile nav).
-8. **SEO is a priority** — preserve `head()` meta, canonical URLs, JSON-LD, and `sitemap[.]xml.ts` when adding routes. Always use `siteUrl()` for absolute URLs in meta — never use local asset import paths directly.
-9. **Deployment target** is Lovable/Cloudflare Workers (assumed from Nitro config). Use `.server.ts` for secrets; never `import.meta.env` for private keys.
-10. **No tests exist** — add a test runner if testing is requested.
-11. **Admin portal exists** at `/admin` — bcrypt auth, MySQL CRUD, file uploads to persistent `../uploads` (or `UPLOADS_DIR`). No customer accounts or checkout.
-12. **Canonical base URL** configured via `VITE_SITE_URL` env var in `src/lib/site.ts`. Defaults to `https://dainty-insight-finder.lovable.app`. Update when deploying to a custom domain.
-13. **`/about` page has been deleted** — do not recreate it. "Our Story" is removed from the nav.
-14. **FloatingWhatsApp is a chat bot**, not a simple link button. It has a guided conversation tree (screens: home, browse, custom, howItWorks, delivery). Add new screens there for new topics. Screen resets to "home" only when the user explicitly closes (×), not when minimized.
-15. **og:image for all pages** uses `public/og-image.jpg` (a copy of `service-hampers.jpg`). For per-product og:image, use the same fallback since bundled asset paths aren't valid public URLs for social crawlers.
-16. **Form errors** use `text-destructive` (not `text-red-600`) to stay theme-consistent.
-17. **Hostinger / Node deployment:** Entry file **`dist/server/hostinger-entry.mjs`**. Set `DATABASE_URL`, `ADMIN_SESSION_SECRET`, `VITE_SITE_URL`, and optionally `UPLOADS_DIR`. WhatsApp and contact details live in MySQL `site_settings` (editable in `/admin/settings`). See `README.md` for the full redeploy checklist.
+| Asset | Role |
+| --- | --- |
+| `manifest.webmanifest` | Public install identity |
+| `admin.webmanifest` | Admin install identity |
+| `admin-push-sw.js` | Push + notificationclick (+ badge helpers); **no offline fetch cache** |
+
+---
+
+## Notifications
+
+- Library: `web-push` + VAPID.
+- Runtime public key: **derived from private key**.
+- Env: `WEB_PUSH_VAPID_PRIVATE_KEY`, `WEB_PUSH_VAPID_SUBJECT` (normalized mailto/https). Legacy public env ignored for send/subscribe.
+- Scripts: `generate:vapid-keys`, `validate:vapid-keys` (no secret printing in normal output).
+- Triggers: new enquiry; Admin test button.
+
+---
+
+## SEO
+
+- Route `head()` titles/descriptions/OG/Twitter.
+- JSON-LD where implemented (e.g. website/product helpers).
+- Dynamic sitemap + robots using `VITE_SITE_URL` / `siteUrl()`.
+
+---
+
+## Analytics
+
+- Optional Google Analytics via `VITE_GA_ID` in `__root.tsx`.
+- Client `trackEvent` helpers for selected CTAs.
+
+---
+
+## Environment Variables
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | MySQL (required production) |
+| `ADMIN_SESSION_SECRET` | Cookie HMAC (≥32; required production) |
+| `VITE_SITE_URL` | Canonical/public origin (required production) |
+| `UPLOADS_DIR` | Persistent uploads (recommended on Hostinger) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Seed only |
+| `VITE_GA_ID` | Optional analytics |
+| `WEB_PUSH_VAPID_PRIVATE_KEY` | Push (secret) |
+| `WEB_PUSH_VAPID_SUBJECT` | Push subject |
+| `WEB_PUSH_VAPID_PUBLIC_KEY` | Legacy optional; not runtime authority |
+| `HOST` / `NITRO_HOST` | Bind (Hostinger often `0.0.0.0`) |
+| `NODE_ENV` | production flags |
+
+Never commit real secrets. Never document private VAPID material.
+
+---
+
+## Deployment / Hostinger
+
+1. Backup DB + uploads.
+2. hPanel env: `DATABASE_URL`, `ADMIN_SESSION_SECRET`, `VITE_SITE_URL`, uploads path, optional push.
+3. Build command: **`npm run build`** (ensure → verify → `build:app`).
+4. Entry: `dist/server/hostinger-entry.mjs` (stdin stub for LiteSpeed).
+5. Smoke: `/`, `/catalog`, `/admin/login`, blog, representative image, `/health`.
+6. Do not deploy macOS `node_modules`/Sharp binaries to Linux.
+
+CI uses `build:app` without production DB. Details: `docs/PRODUCTION_OPERATIONS.md`.
+
+---
+
+## Testing & CI
+
+| Command | What |
+| --- | --- |
+| `npm run test` | Vitest unit tests (`src/**/*.test.ts`) |
+| `npm run lint` | ESLint |
+| `npx tsc --noEmit` | Types (local/CI discipline) |
+| `npm run test:e2e` | Playwright Chromium + scoped WebKit |
+| `npm run test:visual` | Opt-in Chromium screenshots (not default CI gate) |
+| `npm run smoke` | Deployed-origin smoke script |
+
+- WebKit/Playwright ≠ substitute for real iPhone/iPad Safari checks.
+- E2E refuses non-local remote URLs and requires test/e2e DB naming.
+
+GitHub Actions (`.github/workflows/ci.yml`): lint + Vitest + `build:app`; e2e job with MySQL service + seed + Playwright.
+
+---
+
+## Important Routes
+
+**Public:** `/`, `/catalog`, `/catalog/$slug`, `/services`, `/blog`, `/blog/$slug`, `/contact`, `/custom`, `/sitemap.xml`, `/robots.txt`, `/health`, `/uploads/$`
+
+**Admin:** `/admin/login`, `/admin`, `/admin/enquiries`, `/admin/enquiries/$enquiryId`, `/admin/products`, `/admin/products/bulk`, `/admin/products/$productId`, `/admin/categories`, `/admin/services`, `/admin/blog`, `/admin/blog/$postId`, `/admin/testimonials`, `/admin/settings`
+
+---
+
+## Important Modules
+
+| Module | Role |
+| --- | --- |
+| `src/lib/data.server.ts` | Public catalog/settings reads + fallback |
+| `src/lib/api/catalog.ts` / `api/admin/*` | Server functions |
+| `src/lib/auth.server.ts` | Sessions |
+| `src/lib/uploads.server.ts` | Image save/copy/delete |
+| `src/lib/admin-push.server.ts` | VAPID + send |
+| `src/lib/enquiries.server.ts` | Public submit core |
+| `src/lib/schema-expectations.ts` | ensure/verify model |
+| `src/lib/admin-product-bulk.ts` / `product-slug.ts` | Bulk drafts + slugs |
+| `src/lib/cache.server.ts` | TTL cache |
+| `scripts/ensure-schema.ts` / `verify-schema.ts` | Deploy schema safety |
+| `scripts/write-hostinger-entry.mjs` | Hostinger entry wrapper |
+
+---
+
+## Data Models / Tables
+
+See Database & Schema. Product visibility: inactive products must not appear on public catalog/detail. Featured homepage products are a filtered subset with sort order.
+
+---
+
+## Operational Safety Rules
+
+- Hostinger Build Command stays `npm run build`.
+- Never routine-production `db:migrate` or `db:seed`.
+- Persistent uploads must survive redeploy.
+- Enquiry persistence before WhatsApp; push never blocks enquiry success.
+- Do not share product image paths across independently deletable products.
+- Bulk drafts stay hidden until explicitly made visible.
+- Do not print or commit secrets.
+- Prefer smallest change; reuse existing patterns.
+
+---
+
+## Known Technical Debt / Limitations
+
+- Production Drizzle **migration history** may lag physical schema; ensure/verify is the supported path until a planned history reconciliation.
+- `0004_add_product_is_active.sql` is an orphan (on disk, not in journal).
+- `0009_add_admin_push_subscriptions.sql` exists for documentary/ensure use; journal currently ends at `0008`.
+- In-memory cache is per-process only.
+- Custom order form does not create Admin leads.
+- Visual regression is opt-in and environment-sensitive.
+- Real-device iOS validation remains necessary beyond WebKit e2e.
+- Admin date display uses fixed `Asia/Kolkata` formatting to avoid SSR/client timezone hydration mismatches.
+
+---
+
+## Explicitly Deferred Features
+
+- Checkout / payments / carts
+- Customer accounts
+- Full CRM / quoting engine
+- CSV product import
+- Instagram scraping / AI content generation
+- Offline-first Admin caching SW
+- Redis or shared cache invalidation
+- Enforced CSP (currently report-oriented posture per ops doc)
+
+---
+
+## Documentation Map
+
+| Doc | Use |
+| --- | --- |
+| `PROJECT_CONTEXT.md` | Canonical current-state (this file) |
+| `README.md` | Install, env, Hostinger quickstart, command index |
+| `docs/database.md` | ensure/verify/migrate policy + MariaDB JSON |
+| `docs/PRODUCTION_OPERATIONS.md` | Deploy, push env, Playwright, performance notes |
+| `docs/enquiries.md` | Lead capture + Admin workflow |
+| `docs/BACKUP_AND_RESTORE.md` | Backup/restore procedures |
+| `.cursor/rules/daintyhand-context.mdc` | AI workflow: selective doc reading + sync contract |

@@ -17,12 +17,12 @@ Production startup rejects missing `DATABASE_URL`, `ADMIN_SESSION_SECRET`, or `V
 
 1. Back up MySQL and the persistent upload directory.
 2. Install dependencies on the same Linux platform that will run the application with `npm ci`. Sharp contains native components, so do not upload a macOS-built `node_modules` or server bundle to Linux.
-3. Apply `drizzle/migrations/0007_add_blog_posts.sql` (or run the normal migration process).
-4. Build with the production environment configured: `npm run build` (Hostinger Build Command). This runs `db:ensure`, then `db:verify`, then `build:app`. Do not run `db:migrate` or `db:seed` during deploy.
+3. Ensure the live schema matches the app with **`npm run db:ensure`** then **`npm run db:verify`** (Hostinger’s `npm run build` already runs both before compile). Do **not** run `db:migrate` or `db:seed` during deploy. Documentary SQL files under `drizzle/migrations/` (including blog/enquiries/push) exist for history and fresh installs — production relies on ensure/verify while migration history remains inconsistent.
+4. Build with the production environment configured: `npm run build` (Hostinger Build Command). This runs `db:ensure`, then `db:verify`, then `build:app`.
 5. Keep `UPLOADS_DIR` outside release directories and preserve its ownership across deployments.
 6. Restart the Node application.
 7. Run `SITE_URL=https://your-origin.example npm run smoke`.
-8. Confirm an admin login, a representative image, `/sitemap.xml`, and a blog post manually.
+8. Confirm an admin login, a representative image, `/sitemap.xml`, enquiries, and a blog post manually.
 
 ## Headers and CSP
 

@@ -27,11 +27,13 @@ Do not insert fake rows into `__drizzle_migrations` to paper over this.
 
 `drizzle/migrations/meta/_journal.json` lists:
 
-`0000` → `0001` → `0002` → `0003` → `0005` → `0006` → `0007`
+`0000` → `0001` → `0002` → `0003` → `0005` → `0006` → `0007` → `0008`
 
 `0004_add_product_is_active.sql` exists on disk but is **not** in the journal. That file is a handwritten orphan. It was applied in environments via `ensure-schema`, not generated as a normal Drizzle snapshot migration. Adding it to the journal now would make `db:migrate` try `ADD is_active` on databases that already have the column.
 
-Later SQL files (`0003`, `0005`–`0007`) are also handwritten (no matching `meta/000x_snapshot.json` except `0000`). The journal tags exist so Drizzle Kit can find those files; they were not produced by a clean `db:generate` chain.
+`0009_add_admin_push_subscriptions.sql` exists on disk for documentary / ensure coverage of `admin_push_subscriptions`. Prefer **`db:ensure`** on Hostinger; do not assume `db:migrate` has applied `0009`.
+
+Later SQL files (`0003`, `0005`–`0009`) are largely handwritten (no matching `meta/000x_snapshot.json` except `0000`). Journal tags exist so Drizzle Kit can find listed files; they were not produced by a clean `db:generate` chain.
 
 ## When `db:migrate` can become safe
 
@@ -89,3 +91,7 @@ Production receives it through **`npm run build` → `db:ensure`**, which create
 Statuses (application-level): `new`, `contacted`, `quoted`, `confirmed`, `lost`.
 
 Public visitors submit enquiries; only admins can list, change status, or edit internal notes. Admin notes are never exposed publicly.
+
+## Admin push subscriptions
+
+`admin_push_subscriptions` stores Web Push endpoints for Admin devices. Production receives the table through **`npm run build` → `db:ensure`**. Documentary SQL: `drizzle/migrations/0009_add_admin_push_subscriptions.sql`. Do not use `db:migrate` for Hostinger routine deploys.

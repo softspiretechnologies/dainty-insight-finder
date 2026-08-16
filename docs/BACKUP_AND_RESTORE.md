@@ -26,7 +26,7 @@ Restore into an empty, tested database with:
 gzip -dc /secure/backups/database/daintyhand-TIMESTAMP.sql.gz | mysql --defaults-extra-file=/secure/path/mysql.cnf
 ```
 
-Apply any newer application migrations after the restore, then run a smoke check.
+Apply any newer application schema with `npm run db:ensure` + `npm run db:verify` after the restore (do not run production `db:migrate` casually), then run a smoke check.
 
 ## Upload backup
 
