@@ -272,7 +272,7 @@ export function extractPushDeliveryDiagnostic(
 export function friendlyTestPushErrorMessage(diagnostic: PushDeliveryDiagnostic): string {
   switch (diagnostic.category) {
     case "vapid_auth":
-      return "Push provider rejected the server notification credentials. Check the configured VAPID key pair.";
+      return "This device's push subscription does not match the server VAPID key. Disable notifications on this device, then Enable again.";
     case "stale_subscription":
       return "This device's notification subscription expired. Disable and enable notifications again.";
     case "network":

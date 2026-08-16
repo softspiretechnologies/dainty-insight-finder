@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { PushDeliveryDiagnostic } from "@/lib/admin-push";
+import {
+  subscriptionMatchesVapidPublicKey,
+  type PushDeliveryDiagnostic,
+} from "@/lib/admin-push";
 import {
   enableAdminPushOnDevice,
   getAdminPushBrowserSnapshot,
@@ -35,6 +38,8 @@ type UiState = {
   browser: AdminPushBrowserSnapshot["browser"];
   permission: AdminPushBrowserSnapshot["permission"];
   enabledOnDevice: boolean;
+  /** Whether this device's PushSubscription applicationServerKey matches server derived public. */
+  subscriptionMatchesServer: boolean | null;
   statusLabel: string;
 };
 
@@ -54,6 +59,9 @@ function statusLabelFor(state: Omit<UiState, "statusLabel">): string {
   }
   // Local subscription wins over server-config messaging so Disable remains discoverable.
   if (state.enabledOnDevice) {
+    if (state.subscriptionMatchesServer === false) {
+      return "Enabled, but subscription key is outdated — Disable then Enable";
+    }
     return "Enabled on this device";
   }
   if (!state.configured) {
@@ -86,6 +94,37 @@ export function AdminPushNotificationsSettings() {
       "vapidDiagnostics" in status && status.vapidDiagnostics
         ? (status.vapidDiagnostics as VapidDiagnosticsUi)
         : null;
+
+    let subscriptionMatchesServer: boolean | null = null;
+    if (vapidPublicKey && browser.localSubscription?.endpoint) {
+      const live = await getCurrentPushSubscription();
+      subscriptionMatchesServer = subscriptionMatchesVapidPublicKey(
+        live?.options?.applicationServerKey,
+        vapidPublicKey,
+      );
+    }
+
+    // #region agent log
+    fetch("http://127.0.0.1:7278/ingest/68b4041a-7dab-4ccf-9f80-2b4b1a1fa764", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "dfeff6" },
+      body: JSON.stringify({
+        sessionId: "dfeff6",
+        runId: "iphone-403",
+        hypothesisId: "J",
+        location: "AdminPushNotificationsSettings.tsx:refresh",
+        message: "subscription vs server key check",
+        data: {
+          configured,
+          enabledOnDevice: Boolean(browser.localSubscription?.endpoint),
+          subscriptionMatchesServer,
+          hasVapidPublicKey: Boolean(vapidPublicKey),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     const next: UiState = {
       configured,
       vapidPublicKey,
@@ -93,6 +132,7 @@ export function AdminPushNotificationsSettings() {
       browser: browser.browser,
       permission: browser.permission,
       enabledOnDevice: Boolean(browser.localSubscription?.endpoint),
+      subscriptionMatchesServer,
       statusLabel: "",
     };
     next.statusLabel = statusLabelFor(next);
@@ -159,19 +199,15 @@ export function AdminPushNotificationsSettings() {
   const canUsePushRuntime =
     state.configured && Boolean(state.vapidPublicKey) && state.browser === "available";
 
-  // Enable only when runtime is healthy and there is no local subscription.
   const showEnable = canUsePushRuntime && !state.enabledOnDevice && state.permission !== "denied";
-
-  // Test requires a local subscription AND a healthy server push config.
   const showTest = state.enabledOnDevice && canUsePushRuntime && state.permission !== "denied";
-
-  // Disable must always be available when a local subscription exists (recovery path).
   const showDisable = state.enabledOnDevice;
 
   const diagnostics = state.vapidDiagnostics;
   const legacyMismatch =
     diagnostics?.legacyPublicMatchesDerived === false &&
     Boolean(diagnostics.legacyPublicFingerprint);
+  const subscriptionMismatch = state.subscriptionMatchesServer === false;
 
   return (
     <section className="border border-border rounded-xl p-4 sm:p-5 space-y-4 bg-surface/20">
@@ -218,6 +254,14 @@ export function AdminPushNotificationsSettings() {
         </p>
       ) : null}
 
+      {subscriptionMismatch ? (
+        <p className="text-sm text-muted">
+          This device subscription was created with an older VAPID public key. That causes HTTP 403
+          from the push provider when sending. Tap Disable on this device, then Enable notifications
+          again (no Hostinger key changes needed for this).
+        </p>
+      ) : null}
+
       {legacyMismatch ? (
         <p className="text-sm text-muted">
           Legacy configured public key mismatch:{" "}
@@ -253,6 +297,9 @@ export function AdminPushNotificationsSettings() {
           </p>
           <p className="text-xs font-mono text-foreground">
             Subject valid: {yesNo(diagnostics.subjectValid)}
+          </p>
+          <p className="text-xs font-mono text-foreground">
+            Device subscription matches server: {yesNo(state.subscriptionMatchesServer)}
           </p>
           {diagnostics.legacyPublicFingerprint ? (
             <>
@@ -305,6 +352,38 @@ export function AdminPushNotificationsSettings() {
                 const subscription = await getCurrentPushSubscription();
                 if (!subscription) {
                   return { ok: false, error: "Enable notifications on this device first." };
+                }
+                if (state.vapidPublicKey) {
+                  const matches = subscriptionMatchesVapidPublicKey(
+                    subscription.options?.applicationServerKey,
+                    state.vapidPublicKey,
+                  );
+                  // #region agent log
+                  fetch("http://127.0.0.1:7278/ingest/68b4041a-7dab-4ccf-9f80-2b4b1a1fa764", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "X-Debug-Session-Id": "dfeff6",
+                    },
+                    body: JSON.stringify({
+                      sessionId: "dfeff6",
+                      runId: "iphone-403",
+                      hypothesisId: "J",
+                      location: "AdminPushNotificationsSettings.tsx:sendTest",
+                      message: "pre-send subscription key check",
+                      data: { matches },
+                      timestamp: Date.now(),
+                    }),
+                  }).catch(() => {});
+                  // #endregion
+                  if (matches === false) {
+                    return {
+                      ok: false,
+                      error:
+                        "This device's push subscription does not match the server VAPID key. Disable notifications on this device, then Enable again.",
+                      diagnostic: { category: "vapid_auth", statusCode: 403 },
+                    };
+                  }
                 }
                 const result = await sendAdminPushTest({
                   data: { endpoint: subscription.endpoint },

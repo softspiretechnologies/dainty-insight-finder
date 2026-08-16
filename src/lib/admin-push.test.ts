@@ -257,7 +257,7 @@ describe("extractPushDeliveryDiagnostic", () => {
       reason: "BadJwtToken",
       provider: "apple",
     });
-    expect(friendlyTestPushErrorMessage(diagnostic)).toMatch(/VAPID key pair/i);
+    expect(friendlyTestPushErrorMessage(diagnostic)).toMatch(/Disable notifications/i);
   });
 });
 
