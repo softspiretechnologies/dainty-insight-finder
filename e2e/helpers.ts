@@ -18,10 +18,15 @@ export async function visit(page: Page, route: string) {
   await waitForHydration(page);
 }
 
+/** Login password input only — `getByLabel("Password")` also matches "Show password". */
+export function passwordField(page: Page) {
+  return page.locator("#password");
+}
+
 export async function login(page: Page) {
   await visit(page, "/admin/login");
   await page.getByLabel("Email address").fill(adminEmail);
-  await page.getByLabel("Password").fill(adminPassword);
+  await passwordField(page).fill(adminPassword);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/admin\/?$/);
 }

@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/accordion";
 import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminField, invalidBoxClass } from "@/components/admin/AdminField";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
+import { OptimizedImage, adminThumbSizes } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/admin/categories")({
     const categories = await listAdminCategories();
     return { categories };
   },
+  pendingComponent: () => <AdminPagePending label="Loading categories…" />,
   component: AdminCategoriesPage,
 });
 
@@ -104,7 +107,14 @@ function AdminCategoriesPage() {
             <div key={category.id} className="shrink-0 w-24 sm:w-28">
               <div className="aspect-[4/5] overflow-hidden rounded-lg border border-border bg-surface">
                 {category.imagePath ? (
-                  <img src={category.imagePath} alt="" className="w-full h-full object-cover" />
+                  <OptimizedImage
+                    src={category.imagePath}
+                    alt=""
+                    width={112}
+                    height={140}
+                    sizes="112px"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full grid place-items-center text-muted/30">
                     <Tags className="w-5 h-5" />
@@ -203,7 +213,14 @@ function CategorySummary({ category }: { category: CategoryRow }) {
     <div className="flex items-center gap-3 text-left min-w-0 flex-1 pr-2">
       <div className="w-14 h-14 shrink-0 overflow-hidden rounded-md border border-border bg-surface">
         {category.imagePath ? (
-          <img src={category.imagePath} alt="" className="w-full h-full object-cover" />
+          <OptimizedImage
+            src={category.imagePath}
+            alt=""
+            width={80}
+            height={80}
+            sizes={adminThumbSizes}
+            className="w-full h-full object-cover"
+          />
         ) : null}
       </div>
       <div className="min-w-0 flex-1">

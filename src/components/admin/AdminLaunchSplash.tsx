@@ -3,9 +3,9 @@ import { useLayoutEffect, useState } from "react";
 import { markAdminLaunchSplashShown, shouldShowAdminLaunchSplash } from "@/lib/standalone-web-app";
 import { cn } from "@/lib/utils";
 
-/** Longer, calmer brand moment for installed Admin (~1.2s). */
-const EXIT_START_MS = 900;
-const DONE_MS = 1200;
+/** Brief brand moment for installed Admin (~550ms). */
+const EXIT_START_MS = 280;
+const DONE_MS = 550;
 const REDUCED_MOTION_MS = 160;
 
 function prefersReducedMotion() {

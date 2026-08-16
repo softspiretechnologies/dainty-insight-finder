@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/testimonials")({
   loader: async () => listAdminTestimonialsData(),
+  pendingComponent: () => <AdminPagePending label="Loading testimonials…" />,
   component: AdminTestimonialsPage,
 });
 

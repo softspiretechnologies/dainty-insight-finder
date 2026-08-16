@@ -5,6 +5,7 @@ import { MessageCircle, Mail, Instagram, User, MapPin, Check } from "lucide-reac
 import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { AdminPushNotificationsSettings } from "@/components/admin/AdminPushNotificationsSettings";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import {
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/admin/settings")({
     const settings = await getAdminSettings();
     return { settings };
   },
+  pendingComponent: () => <AdminPagePending label="Loading settings…" />,
   component: AdminSettingsPage,
 });
 

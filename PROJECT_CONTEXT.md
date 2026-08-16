@@ -156,11 +156,11 @@ src/
 
 ### Categories
 
-`/admin/categories` — labels, blurbs, images, reorder.
+`/admin/categories` — labels, blurbs, images, reorder. List/preview thumbs use `OptimizedImage` + generated variants.
 
 ### Services
 
-`/admin/services` — service cards + page intro/footer copy; reorder; image upload.
+`/admin/services` — service cards + page intro/footer copy; reorder; image upload. List thumbs use `OptimizedImage` + generated variants.
 
 ### Testimonials
 
@@ -174,12 +174,14 @@ src/
 
 `/admin/settings` — WhatsApp, email, Instagram, founder, location; **change password**; logout-all-sessions (bumps `session_version`); **push notification** enable/test UI.
 
+Secondary Admin list/editor routes (categories, services, testimonials, blog, settings) show `AdminPagePending` in the content area while loaders run; the Admin shell stays visible.
+
 ### Admin PWA
 
 - Manifest: `public/admin.webmanifest` (`start_url` `/admin`, scope `/admin`).
 - Public manifest: `public/manifest.webmanifest`.
 - Route-aware manifest selection (`pwa-identity`).
-- Installed-app launch: early boot script + `AdminLaunchSplash` (once per session); standalone hides redundant mobile top chrome via CSS.
+- Installed-app launch: early boot script + `AdminLaunchSplash` (once per session, ~550ms); standalone hides redundant mobile top chrome via CSS.
 
 ### Push Notifications
 
@@ -245,7 +247,7 @@ See `docs/database.md`.
 
 - Client: `fileToUploadPayload` (browser resize/compress before send).
 - Server: MIME/magic-byte validation; Sharp WebP variants; write to persistent uploads root; optional mirror into bundle for local/prod serving.
-- Read: multi-root resolve (`uploads-path`) via `/uploads/$`.
+- Read: multi-root resolve (`uploads-path`) via `/uploads/$`. Admin list thumbs (products, categories, services) use `OptimizedImage` + generated variants.
 - Duplicate products: **file copy**, never shared destructive ownership.
 - Bulk create: same upload validation pipeline as single save.
 - Seed/build: `scripts/prepare-uploads.ts` copies seed assets into targets.
@@ -344,6 +346,7 @@ CI uses `build:app` without production DB. Details: `docs/PRODUCTION_OPERATIONS.
 
 - WebKit/Playwright ≠ substitute for real iPhone/iPad Safari checks.
 - E2E refuses non-local remote URLs and requires test/e2e DB naming.
+- Admin login E2E fills `#password` (not `getByLabel("Password")`) so the “Show password” control is not matched.
 
 GitHub Actions (`.github/workflows/ci.yml`): lint + Vitest + `build:app`; e2e job with MySQL service + seed + Playwright.
 

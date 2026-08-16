@@ -80,7 +80,7 @@
 }
 
 .admin-launch-brand {
-  animation: admin-launch-brand 700ms var(--ease-out-expo) both;
+  animation: admin-launch-brand 280ms var(--ease-out-expo) both;
 }
 
 .admin-launch-overlay-exit {

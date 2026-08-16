@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/accordion";
 import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminField, invalidBoxClass } from "@/components/admin/AdminField";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
+import { OptimizedImage, adminThumbSizes } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +39,7 @@ import type { ServiceId } from "@/types/catalog";
 
 export const Route = createFileRoute("/admin/services")({
   loader: async () => listAdminServicesData(),
+  pendingComponent: () => <AdminPagePending label="Loading services…" />,
   component: AdminServicesPage,
 });
 
@@ -348,7 +351,14 @@ function ServiceSummary({ service }: { service: ServiceRow }) {
     <div className="flex items-center gap-3 text-left min-w-0 flex-1 pr-2">
       <div className="w-14 h-14 shrink-0 overflow-hidden rounded-md border border-border bg-surface">
         {service.imagePath ? (
-          <img src={service.imagePath} alt="" className="w-full h-full object-cover" />
+          <OptimizedImage
+            src={service.imagePath}
+            alt=""
+            width={80}
+            height={80}
+            sizes={adminThumbSizes}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full grid place-items-center text-muted/30">
             <Sparkles className="w-5 h-5" />

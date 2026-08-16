@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AdminField, FormErrorBanner } from "@/components/admin/AdminField";
+import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/admin/blog/$postId")({
     if (parsed === "new" || parsed === null) return { post: null };
     return { post: await getAdminBlogPost({ data: { id: parsed } }) };
   },
+  pendingComponent: () => <AdminPagePending label="Loading blog post…" />,
   errorComponent: ({ error, reset }) => (
     <div className="max-w-3xl space-y-4">
       <h1 className="font-display text-3xl italic">Blog post</h1>

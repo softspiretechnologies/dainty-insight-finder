@@ -1,7 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const adminEmail = process.env.E2E_ADMIN_EMAIL || "e2e-admin@example.com";
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || "E2e-password-123!";
+import { adminEmail, adminPassword, passwordField } from "./helpers";
 
 test.describe.configure({ timeout: 120_000 });
 
@@ -53,7 +52,7 @@ async function login(page: Page) {
   await waitForResponsiveLayout(page);
   await expectNoPageOverflow(page);
   await page.getByLabel("Email address").fill(adminEmail);
-  await page.getByLabel("Password").fill(adminPassword);
+  await passwordField(page).fill(adminPassword);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/admin\/?$/);
 }

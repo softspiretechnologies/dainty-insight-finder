@@ -3,7 +3,7 @@ export const ADMIN_EARLY_BOOT_SCRIPT = `(function(){try{var p=location.pathname;
 
 export const ADMIN_EARLY_BOOT_STYLE = `html,body{background-color:#fdfbf7;color-scheme:light}
 #admin-early-splash{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;min-height:100dvh;width:100%;background:#fdfbf7;pointer-events:auto}
-.admin-early-splash-brand{text-align:center;padding:1.5rem;animation:admin-launch-brand 700ms cubic-bezier(0.16,1,0.3,1) both}
+.admin-early-splash-brand{text-align:center;padding:1.5rem;animation:admin-launch-brand 280ms cubic-bezier(0.16,1,0.3,1) both}
 .admin-early-splash-title{margin:0;font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:2.25rem;letter-spacing:-0.02em;color:#2d2926}
 .admin-early-splash-sub{margin:0.75rem 0 0;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:#68635f}
 @media (prefers-reduced-motion:reduce){.admin-early-splash-brand{animation:none}}

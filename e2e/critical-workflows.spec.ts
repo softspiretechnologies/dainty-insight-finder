@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import { expect, test, type Page } from "@playwright/test";
 
-const adminEmail = process.env.E2E_ADMIN_EMAIL || "e2e-admin@example.com";
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || "E2e-password-123!";
+import { adminEmail, adminPassword, login, passwordField } from "./helpers";
+
 test.describe.configure({ timeout: 90_000 });
 const fixture = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -13,20 +13,6 @@ const fixture = path.resolve(
 
 async function waitForHydration(page: Page) {
   await expect(page.locator('html[data-hydrated="true"]')).toHaveCount(1, { timeout: 20_000 });
-}
-
-async function login(page: Page) {
-  await page.goto("/admin/login");
-  await waitForHydration(page);
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByLabel("Email address")).toBeFocused();
-  await expect(page.getByLabel("Email address")).toHaveAttribute("aria-invalid", "true");
-  await expect(page.getByLabel("Email address")).toHaveAttribute("aria-describedby", "email-error");
-  await page.getByLabel("Email address").fill(adminEmail);
-  await page.getByLabel("Password").fill(adminPassword);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/admin\/?$/);
 }
 
 async function openProductEditor(page: Page, productName: string) {
@@ -46,14 +32,21 @@ test("admin authentication rejects invalid credentials and revokes the current s
   await page.goto("/admin/login");
   await waitForHydration(page);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByLabel("Email address")).toBeFocused();
+  await expect(page.getByLabel("Email address")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByLabel("Email address")).toHaveAttribute("aria-describedby", "email-error");
+
   await page.getByLabel("Email address").fill(adminEmail);
-  await page.getByLabel("Password").fill("incorrect-password");
+  await passwordField(page).fill("incorrect-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "Invalid email or password" }),
   ).toBeVisible({ timeout: 20_000 });
 
-  await login(page);
+  await passwordField(page).fill(adminPassword);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/admin\/?$/);
   await expect(page.getByRole("heading", { name: /DaintyHand Admin/i })).toBeVisible();
   await page.getByRole("button", { name: "Log out" }).first().click();
   await expect(page).toHaveURL(/\/admin\/login/);
@@ -76,15 +69,20 @@ test("unauthenticated direct Admin URLs redirect to login", async ({ page }) => 
 
 test("authenticated Admin can move between primary pages", async ({ page }) => {
   await login(page);
-  await page.goto("/admin/products");
-  await waitForHydration(page);
-  await expect(page.getByRole("heading", { name: "Products" })).toBeVisible();
-  await page.goto("/admin/enquiries");
-  await waitForHydration(page);
-  await expect(page.getByRole("heading", { name: "Enquiries" })).toBeVisible();
-  await page.goto("/admin");
-  await waitForHydration(page);
   await expect(page.getByRole("heading", { name: /DaintyHand Admin/i })).toBeVisible();
+
+  const sidebar = page.locator("aside");
+  await sidebar.getByRole("link", { name: "Enquiries" }).click();
+  await expect(page).toHaveURL(/\/admin\/enquiries/);
+  await expect(page.getByRole("heading", { name: "Enquiries" })).toBeVisible();
+
+  await sidebar.getByRole("link", { name: "Products" }).click();
+  await expect(page).toHaveURL(/\/admin\/products/);
+  await expect(page.getByRole("heading", { name: "Products" })).toBeVisible();
+
+  await sidebar.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/admin\/settings/);
+  await expect(page.getByRole("heading", { name: "Site settings" })).toBeVisible();
 });
 
 test("admin can create, edit, and hide a product", async ({ page }) => {
@@ -123,7 +121,7 @@ test("admin can create, edit, and hide a product", async ({ page }) => {
   await page.goto("/admin/products");
   await waitForHydration(page);
   await openProductEditor(page, editedName);
-  await page.getByLabel("Listed on site").uncheck();
+  await page.getByLabel("Listed on website").uncheck();
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page).toHaveURL(/\/admin\/products\/?$/);
   const hiddenResponse = await page.goto(`/catalog/${editedSlug}`);

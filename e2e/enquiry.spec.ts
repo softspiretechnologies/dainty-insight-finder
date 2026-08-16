@@ -1,21 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-const adminEmail = process.env.E2E_ADMIN_EMAIL || "e2e-admin@example.com";
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || "E2e-password-123!";
+import { login, waitForHydration } from "./helpers";
+
 test.describe.configure({ timeout: 90_000 });
-
-async function waitForHydration(page: Page) {
-  await expect(page.locator('html[data-hydrated="true"]')).toHaveCount(1, { timeout: 20_000 });
-}
-
-async function login(page: Page) {
-  await page.goto("/admin/login");
-  await waitForHydration(page);
-  await page.getByLabel("Email address").fill(adminEmail);
-  await page.getByLabel("Password").fill(adminPassword);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/admin\/?$/);
-}
 
 test("public enquiry submits and appears in admin", async ({ page }) => {
   const suffix = Date.now();
@@ -41,6 +28,8 @@ test("public enquiry submits and appears in admin", async ({ page }) => {
   await page.getByRole("link", { name: new RegExp(name) }).click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await page.locator("#enquiry-status").selectOption("contacted");
-  await page.getByRole("button", { name: "Update status" }).click();
-  await expect(page.getByText("Status updated.")).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Saved" })).toBeVisible({
+    timeout: 15_000,
+  });
 });
