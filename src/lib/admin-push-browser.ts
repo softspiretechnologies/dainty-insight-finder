@@ -44,7 +44,16 @@ export async function registerAdminPushServiceWorker(): Promise<ServiceWorkerReg
   if (!("serviceWorker" in navigator)) {
     throw new Error("Service workers are not supported.");
   }
-  return navigator.serviceWorker.register(ADMIN_PUSH_SW_URL, { scope: ADMIN_PUSH_SW_SCOPE });
+  const registration = await navigator.serviceWorker.register(ADMIN_PUSH_SW_URL, {
+    scope: ADMIN_PUSH_SW_SCOPE,
+    updateViaCache: "none",
+  });
+  try {
+    await registration.update();
+  } catch {
+    // Best-effort refresh; existing registration still usable.
+  }
+  return registration;
 }
 
 export async function getCurrentPushSubscription(): Promise<PushSubscription | null> {

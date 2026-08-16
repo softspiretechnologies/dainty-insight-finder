@@ -551,12 +551,14 @@ export async function sendAdminTestNotification(
     return { ok: false, error: "Enable notifications on this device first." };
   }
 
+  const testStamp = Date.now();
   const result = await sendAdminNotification({
     type: "test",
     title: "DaintyHand Admin",
-    body: "Notifications are working.",
+    // Unique body + tag: some browsers suppress repeated identical banners.
+    body: `Notifications are working. (${new Date(testStamp).toLocaleTimeString()})`,
     url: "/admin",
-    tag: "admin-push-test",
+    tag: `admin-push-test-${testStamp}`,
     adminUserId,
     endpoint: trimmed,
   });

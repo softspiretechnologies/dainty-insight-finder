@@ -377,9 +377,11 @@ describe("resolveSubscriptionForCurrentVapidKey", () => {
 describe("admin-push-sw test renotify", () => {
   it("sets renotify only for tagged test notifications", () => {
     const source = readFileSync(join(process.cwd(), "public/admin-push-sw.js"), "utf8");
-    expect(source).toContain('parsed?.type === "test" && tag ? { renotify: true } : {}');
+    expect(source).toContain('parsed?.type === "test"');
+    expect(source).toContain("requireInteraction: true");
+    expect(source).toContain("renotify: true");
+    expect(source).toContain("skipWaiting");
     // Must not globally force renotify on every notification.
-    expect(source).not.toMatch(/showNotification\([^)]*renotify:\s*true/);
     expect(source.match(/renotify:\s*true/g)?.length).toBe(1);
   });
 });

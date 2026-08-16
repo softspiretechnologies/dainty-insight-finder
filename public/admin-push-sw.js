@@ -1,4 +1,12 @@
-/* admin-push-sw v1.1 — push + notificationclick (+ optional badge) only. No fetch / cache. */
+/* admin-push-sw v1.4 — push + notificationclick (+ optional badge) only. No fetch / cache. */
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
 
 function sanitizeAdminUrl(candidate) {
   if (typeof candidate !== "string") return null;
@@ -50,19 +58,24 @@ self.addEventListener("push", (event) => {
   const tag = typeof parsed?.tag === "string" ? parsed.tag : undefined;
   const badgeCount = typeof parsed?.badgeCount === "number" ? parsed.badgeCount : undefined;
 
-  // Same-tag replacements (e.g. admin-push-test) only re-alert when renotify is set.
-  // Limit renotify to test payloads so enquiry notifications stay quiet when replaced.
+  // Test-only: unique tags come from the server; renotify + requireInteraction help
+  // browsers that suppress quiet/same-content banners while the Admin tab is focused.
+  const isTest = parsed?.type === "test";
   const options = {
     body,
     icon: "/icon-192.png",
     badge: "/favicon.png",
     tag,
     data: { url },
-    ...(parsed?.type === "test" && tag ? { renotify: true } : {}),
+    ...(isTest && tag
+      ? {
+          renotify: true,
+          requireInteraction: true,
+        }
+      : {}),
   };
 
   const show = self.registration.showNotification(title, options);
-
   event.waitUntil(Promise.all([show, applyBadge(badgeCount)]));
 });
 
