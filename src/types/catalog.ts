@@ -8,14 +8,19 @@ export type CategoryId =
   | "calligraphy"
   | "celebrations";
 
-export type CatalogCategory = {
+export type SeoOverrides = {
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+};
+
+export type CatalogCategory = SeoOverrides & {
   id: CategoryId;
   label: string;
   blurb: string;
   image: string;
 };
 
-export type CatalogProduct = {
+export type CatalogProduct = SeoOverrides & {
   id?: number;
   slug: string;
   name: string;

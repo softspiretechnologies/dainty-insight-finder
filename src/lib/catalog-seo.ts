@@ -1,6 +1,8 @@
-import type { CategoryId } from "@/types/catalog";
+import type { CategoryId, SeoOverrides } from "@/types/catalog";
 
 export const CATALOG_PAGE_SIZE = 12;
+export const SEO_TITLE_MAX = 120;
+export const SEO_DESCRIPTION_MAX = 320;
 
 export const categorySeo = {
   hampers: {
@@ -70,6 +72,7 @@ export function catalogPath(category?: CategoryId, page = 1): string {
 export function getCatalogSeo(
   search: CatalogSearch,
   products: ReadonlyArray<{ category: CategoryId }>,
+  categories: ReadonlyArray<SeoOverrides & { id: string }> = [],
 ) {
   const selected = Array.isArray(search.category)
     ? [...new Set(search.category)]
@@ -78,6 +81,7 @@ export function getCatalogSeo(
       : [];
   const category = selected.length === 1 && isSeoCategory(selected[0]) ? selected[0] : undefined;
   const copy = category ? categorySeo[category] : undefined;
+  const overrides = category ? categories.find((item) => item.id === category) : undefined;
   const count = selected.length
     ? products.filter((product) => selected.includes(product.category)).length
     : products.length;
@@ -90,13 +94,17 @@ export function getCatalogSeo(
     page >= 1 &&
     page <= maxPage;
   const title = copy?.heading ?? "Custom Hampers, Bouquets & Wedding Gifts in Kerala";
+  const pageSuffix = page > 1 ? ` | Page ${page}` : "";
+  const customTitle = overrides?.metaTitle?.trim();
+  const intro =
+    copy?.description ??
+    "Browse handcrafted hampers, bouquets, invitations and keepsakes from DaintyHand in Perinthalmanna, Malappuram, Kerala.";
   return {
     category,
-    title: `${title}${page > 1 ? ` | Page ${page}` : ""} | DaintyHand`,
+    title: customTitle ? `${customTitle}${pageSuffix}` : `${title}${pageSuffix} | DaintyHand`,
     heading: copy?.heading ?? "Past Creations & Custom Gifts",
-    description:
-      copy?.description ??
-      "Browse handcrafted hampers, bouquets, invitations and keepsakes from DaintyHand in Perinthalmanna, Malappuram, Kerala.",
+    intro,
+    description: overrides?.metaDescription?.trim() || intro,
     indexable,
     canonicalPath: indexable ? catalogPath(category, page) : undefined,
   };
@@ -105,4 +113,27 @@ export function getCatalogSeo(
 export function productSeoTitle(name: string, category: CategoryId) {
   const label = isSeoCategory(category) ? categorySeo[category].productLabel : "Handcrafted Gifts";
   return `${name} | ${label} - DaintyHand Kerala`;
+}
+
+export function getProductSeo(
+  product: SeoOverrides & {
+    name: string;
+    category: CategoryId;
+    description: string;
+    blurb: string;
+  },
+) {
+  const description =
+    product.metaDescription?.trim() ||
+    [product.description, product.blurb].find((value) => value?.trim().length > 30)?.trim() ||
+    `${product.name} — discover this past creation from DaintyHand in Perinthalmanna, Kerala. Enquire about personalisation for your occasion.`;
+  return {
+    title: product.metaTitle?.trim() || productSeoTitle(product.name, product.category),
+    description,
+  };
+}
+
+/** Escape the HTML script delimiter without altering the decoded JSON-LD values. */
+export function serializeCatalogJsonLd(value: object) {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
 }

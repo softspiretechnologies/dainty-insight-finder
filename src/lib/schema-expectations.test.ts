@@ -179,6 +179,18 @@ describe("diffExpectedSchema", () => {
     );
   });
 
+  it("adds missing SEO columns without altering existing records", () => {
+    const actual = currentSnapshot();
+    for (const table of ["products", "categories"]) {
+      delete actual.tables[table].columns.meta_title;
+      delete actual.tables[table].columns.meta_description;
+    }
+    const plan = planEnsureActions(diffExpectedSchema(actual));
+    expect(plan.apply).toHaveLength(4);
+    expect(plan.apply.every((issue) => issue.fixable && issue.sql?.includes(" ADD "))).toBe(true);
+    expect(planEnsureActions(diffExpectedSchema(currentSnapshot())).apply).toEqual([]);
+  });
+
   it("detects a missing admin_login_attempts table", () => {
     const actual = currentSnapshot();
     delete actual.tables.admin_login_attempts;

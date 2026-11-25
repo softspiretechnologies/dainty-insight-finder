@@ -12,6 +12,7 @@ import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminField, invalidBoxClass } from "@/components/admin/AdminField";
 import { AdminPagePending } from "@/components/admin/AdminSkeleton";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
+import { AdminSeoFields } from "@/components/admin/AdminSeoFields";
 import { OptimizedImage, adminThumbSizes } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { canMoveItem } from "@/lib/admin-reorder";
 import { adminCategoryFormSchema } from "@/lib/admin-schemas";
+import { catalogPath, getCatalogSeo } from "@/lib/catalog-seo";
 import {
   invalidInputClass,
   scrollToFirstField,
@@ -47,6 +49,8 @@ type CategoryRow = {
   id: string;
   label: string;
   blurb: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
   imagePath: string;
   sortOrder: number;
 };
@@ -245,6 +249,10 @@ function CategoryForm({
   const fileInputId = useId();
   const [label, setLabel] = useState(category.label);
   const [blurb, setBlurb] = useState(category.blurb);
+  const [seo, setSeo] = useState({
+    metaTitle: category.metaTitle ?? "",
+    metaDescription: category.metaDescription ?? "",
+  });
   const [sortOrder, setSortOrder] = useState(String(category.sortOrder));
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -268,12 +276,24 @@ function CategoryForm({
   useEffect(() => {
     setLabel(category.label);
     setBlurb(category.blurb);
+    setSeo({
+      metaTitle: category.metaTitle ?? "",
+      metaDescription: category.metaDescription ?? "",
+    });
     setSortOrder(String(category.sortOrder));
     setImageFile(null);
     setSavedMessage(null);
     setFormError(null);
     setFieldErrors({});
-  }, [category.id, category.label, category.blurb, category.sortOrder, category.imagePath]);
+  }, [
+    category.id,
+    category.label,
+    category.blurb,
+    category.metaTitle,
+    category.metaDescription,
+    category.sortOrder,
+    category.imagePath,
+  ]);
 
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
@@ -285,8 +305,13 @@ function CategoryForm({
   };
 
   const isDirty = useMemo(
-    () => label !== category.label || blurb !== category.blurb || imageFile !== null,
-    [label, blurb, imageFile, category],
+    () =>
+      label !== category.label ||
+      blurb !== category.blurb ||
+      seo.metaTitle !== (category.metaTitle ?? "") ||
+      seo.metaDescription !== (category.metaDescription ?? "") ||
+      imageFile !== null,
+    [label, blurb, seo, imageFile, category],
   );
 
   useEffect(() => {
@@ -309,6 +334,7 @@ function CategoryForm({
     const validation = validateForm(adminCategoryFormSchema, {
       label,
       blurb,
+      ...seo,
       sortOrder,
     });
 
@@ -432,6 +458,19 @@ function CategoryForm({
           className={cn("resize-none", invalidInputClass(fieldErrors.blurb))}
         />
       </AdminField>
+
+      <AdminSeoFields
+        idPrefix={`${category.id}-`}
+        value={seo}
+        defaults={getCatalogSeo({ category: category.id as CategoryId }, [])}
+        path={catalogPath(category.id as CategoryId)}
+        errors={fieldErrors}
+        onChange={(field, value) => {
+          setSeo((current) => ({ ...current, [field]: value }));
+          clearFieldError(field);
+          setSavedMessage(null);
+        }}
+      />
 
       {formError ? (
         <AdminActionError

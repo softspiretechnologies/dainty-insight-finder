@@ -102,21 +102,39 @@ test("admin can create, edit, and hide a product", async ({ page }) => {
     .getByLabel("Full description")
     .fill("A temporary product used to verify the admin workflow.");
   await page.getByLabel("Details").fill("Reusable test fixture\nTemporary product");
+  await page.getByLabel("SEO title").fill("E2E custom gift title");
+  await page.getByLabel("SEO description").fill("A custom search description for this gift.");
   await page.locator('input[type="file"]').setInputFiles(fixture);
   await page.getByRole("button", { name: "Create product" }).click();
   await expect(page).toHaveURL(/\/admin\/products\/?$/);
 
   await page.goto(`/catalog/${slug}`);
   await expect(page.getByRole("heading", { name: originalName })).toBeVisible();
+  await expect(page).toHaveTitle("E2E custom gift title");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "A custom search description for this gift.",
+  );
 
   await page.goto("/admin/products");
   await waitForHydration(page);
   await openProductEditor(page, originalName);
+  await expect(page.getByLabel("SEO title")).toHaveValue("E2E custom gift title");
+  await expect(page.getByLabel("SEO description")).toHaveValue(
+    "A custom search description for this gift.",
+  );
+  await page.getByLabel("SEO title").fill("");
+  await page.getByLabel("SEO description").fill("");
   await page.getByLabel("Product name").fill(editedName);
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page).toHaveURL(/\/admin\/products\/?$/);
   await page.goto(`/catalog/${editedSlug}`);
   await expect(page.getByRole("heading", { name: editedName })).toBeVisible();
+  await expect(page).toHaveTitle(new RegExp(editedName));
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "A temporary product used to verify the admin workflow.",
+  );
 
   await page.goto("/admin/products");
   await waitForHydration(page);
@@ -136,4 +154,42 @@ test("catalog filters and opens a product", async ({ page }) => {
   await page.locator("article a").first().click();
   await expect(page).toHaveURL(/\/catalog\/[^/?]+/);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+});
+
+test("category SEO saves, renders, and restores defaults", async ({ page }) => {
+  const categoryUrl = "/catalog?category=hampers";
+  const title = "E2E custom hamper category";
+  const description = "A custom search description for the hamper category.";
+  const openCategory = async () => {
+    await page.goto("/admin/categories");
+    await waitForHydration(page);
+    await page.getByRole("button", { name: /^Custom Hampers/ }).click();
+  };
+  await login(page);
+  await openCategory();
+  const originalTitle = await page.getByLabel("SEO title").inputValue();
+  const originalDescription = await page.getByLabel("SEO description").inputValue();
+  const save = async (metaTitle: string, metaDescription: string) => {
+    await page.getByLabel("SEO title").fill(metaTitle);
+    await page.getByLabel("SEO description").fill(metaDescription);
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Save or discard edits before reordering.")).toHaveCount(0);
+  };
+  await save(title, description);
+  try {
+    await page.goto(categoryUrl);
+    await expect(page).toHaveTitle(title);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", description);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Custom Gift Hampers in Malappuram",
+    );
+    await openCategory();
+    await expect(page.getByLabel("SEO title")).toHaveValue(title);
+    await expect(page.getByLabel("SEO description")).toHaveValue(description);
+  } finally {
+    await openCategory();
+    await save(originalTitle, originalDescription);
+  }
+  await page.goto(categoryUrl);
+  await expect(page).toHaveTitle(/Custom Gift Hampers in Malappuram/);
 });

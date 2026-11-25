@@ -6,7 +6,7 @@ import { getProductBySlugData } from "@/lib/api/catalog";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { siteUrl } from "@/lib/site";
 import { absoluteProductImage, buildProductStructuredData } from "@/lib/product-schema";
-import { productSeoTitle } from "@/lib/catalog-seo";
+import { getProductSeo, serializeCatalogJsonLd } from "@/lib/catalog-seo";
 import { formatProductPriceFrom } from "@/lib/product-price";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
@@ -24,10 +24,7 @@ export const Route = createFileRoute("/catalog/$slug")({
       return { meta: [{ title: "Not found — DaintyHand" }] };
     }
     const url = siteUrl(`/catalog/${product.slug}`);
-    const title = productSeoTitle(product.name, product.category);
-    const metaDescription =
-      [product.description, product.blurb].find((value) => value?.trim().length > 30)?.trim() ||
-      `${product.name} — discover this past creation from DaintyHand in Perinthalmanna, Kerala. Enquire about personalisation for your occasion.`;
+    const { title, description: metaDescription } = getProductSeo(product);
     const productImage = absoluteProductImage(product.image);
 
     return {
@@ -47,7 +44,7 @@ export const Route = createFileRoute("/catalog/$slug")({
       scripts: [
         {
           type: "application/ld+json",
-          children: JSON.stringify({
+          children: serializeCatalogJsonLd({
             "@context": "https://schema.org",
             "@graph": [
               {
