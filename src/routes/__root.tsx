@@ -116,7 +116,6 @@ export const Route = createRootRouteWithContext<{
         },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:site", content: "@dainty.handd" },
         { name: "twitter:title", content: "DaintyHand — Handcrafted Gifts & Wedding Studio" },
         {
           name: "twitter:description",

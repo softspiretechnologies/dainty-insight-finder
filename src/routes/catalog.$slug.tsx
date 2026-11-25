@@ -6,6 +6,7 @@ import { getProductBySlugData } from "@/lib/api/catalog";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { siteUrl } from "@/lib/site";
 import { absoluteProductImage, buildProductStructuredData } from "@/lib/product-schema";
+import { productSeoTitle } from "@/lib/catalog-seo";
 import { formatProductPriceFrom } from "@/lib/product-price";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
@@ -23,28 +24,23 @@ export const Route = createFileRoute("/catalog/$slug")({
       return { meta: [{ title: "Not found — DaintyHand" }] };
     }
     const url = siteUrl(`/catalog/${product.slug}`);
+    const title = productSeoTitle(product.name, product.category);
     const metaDescription =
-      product.description && product.description.length > 30
-        ? product.description
-        : `${product.name} — custom handcrafted by DaintyHand in Perinthalmanna, Kerala. Fully personalized for weddings, engagements, Nikahs & celebrations. Ships across India & worldwide.`;
+      [product.description, product.blurb].find((value) => value?.trim().length > 30)?.trim() ||
+      `${product.name} — discover this past creation from DaintyHand in Perinthalmanna, Kerala. Enquire about personalisation for your occasion.`;
     const productImage = absoluteProductImage(product.image);
 
     return {
       meta: [
-        { title: `${product.name} | Custom Gifts & Hampers - DaintyHand Kerala` },
+        { title },
         { name: "description", content: metaDescription },
-        {
-          name: "keywords",
-          content: `${product.name}, custom hampers Kerala, Nikah gifts, wedding hampers Perinthalmanna, DaintyHand`,
-        },
-        {
-          property: "og:title",
-          content: `${product.name} | Custom Gifts & Hampers - DaintyHand Kerala`,
-        },
+        { property: "og:title", content: title },
         { property: "og:description", content: metaDescription },
         { property: "og:url", content: url },
         { property: "og:image", content: productImage },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: metaDescription },
         { name: "twitter:image", content: productImage },
       ],
       links: [{ rel: "canonical", href: url }],

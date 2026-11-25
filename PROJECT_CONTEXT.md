@@ -290,8 +290,10 @@ See `docs/database.md`.
 
 ## SEO
 
-- Route `head()` titles/descriptions/OG/Twitter.
-- JSON-LD where implemented (e.g. website/product helpers).
+- Route `head()` titles/descriptions/OG/Twitter; product titles use the real category.
+- Single-category catalog URLs (`/catalog?category=hampers`, etc.) use category-specific server-rendered copy and canonicals. Valid pagination uses crawlable links and self-canonical URLs; empty, combined and out-of-range filters use `noindex, follow`.
+- JSON-LD where implemented (e.g. website/product helpers and indexable catalog views).
+- Admin route tree uses `noindex, nofollow`; authentication remains independent of indexing.
 - Dynamic sitemap + robots using `VITE_SITE_URL` / `siteUrl()`.
 
 ---

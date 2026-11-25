@@ -1,38 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { getSitemapProducts } from "@/lib/api/catalog";
-import { getPublishedBlogPosts } from "@/lib/blog.server";
 import { site } from "@/lib/site";
+import { buildSitemapXml } from "@/lib/sitemap";
+import { getSitemapEntries } from "@/lib/sitemap.server";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const [products, blogPosts] = await Promise.all([
-          getSitemapProducts(),
-          getPublishedBlogPosts(),
-        ]);
-        const staticPaths = ["/", "/services", "/catalog", "/custom", "/contact", "/blog"];
-        const productPaths = products.map((p) => `/catalog/${p.slug}`);
-        const blogPaths = blogPosts.map((b) => `/blog/${b.slug}`);
-        const all = [...staticPaths, ...productPaths, ...blogPaths];
-
-        const xml = [
-          `<?xml version="1.0" encoding="UTF-8"?>`,
-          `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
-          ...all.map(
-            (path) =>
-              `  <url>\n    <loc>${site.baseUrl}${path}</loc>\n    <changefreq>weekly</changefreq>\n  </url>`,
-          ),
-          `</urlset>`,
-        ].join("\n");
-
-        return new Response(xml, {
-          headers: {
-            "Content-Type": "application/xml",
-            "Cache-Control": "public, max-age=3600",
-          },
-        });
+        try {
+          const xml = buildSitemapXml(site.baseUrl, await getSitemapEntries());
+          return new Response(xml, {
+            headers: {
+              "Content-Type": "application/xml; charset=utf-8",
+              "Cache-Control": "public, max-age=300",
+            },
+          });
+        } catch {
+          return new Response("Sitemap temporarily unavailable", {
+            status: 503,
+            headers: { "Cache-Control": "no-store", "Retry-After": "300" },
+          });
+        }
       },
     },
   },
