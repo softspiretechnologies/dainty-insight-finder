@@ -109,7 +109,11 @@ describe("optional SEO fields", () => {
     expect(input.metaTitle).toBeUndefined();
     expect(input.metaDescription).toBeUndefined();
     expect(
-      productInputSchema.parse({ ...validProduct, metaTitle: "  Gift title  ", metaDescription: " " }),
+      productInputSchema.parse({
+        ...validProduct,
+        metaTitle: "  Gift title  ",
+        metaDescription: " ",
+      }),
     ).toMatchObject({ metaTitle: "Gift title", metaDescription: "" });
   });
 
@@ -124,7 +128,9 @@ describe("optional SEO fields", () => {
       expect(productInputSchema.safeParse({ ...validProduct, ...fields }).success).toBe(false);
       expect(categoryInputSchema.safeParse({ ...category, ...fields }).success).toBe(false);
     }
-    expect(categoryInputSchema.parse({ ...category, metaTitle: " ", metaDescription: "" })).toMatchObject({
+    expect(
+      categoryInputSchema.parse({ ...category, metaTitle: " ", metaDescription: "" }),
+    ).toMatchObject({
       metaTitle: "",
       metaDescription: "",
     });

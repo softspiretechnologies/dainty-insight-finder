@@ -219,7 +219,8 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
           blurb: data.blurb,
           description: data.description,
           metaTitle: data.metaTitle === undefined ? undefined : data.metaTitle || null,
-          metaDescription: data.metaDescription === undefined ? undefined : data.metaDescription || null,
+          metaDescription:
+            data.metaDescription === undefined ? undefined : data.metaDescription || null,
           details: parseDetails(data.details),
           imagePath,
           priceFrom: data.priceFrom?.trim() || null,
