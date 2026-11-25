@@ -102,3 +102,31 @@ describe("adminBlogPostSchema", () => {
     ).toBe(false);
   });
 });
+
+describe("optional SEO fields", () => {
+  it("accepts missing fields, trims text and preserves explicit clears", () => {
+    const input = productInputSchema.parse(validProduct);
+    expect(input.metaTitle).toBeUndefined();
+    expect(input.metaDescription).toBeUndefined();
+    expect(
+      productInputSchema.parse({ ...validProduct, metaTitle: "  Gift title  ", metaDescription: " " }),
+    ).toMatchObject({ metaTitle: "Gift title", metaDescription: "" });
+  });
+
+  it("enforces limits on both product and category writes", () => {
+    const category = {
+      id: "hampers",
+      label: "Custom Hampers",
+      blurb: "Luxury hampers",
+      sortOrder: 0,
+    };
+    for (const fields of [{ metaTitle: "x".repeat(121) }, { metaDescription: "x".repeat(321) }]) {
+      expect(productInputSchema.safeParse({ ...validProduct, ...fields }).success).toBe(false);
+      expect(categoryInputSchema.safeParse({ ...category, ...fields }).success).toBe(false);
+    }
+    expect(categoryInputSchema.parse({ ...category, metaTitle: " ", metaDescription: "" })).toMatchObject({
+      metaTitle: "",
+      metaDescription: "",
+    });
+  });
+});

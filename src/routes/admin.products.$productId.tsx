@@ -102,7 +102,7 @@ function AdminProductEditPage() {
     return () => URL.revokeObjectURL(url);
   }, [imageFile]);
 
-  const slug = slugify(name);
+  const slug = product && name === product.name ? product.slug : slugify(name);
   const previewSrc = previewUrl ?? product?.imagePath ?? null;
   const initialDetails = normalizeProductDetails(product?.details).join("\n");
   const isDirty = useMemo(() => {
