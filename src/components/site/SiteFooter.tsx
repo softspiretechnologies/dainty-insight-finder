@@ -5,7 +5,7 @@ import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
 
 export function SiteFooter() {
-  const { waLink, founder } = useSiteContact();
+  const { waLink, founder, location, instagramUrl, instagramHandle } = useSiteContact();
 
   return (
     <footer className="border-t border-border py-12 md:py-20 px-5 md:px-6">
@@ -13,10 +13,10 @@ export function SiteFooter() {
         <div className="min-w-0">
           <div className="font-display italic text-2xl mb-2">{site.name}</div>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted max-w-xs leading-relaxed mb-3">
-            Handcrafted gifting &amp; wedding celebration studio based in Perinthalmanna, Kerala.
+            Handcrafted gifting &amp; wedding celebration studio based in {location}.
           </p>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
-            © {formatSiteCopyrightYear()} · {site.location}
+            © {formatSiteCopyrightYear()} · {location}
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export function SiteFooter() {
             </span>
             <div className="space-y-3">
               <a
-                href={site.instagramUrl}
+                href={instagramUrl}
                 onClick={() => trackEvent("instagram_click", { source_page: "footer" })}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -69,7 +69,7 @@ export function SiteFooter() {
                 <span className="text-[10px] uppercase tracking-[0.2em] text-muted group-hover:text-primary transition-colors block">
                   Instagram
                 </span>
-                <span className="break-words text-xs">{site.instagramHandle}</span>
+                <span className="break-words text-xs">{instagramHandle}</span>
               </a>
               <a
                 href={waLink(`Hi ${founder}, I'd like to enquire.`)}

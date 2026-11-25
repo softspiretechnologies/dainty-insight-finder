@@ -1,6 +1,7 @@
 import type { CatalogProduct } from "@/types/catalog";
 
 import { siteUrl } from "./site";
+import { businessReference } from "./business-seo";
 
 export function parseProductPrice(value: string | undefined) {
   if (!value?.trim()) return undefined;
@@ -25,7 +26,7 @@ export function buildProductStructuredData(product: CatalogProduct, description:
     description,
     image: absoluteProductImage(product.image),
     url,
-    brand: { "@type": "Brand", name: "DaintyHand" },
+    brand: businessReference(),
     ...(price
       ? {
           offers: {

@@ -4,30 +4,20 @@ import { EnquirySheet } from "@/components/site/EnquirySheet";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getServicesPageDataFn } from "@/lib/api/catalog";
 import { siteUrl } from "@/lib/site";
+import { businessReference } from "@/lib/business-seo";
+import { serializeCatalogJsonLd } from "@/lib/catalog-seo";
 import { useSiteContact } from "@/hooks/useSiteContact";
 
 export const Route = createFileRoute("/services")({
   loader: () => getServicesPageDataFn(),
   head: ({ loaderData }) => {
-    const intro =
-      loaderData?.intro ??
-      "Save-the-date shoots, proposal setups, birthday surprises, couple shoots and memory reels — styled by DaintyHand across Kerala, India & worldwide.";
-
     const serviceGraph =
       loaderData?.services.map((service) => ({
         "@type": "Service",
         name: service.title,
         description: service.blurb,
-        provider: {
-          "@type": "LocalBusiness",
-          name: "DaintyHand",
-          address: {
-            "@type": "PostalAddress",
-            addressLocality: "Perinthalmanna",
-            addressRegion: "Kerala",
-          },
-        },
-        areaServed: ["Malappuram", "Kozhikode", "Kerala", "India", "Worldwide"],
+        provider: businessReference(),
+        areaServed: ["Malappuram", "Kozhikode", "Kerala"],
         serviceType: service.title,
       })) ?? [];
 
@@ -61,7 +51,7 @@ export const Route = createFileRoute("/services")({
       scripts: [
         {
           type: "application/ld+json",
-          children: JSON.stringify({
+          children: serializeCatalogJsonLd({
             "@context": "https://schema.org",
             "@graph": [
               {

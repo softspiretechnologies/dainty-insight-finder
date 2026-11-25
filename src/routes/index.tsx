@@ -2,7 +2,9 @@ import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { OptimizedImage, catalogGridSizes } from "@/components/ui/optimized-image";
 import { galleryImages } from "@/data/products";
-import { site, siteUrl, formatTelephone } from "@/lib/site";
+import { resolveSiteContact, site, siteUrl } from "@/lib/site";
+import { buildFaqStructuredData, buildOrganizationStructuredData, getHomeFaq } from "@/lib/business-seo";
+import { serializeCatalogJsonLd } from "@/lib/catalog-seo";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { getRootPageData, getHomeGallery, getHomeTestimonials } from "@/lib/api/catalog";
 import momentSaveTheDate from "@/assets/moment-savethedate.jpg";
@@ -27,11 +29,6 @@ export const Route = createFileRoute("/")({
         name: "description",
         content:
           "Custom hampers, nikah invitations, save-the-date shoots, proposal setups & memory reels handcrafted by Nafisa in Perinthalmanna, Kerala. We ship across India & worldwide.",
-      },
-      {
-        name: "keywords",
-        content:
-          "Wedding Gifts Kerala, Nikah Invitations India, Save The Date Shoots Kozhikode, Custom Hampers Malappuram, Proposal Setup Kerala, Birthday Surprise Perinthalmanna, Wedding Invitations, Handcrafted Gifts Worldwide, Gifting Studio Perinthalmanna",
       },
       {
         property: "og:title",
@@ -62,84 +59,11 @@ export const Route = createFileRoute("/")({
     scripts: [
       {
         type: "application/ld+json",
-        children: JSON.stringify({
+        children: serializeCatalogJsonLd({
           "@context": "https://schema.org",
           "@graph": [
-            {
-              "@type": "LocalBusiness",
-              name: "DaintyHand",
-              description:
-                "Handcrafted gifts, wedding essentials and celebration studio based in Perinthalmanna, Kerala — shipping across India & worldwide.",
-              image: siteUrl("/og-image.jpg"),
-              url: siteUrl("/"),
-              telephone: formatTelephone(loaderData?.siteSettings.whatsappNumber ?? ""),
-              email: loaderData?.siteSettings.email ?? site.email,
-              address: {
-                "@type": "PostalAddress",
-                streetAddress: "Perinthalmanna",
-                addressLocality: "Perinthalmanna",
-                addressRegion: "Kerala",
-                postalCode: "679322",
-                addressCountry: "IN",
-              },
-              geo: {
-                "@type": "GeoCoordinates",
-                latitude: "10.9752",
-                longitude: "76.2238",
-              },
-              priceRange: "₹₹",
-              areaServed: [
-                "Perinthalmanna",
-                "Malappuram",
-                "Kozhikode",
-                "Kerala",
-                "India",
-                "Worldwide",
-              ],
-              openingHours: "Mo-Sa 10:00-19:00",
-              sameAs: ["https://www.instagram.com/dainty.handd/"],
-              founder: {
-                "@type": "Person",
-                name: loaderData?.siteSettings.founder ?? site.founder,
-              },
-            },
-            {
-              "@type": "FAQPage",
-              mainEntity: [
-                {
-                  "@type": "Question",
-                  name: "How do I order a custom hamper or Nikah invitation suite?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "Browse our catalog or journal, pick what inspires you, and tap 'Enquire on WhatsApp' or fill out our custom order brief. Nafisa will discuss colors, theme, budget, and packaging with you directly before anything is handcrafted.",
-                  },
-                },
-                {
-                  "@type": "Question",
-                  name: "Do you ship custom gift hampers across Kerala, India, and internationally?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "Yes! We offer direct local hand-delivery in Perinthalmanna and Malappuram, express courier delivery across all states in India, and international shipping for overseas Nikahs and weddings.",
-                  },
-                },
-                {
-                  "@type": "Question",
-                  name: "What celebration services does DaintyHand offer in Kerala?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "We offer Save The Date couple shoots (with edited 30–60s reels), private proposal setups, surprise birthday room decor, couple portrait sessions, and memory reels across Malappuram, Kozhikode, and all of Kerala.",
-                  },
-                },
-                {
-                  "@type": "Question",
-                  name: "Can hampers, ring trays, and cards be personalized with names and custom dates?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "Consciously crafted to order. Every hamper, ring tray, wax seal, acrylic frame, and invitation card is fully customizable with names, dates, colors, floral preferences, and personal notes.",
-                  },
-                },
-              ],
-            },
+            buildOrganizationStructuredData(loaderData?.siteSettings),
+            buildFaqStructuredData(resolveSiteContact(loaderData?.siteSettings).location),
           ],
         }),
       },
@@ -231,7 +155,7 @@ function Index() {
   const { categories } = useRouteContext({ from: "__root__" });
   const { testimonials, featuredGallery } = Route.useLoaderData();
   const galleryItems = buildGalleryItems(featuredGallery);
-  const { waLink, founder } = useSiteContact();
+  const { waLink, founder, location } = useSiteContact();
 
   return (
     <PageShell>
@@ -240,7 +164,7 @@ function Index() {
         <div className="max-w-5xl mx-auto text-center">
           {/* eyebrow + location */}
           <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-muted animate-reveal block mb-6 md:mb-8">
-            {site.location}
+            {location}
           </span>
 
           {/* headline */}
@@ -622,26 +546,9 @@ function Index() {
           </div>
 
           <div className="space-y-4">
-            {[
-              {
-                q: "How do I order a custom hamper or Nikah invitation suite?",
-                a: "Browse our catalog or journal, pick what inspires you, and tap 'Enquire on WhatsApp' or fill out our custom order brief. Nafisa will discuss colors, theme, budget, and packaging with you directly before anything is handcrafted.",
-              },
-              {
-                q: "Do you ship custom gift hampers across Kerala, India, and internationally?",
-                a: "Yes! We offer direct local hand-delivery in Perinthalmanna and Malappuram, express courier delivery across all states in India, and international shipping for overseas Nikahs and weddings.",
-              },
-              {
-                q: "What celebration services does DaintyHand offer in Kerala?",
-                a: "We offer Save The Date couple shoots (with edited 30–60s reels), private proposal setups, surprise birthday room decor, couple portrait sessions, and memory reels across Malappuram, Kozhikode, and all of Kerala.",
-              },
-              {
-                q: "Can hampers, ring trays, and cards be personalized with names and custom dates?",
-                a: "Consciously crafted to order. Every hamper, ring tray, wax seal, acrylic frame, and invitation card is fully customizable with names, dates, colors, floral preferences, and personal notes.",
-              },
-            ].map((faq, i) => (
+            {getHomeFaq(location).map((faq) => (
               <details
-                key={i}
+                key={faq.q}
                 className="group bg-background border border-border rounded-sm p-6 cursor-pointer"
               >
                 <summary className="font-display italic text-lg sm:text-xl flex items-center justify-between list-none select-none">

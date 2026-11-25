@@ -296,7 +296,8 @@ See `docs/database.md`.
 - Admin route tree uses `noindex, nofollow`; authentication remains independent of indexing.
 - Product and category editors offer optional SEO title/description overrides with a search-result preview. Blank fields retain generated defaults; clearing a saved override restores them. Overrides affect public SSR metadata and social previews, not slugs, indexing rules or category headings. New bulk/duplicated products start without overrides.
 - Products and categories each store nullable `meta_title` and `meta_description`. Hostinger's existing additive `db:ensure` / `db:verify` workflow manages these columns; no data backfill is required.
-- Dynamic sitemap + robots using `VITE_SITE_URL` / `siteUrl()`.
+- Dynamic sitemap + robots using `VITE_SITE_URL` / `siteUrl()`. Public crawling (including OAI-SearchBot) is allowed by the wildcard rule; hosting/CDN access must be verified separately.
+- Public website, homepage Organization, products, services, contact and journal reference one business ID (`/#organization`). Business contact/social/location/founder values use the existing public site settings. Home FAQs share one source for visible copy and JSON-LD. Precise address, pin coordinates, price range, hours and ratings are not asserted in Organization JSON-LD without verification. No paid AI tracker is required for this implementation.
 
 ---
 

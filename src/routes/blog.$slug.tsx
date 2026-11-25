@@ -2,6 +2,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { Category } from "@/data/products";
 import { site, siteUrl } from "@/lib/site";
+import { businessReference } from "@/lib/business-seo";
+import { serializeCatalogJsonLd } from "@/lib/catalog-seo";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
 import { useEffect } from "react";
@@ -37,7 +39,7 @@ export const Route = createFileRoute("/blog/$slug")({
       scripts: [
         {
           type: "application/ld+json",
-          children: JSON.stringify({
+          children: serializeCatalogJsonLd({
             "@context": "https://schema.org",
             "@type": "BlogPosting",
             headline: post.title,
@@ -46,11 +48,7 @@ export const Route = createFileRoute("/blog/$slug")({
             datePublished: post.datePublished || post.date,
             image: post.image.startsWith("http") ? post.image : siteUrl(post.image),
             author: { "@type": "Person", name: post.author },
-            publisher: {
-              "@type": "Organization",
-              name: "DaintyHand",
-              logo: siteUrl("/og-image.jpg"),
-            },
+            publisher: businessReference(),
             mainEntityOfPage: { "@type": "WebPage", "@id": url },
           }),
         },

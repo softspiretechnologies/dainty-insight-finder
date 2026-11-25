@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { EnquiryForm } from "@/components/site/EnquiryForm";
-import { site, siteUrl } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
+import { businessReference } from "@/lib/business-seo";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { trackEvent } from "@/lib/analytics";
 
@@ -12,11 +13,6 @@ export const Route = createFileRoute("/contact")({
       {
         name: "description",
         content: `Get in touch with DaintyHand in Perinthalmanna, Kerala. Enquire on WhatsApp for custom gift hampers, wedding invitation suites, and event styling.`,
-      },
-      {
-        name: "keywords",
-        content:
-          "Contact DaintyHand, Gifting Studio Perinthalmanna, WhatsApp Gifting Kerala, Wedding Hampers Malappuram, Event Styling Kerala",
       },
       {
         property: "og:title",
@@ -50,6 +46,7 @@ export const Route = createFileRoute("/contact")({
               description:
                 "Contact DaintyHand for custom handcrafted hampers, wedding invitations, and celebration services in Kerala.",
               url: siteUrl("/contact"),
+              about: businessReference(),
             },
           ],
         }),
@@ -60,7 +57,7 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const { waLink, founder } = useSiteContact();
+  const { waLink, founder, email, instagramUrl, instagramHandle, location } = useSiteContact();
 
   return (
     <PageShell>
@@ -74,8 +71,8 @@ function ContactPage() {
             Say <span className="italic text-primary">hello.</span>
           </h1>
           <p className="text-sm text-muted max-w-sm leading-relaxed text-pretty">
-            We're fastest on WhatsApp. For a detailed brief, email works too — we reply within a
-            day.
+            Contact DaintyHand in {location} for custom hampers, bouquets, wedding invitations
+            and celebration services. WhatsApp is the quickest way to discuss your ideas.
           </p>
         </div>
       </section>
@@ -97,7 +94,7 @@ function ContactPage() {
               </span>
               <div>
                 <p className="break-words font-display text-2xl md:text-3xl italic text-accent-on-dark mb-2">
-                  Chat with {site.founder}
+                  Chat with {founder}
                 </p>
                 <p className="text-[11px] text-background/60 uppercase tracking-[0.2em]">
                   Usually replies within hours →
@@ -107,7 +104,7 @@ function ContactPage() {
 
             {/* Instagram */}
             <a
-              href={site.instagramUrl}
+              href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackEvent("instagram_click", { source_page: "contact" })}
@@ -118,7 +115,7 @@ function ContactPage() {
               </span>
               <div>
                 <p className="break-words font-display text-2xl md:text-3xl italic group-hover:text-primary transition-colors mb-2">
-                  {site.instagramHandle}
+                  {instagramHandle}
                 </p>
                 <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
                   DM us for inspiration & enquiries →
@@ -128,7 +125,7 @@ function ContactPage() {
 
             {/* Email */}
             <a
-              href={`mailto:${site.email}`}
+              href={`mailto:${email}`}
               className="group bg-background p-8 md:p-12 flex flex-col justify-between min-h-[160px] hover:bg-surface transition-colors"
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
@@ -136,7 +133,7 @@ function ContactPage() {
               </span>
               <div>
                 <p className="break-all font-display text-xl md:text-2xl italic group-hover:text-primary transition-colors mb-2">
-                  {site.email}
+                  {email}
                 </p>
                 <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
                   For detailed event briefs →
@@ -151,7 +148,7 @@ function ContactPage() {
               </span>
               <div>
                 <p className="break-words font-display text-xl md:text-2xl italic mb-2">
-                  {site.location}
+                  {location}
                 </p>
                 <p className="text-[11px] text-muted uppercase tracking-[0.2em]">
                   By appointment only
