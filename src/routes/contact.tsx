@@ -71,8 +71,8 @@ function ContactPage() {
             Say <span className="italic text-primary">hello.</span>
           </h1>
           <p className="text-sm text-muted max-w-sm leading-relaxed text-pretty">
-            Contact DaintyHand in {location} for custom hampers, bouquets, wedding invitations
-            and celebration services. WhatsApp is the quickest way to discuss your ideas.
+            Contact DaintyHand in {location} for custom hampers, bouquets, wedding invitations and
+            celebration services. WhatsApp is the quickest way to discuss your ideas.
           </p>
         </div>
       </section>
