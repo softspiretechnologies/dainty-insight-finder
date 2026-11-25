@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 import { getPaginationItems, type PaginationItem } from "@/lib/pagination";
 import { formatProductPriceFrom } from "@/lib/product-price";
+import { CATALOG_PAGE_SIZE, getCatalogSeo } from "@/lib/catalog-seo";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = CATALOG_PAGE_SIZE;
 
 const categoryIds = staticCategories.map((c) => c.id) as [Category, ...Category[]];
 
@@ -38,66 +39,70 @@ function categorySearchParam(categories: Set<Category>) {
 
 export const Route = createFileRoute("/catalog/")({
   validateSearch: catalogSearchSchema,
-  loader: () => getCatalogProducts(),
-  head: () => ({
-    meta: [
-      { title: "Custom Hampers, Bouquets & Wedding Gifts - DaintyHand Kerala" },
-      {
-        name: "description",
-        content:
-          "Browse handcrafted hampers, chocolate bouquets, wedding invitation suites, ring trays and acrylic frames. Customised for engagements, nikahs and celebrations across Kerala & India.",
-      },
-      {
-        name: "keywords",
-        content:
-          "Custom Hampers Kerala, Chocolate Bouquets Malappuram, Nikah Invitations, Wedding Ring Trays, Acrylic Memory Frames, Handcrafted Gifts Perinthalmanna",
-      },
-      {
-        property: "og:title",
-        content: "Custom Hampers, Bouquets & Wedding Gifts - DaintyHand Kerala",
-      },
-      {
-        property: "og:description",
-        content:
-          "Browse handcrafted hampers, chocolate bouquets, wedding invitation suites, ring trays and acrylic frames. Customised for engagements, nikahs and celebrations.",
-      },
-      { property: "og:url", content: siteUrl("/catalog") },
-      { property: "og:image", content: siteUrl("/og-image.jpg") },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: siteUrl("/catalog") }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@graph": [
+  loaderDeps: ({ search }) => ({ category: search.category, page: search.page }),
+  loader: async ({ deps }) => {
+    const products = await getCatalogProducts();
+    return { products, seo: getCatalogSeo(deps, products) };
+  },
+  head: ({ loaderData }) => {
+    const seo = loaderData?.seo ?? getCatalogSeo({}, []);
+    const url = seo.canonicalPath ? siteUrl(seo.canonicalPath) : undefined;
+    return {
+      meta: [
+        { title: seo.title },
+        { name: "description", content: seo.description },
+        { name: "robots", content: seo.indexable ? "index, follow" : "noindex, follow" },
+        { property: "og:title", content: seo.title },
+        { property: "og:description", content: seo.description },
+        { property: "og:url", content: url ?? siteUrl("/catalog") },
+        { property: "og:image", content: siteUrl("/og-image.jpg") },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: seo.title },
+        { name: "twitter:description", content: seo.description },
+      ],
+      links: url ? [{ rel: "canonical", href: url }] : [],
+      scripts: url
+        ? [
             {
-              "@type": "BreadcrumbList",
-              itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: siteUrl("/") },
-                { "@type": "ListItem", position: 2, name: "Catalog", item: siteUrl("/catalog") },
-              ],
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@graph": [
+                  {
+                    "@type": "BreadcrumbList",
+                    itemListElement: [
+                      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl("/") },
+                      {
+                        "@type": "ListItem",
+                        position: 2,
+                        name: "Catalog",
+                        item: siteUrl("/catalog"),
+                      },
+                      ...(seo.category
+                        ? [{ "@type": "ListItem", position: 3, name: seo.heading, item: url }]
+                        : []),
+                    ],
+                  },
+                  {
+                    "@type": "CollectionPage",
+                    name: seo.heading,
+                    description: seo.description,
+                    url,
+                  },
+                ],
+              }),
             },
-            {
-              "@type": "CollectionPage",
-              name: "Past Creations & Custom Gifts",
-              description:
-                "Handcrafted gift hampers, bouquets, invitations and wedding keepsakes by DaintyHand in Perinthalmanna, Kerala.",
-              url: siteUrl("/catalog"),
-            },
-          ],
-        }),
-      },
-    ],
-  }),
+          ]
+        : [],
+    };
+  },
   component: CatalogPage,
 });
 
 function CatalogPage() {
   const { categories } = useRouteContext({ from: "__root__" });
   const { waLink, founder } = useSiteContact();
-  const products = Route.useLoaderData();
+  const { products, seo } = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
@@ -136,10 +141,6 @@ function CatalogPage() {
     updateSearch({ categories: next, page: undefined });
   };
 
-  const handlePage = (p: number) => {
-    updateSearch({ page: p === 1 ? undefined : p });
-  };
-
   const sortedCategories = useMemo(
     () => sortCategoriesWithSelectedFirst(categories, selectedCategories),
     [categories, selectedCategories],
@@ -153,11 +154,18 @@ function CatalogPage() {
             Past Creations
           </span>
           <h1 className="font-display text-4xl sm:text-5xl md:text-7xl tracking-tighter mt-4 mb-5 md:mb-6 text-balance">
-            A look at <span className="italic font-normal text-primary">past creations.</span>
+            {seo.category ? (
+              seo.heading
+            ) : (
+              <>
+                A look at <span className="italic font-normal text-primary">past creations.</span>
+              </>
+            )}
           </h1>
           <p className="max-w-xl text-sm text-muted leading-relaxed text-pretty">
-            Every piece below was made for someone — and every piece is a starting point. Pick what
-            inspires you and we'll fully customise it for your occasion on WhatsApp.
+            {seo.category
+              ? seo.description
+              : "Every piece below was made for someone — and every piece is a starting point. Pick what inspires you and we'll fully customise it for your occasion on WhatsApp."}
           </p>
         </div>
       </section>
@@ -235,36 +243,40 @@ function CatalogPage() {
             className="max-w-7xl mx-auto flex max-w-full items-center justify-center gap-1.5 sm:gap-2 mt-10 md:mt-14"
             aria-label="Catalog pagination"
           >
-            <button
-              onClick={() => handlePage(Math.max(1, safePage - 1))}
+            <Link
+              to="/catalog"
+              search={{ category: search.category, page: safePage > 2 ? safePage - 1 : undefined }}
+              replace
               disabled={safePage === 1}
-              className="grid place-items-center w-11 h-11 shrink-0 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="grid place-items-center w-11 h-11 shrink-0 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground aria-disabled:opacity-30 aria-disabled:pointer-events-none transition-colors"
               aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+            </Link>
             <div className="flex min-w-0 items-center gap-1 sm:hidden">
               <PaginationItems
                 items={getPaginationItems(safePage, totalPages, 0)}
                 currentPage={safePage}
-                onSelect={handlePage}
+                category={search.category}
               />
             </div>
             <div className="hidden min-w-0 items-center gap-2 sm:flex">
               <PaginationItems
                 items={getPaginationItems(safePage, totalPages, 1)}
                 currentPage={safePage}
-                onSelect={handlePage}
+                category={search.category}
               />
             </div>
-            <button
-              onClick={() => handlePage(Math.min(totalPages, safePage + 1))}
+            <Link
+              to="/catalog"
+              search={{ category: search.category, page: safePage + 1 }}
+              replace
               disabled={safePage === totalPages}
-              className="grid place-items-center w-11 h-11 shrink-0 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="grid place-items-center w-11 h-11 shrink-0 rounded-full border border-border text-muted hover:border-foreground hover:text-foreground aria-disabled:opacity-30 aria-disabled:pointer-events-none transition-colors"
               aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </Link>
           </nav>
         )}
       </section>
@@ -295,11 +307,11 @@ function CatalogPage() {
 function PaginationItems({
   items,
   currentPage,
-  onSelect,
+  category,
 }: {
   items: PaginationItem[];
   currentPage: number;
-  onSelect: (page: number) => void;
+  category?: Category | Category[];
 }) {
   return items.map((item, index) =>
     item === "ellipsis" ? (
@@ -311,10 +323,11 @@ function PaginationItems({
         …
       </span>
     ) : (
-      <button
+      <Link
         key={item}
-        type="button"
-        onClick={() => onSelect(item)}
+        to="/catalog"
+        search={{ category, page: item === 1 ? undefined : item }}
+        replace
         className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-[11px] font-medium transition-colors ${
           item === currentPage
             ? "bg-foreground text-background"
@@ -324,7 +337,7 @@ function PaginationItems({
         aria-current={item === currentPage ? "page" : undefined}
       >
         {item}
-      </button>
+      </Link>
     ),
   );
 }

@@ -44,6 +44,7 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "DaintyHand Admin" },
+      { name: "robots", content: "noindex, nofollow" },
       { name: "application-name", content: "DaintyHand Admin" },
       { name: "apple-mobile-web-app-title", content: "DaintyHand Admin" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
