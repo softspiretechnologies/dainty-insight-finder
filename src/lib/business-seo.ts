@@ -43,8 +43,7 @@ export function buildOrganizationStructuredData(settings?: Partial<SiteSettingsD
   const contact = resolveSiteContact(settings);
   const instagram = instagramProfileUrl(contact.instagramUrl);
   const telephone =
-    contact.whatsappNumber !== site.whatsappNumber &&
-    /^\d{8,15}$/.test(contact.whatsappNumber)
+    contact.whatsappNumber !== site.whatsappNumber && /^\d{8,15}$/.test(contact.whatsappNumber)
       ? contact.telephone
       : undefined;
 

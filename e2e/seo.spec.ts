@@ -31,7 +31,9 @@ test("sitemap includes populated category and excludes admin pages", async ({ re
   expect(xml).not.toContain("/admin");
 });
 
-test("homepage exposes a consistent business identity and visible FAQ content", async ({ page }) => {
+test("homepage exposes a consistent business identity and visible FAQ content", async ({
+  page,
+}) => {
   const response = await page.goto("/");
   expect(response?.status()).toBe(200);
   const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();

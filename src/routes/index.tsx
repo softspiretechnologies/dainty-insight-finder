@@ -3,7 +3,11 @@ import { PageShell } from "@/components/site/PageShell";
 import { OptimizedImage, catalogGridSizes } from "@/components/ui/optimized-image";
 import { galleryImages } from "@/data/products";
 import { resolveSiteContact, site, siteUrl } from "@/lib/site";
-import { buildFaqStructuredData, buildOrganizationStructuredData, getHomeFaq } from "@/lib/business-seo";
+import {
+  buildFaqStructuredData,
+  buildOrganizationStructuredData,
+  getHomeFaq,
+} from "@/lib/business-seo";
 import { serializeCatalogJsonLd } from "@/lib/catalog-seo";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { getRootPageData, getHomeGallery, getHomeTestimonials } from "@/lib/api/catalog";

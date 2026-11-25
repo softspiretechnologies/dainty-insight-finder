@@ -26,7 +26,8 @@ export function buildProductStructuredData(product: CatalogProduct, description:
     description,
     image: absoluteProductImage(product.image),
     url,
-    brand: businessReference(),
+    brand: { "@type": "Brand", name: "DaintyHand" },
+    manufacturer: businessReference(),
     ...(price
       ? {
           offers: {
