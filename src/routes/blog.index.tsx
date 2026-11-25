@@ -11,12 +11,7 @@ export const Route = createFileRoute("/blog/")({
       {
         name: "description",
         content:
-          "Inspiration, gift hamper ideas, wedding Nikah invitation design guides, and celebration shoot locations in Kerala from DaintyHand.",
-      },
-      {
-        name: "keywords",
-        content:
-          "custom wedding hamper ideas Kerala, nikah invitation design India, save the date shoot Kozhikode, engagement gift ideas for couples India, proposal setup Kerala",
+          "Gift hamper ordering guides, bouquet ideas, Nikah invitations, engagement keepsakes and celebration inspiration from DaintyHand in Kerala.",
       },
       { property: "og:title", content: "Journal & Gifting Guides — DaintyHand Kerala" },
       {
@@ -63,8 +58,8 @@ function BlogIndexPage() {
             Ideas, inspiration &amp; <span className="italic text-primary">gifting guides.</span>
           </h1>
           <p className="text-sm md:text-base text-muted leading-relaxed max-w-2xl mx-auto text-pretty">
-            Explore guides on wedding hampers, Nikah invitation styling, engagement keepsakes, and
-            Save The Date shoot locations in Kerala.
+            Explore practical guides on custom hampers, bouquets, Nikah invitations, engagement
+            keepsakes and celebration ideas in Kerala.
           </p>
         </div>
       </section>
