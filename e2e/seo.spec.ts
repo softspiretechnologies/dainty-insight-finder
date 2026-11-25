@@ -6,7 +6,9 @@ test("single category metadata is server rendered and canonical", async ({ page 
   const html = await response!.text();
   expect(html).toContain("Custom Gift Hampers in Malappuram");
   await expect(page).toHaveTitle(/Custom Gift Hampers in Malappuram/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Custom Gift Hampers in Malappuram");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Custom Gift Hampers in Malappuram",
+  );
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",
     /\/catalog\?category=hampers$/,
