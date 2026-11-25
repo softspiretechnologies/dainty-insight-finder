@@ -294,6 +294,8 @@ See `docs/database.md`.
 - Single-category catalog URLs (`/catalog?category=hampers`, etc.) use category-specific server-rendered copy and canonicals. Valid pagination uses crawlable links and self-canonical URLs; empty, combined and out-of-range filters use `noindex, follow`.
 - JSON-LD where implemented (e.g. website/product helpers and indexable catalog views).
 - Admin route tree uses `noindex, nofollow`; authentication remains independent of indexing.
+- Product and category editors offer optional SEO title/description overrides with a search-result preview. Blank fields retain generated defaults; clearing a saved override restores them. Overrides affect public SSR metadata and social previews, not slugs, indexing rules or category headings. New bulk/duplicated products start without overrides.
+- Products and categories each store nullable `meta_title` and `meta_description`. Hostinger's existing additive `db:ensure` / `db:verify` workflow manages these columns; no data backfill is required.
 - Dynamic sitemap + robots using `VITE_SITE_URL` / `siteUrl()`.
 
 ---

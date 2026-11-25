@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { SEO_DESCRIPTION_MAX, SEO_TITLE_MAX } from "@/lib/catalog-seo";
 import { isValidProductPriceInput, normalizeProductPriceInput } from "@/lib/product-price";
 
 export const categoryIds = [
@@ -14,6 +15,12 @@ export const categoryIds = [
 ] as const;
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+// Empty strings explicitly clear an override; omitted fields preserve existing values.
+const seoFields = {
+  metaTitle: z.string().trim().max(SEO_TITLE_MAX).optional(),
+  metaDescription: z.string().trim().max(SEO_DESCRIPTION_MAX).optional(),
+};
 
 const priceFromSchema = z
   .string()
@@ -60,12 +67,14 @@ export const adminSettingsFormSchema = z.object({
 });
 
 export const adminCategoryFormSchema = z.object({
+  ...seoFields,
   label: z.string().trim().min(1, "Display label is required").max(128),
   blurb: z.string().trim().min(1, "Short blurb is required"),
   sortOrder: z.coerce.number().int().min(0, "Sort order must be 0 or greater"),
 });
 
 export const adminProductFormSchema = z.object({
+  ...seoFields,
   name: z.string().trim().min(1, "Product name is required").max(256),
   slug: z
     .string()
@@ -83,6 +92,7 @@ export const adminProductFormSchema = z.object({
 });
 
 export const productInputSchema = z.object({
+  ...seoFields,
   id: z.union([z.literal("new"), z.number().int().positive()]),
   slug: z.string().min(1).max(128).regex(slugPattern, "Invalid slug format"),
   name: z.string().min(1).max(256),
@@ -124,6 +134,7 @@ export const duplicateProductInputSchema = z.object({
 });
 
 export const categoryInputSchema = z.object({
+  ...seoFields,
   id: z.enum(categoryIds),
   label: z.string().min(1).max(128),
   blurb: z.string().min(1),

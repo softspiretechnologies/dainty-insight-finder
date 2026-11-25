@@ -45,6 +45,8 @@ export const saveAdminCategory = createServerFn({ method: "POST" })
     const values = {
       label: data.label.trim(),
       blurb: data.blurb.trim(),
+      metaTitle: data.metaTitle === undefined ? undefined : data.metaTitle || null,
+      metaDescription: data.metaDescription === undefined ? undefined : data.metaDescription || null,
       imagePath,
       sortOrder: data.sortOrder,
     };

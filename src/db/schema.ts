@@ -13,6 +13,8 @@ export const categories = mysqlTable("categories", {
   id: varchar("id", { length: 32 }).primaryKey(),
   label: varchar("label", { length: 128 }).notNull(),
   blurb: text("blurb").notNull(),
+  metaTitle: varchar("meta_title", { length: 120 }),
+  metaDescription: text("meta_description"),
   imagePath: varchar("image_path", { length: 512 }).notNull().default(""),
   sortOrder: int("sort_order").notNull().default(0),
 });
@@ -24,6 +26,8 @@ export const products = mysqlTable("products", {
   categoryId: varchar("category_id", { length: 32 }).notNull(),
   blurb: text("blurb").notNull(),
   description: text("description").notNull(),
+  metaTitle: varchar("meta_title", { length: 120 }),
+  metaDescription: text("meta_description"),
   details: json("details").$type<string[]>().notNull(),
   imagePath: varchar("image_path", { length: 512 }).notNull().default(""),
   priceFrom: varchar("price_from", { length: 64 }),

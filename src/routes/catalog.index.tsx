@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 import { getPaginationItems, type PaginationItem } from "@/lib/pagination";
 import { formatProductPriceFrom } from "@/lib/product-price";
-import { CATALOG_PAGE_SIZE, getCatalogSeo } from "@/lib/catalog-seo";
+import { CATALOG_PAGE_SIZE, getCatalogSeo, serializeCatalogJsonLd } from "@/lib/catalog-seo";
 
 const PAGE_SIZE = CATALOG_PAGE_SIZE;
 
@@ -40,9 +40,9 @@ function categorySearchParam(categories: Set<Category>) {
 export const Route = createFileRoute("/catalog/")({
   validateSearch: catalogSearchSchema,
   loaderDeps: ({ search }) => ({ category: search.category, page: search.page }),
-  loader: async ({ deps }) => {
+  loader: async ({ deps, context }) => {
     const products = await getCatalogProducts();
-    return { products, seo: getCatalogSeo(deps, products) };
+    return { products, seo: getCatalogSeo(deps, products, context.categories) };
   },
   head: ({ loaderData }) => {
     const seo = loaderData?.seo ?? getCatalogSeo({}, []);
@@ -65,7 +65,7 @@ export const Route = createFileRoute("/catalog/")({
         ? [
             {
               type: "application/ld+json",
-              children: JSON.stringify({
+              children: serializeCatalogJsonLd({
                 "@context": "https://schema.org",
                 "@graph": [
                   {
@@ -164,7 +164,7 @@ function CatalogPage() {
           </h1>
           <p className="max-w-xl text-sm text-muted leading-relaxed text-pretty">
             {seo.category
-              ? seo.description
+              ? seo.intro
               : "Every piece below was made for someone — and every piece is a starting point. Pick what inspires you and we'll fully customise it for your occasion on WhatsApp."}
           </p>
         </div>

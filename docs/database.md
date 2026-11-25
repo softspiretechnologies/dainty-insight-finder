@@ -95,3 +95,11 @@ Public visitors submit enquiries; only admins can list, change status, or edit i
 ## Admin push subscriptions
 
 `admin_push_subscriptions` stores Web Push endpoints for Admin devices. Production receives the table through **`npm run build` → `db:ensure`**. Documentary SQL: `drizzle/migrations/0009_add_admin_push_subscriptions.sql`. Do not use `db:migrate` for Hostinger routine deploys.
+
+## Product and category SEO overrides
+
+Both `products` and `categories` have nullable `meta_title` (varchar(120)) and
+`meta_description` (text) columns. Existing rows keep generated metadata when these are null.
+The Admin forms validate titles up to 120 characters and descriptions up to 320 characters.
+`db:ensure` adds missing columns and `db:verify` checks their shape; no backfill or production
+`db:migrate` is required. Bulk creation and duplication intentionally leave overrides null.

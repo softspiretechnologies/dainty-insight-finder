@@ -5,6 +5,7 @@ import { ImagePlus, ChevronLeft, Package, Eye, EyeOff, Star } from "lucide-react
 import { AdminActionError } from "@/components/admin/AdminActionError";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminSaveStatus } from "@/components/admin/AdminSaveStatus";
+import { AdminSeoFields } from "@/components/admin/AdminSeoFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,7 @@ import {
   type FieldErrors,
 } from "@/lib/admin-validation";
 import { getAdminProductEditorData, saveAdminProduct } from "@/lib/api/admin/products";
+import { getProductSeo } from "@/lib/catalog-seo";
 import { fileToUploadPayload } from "@/lib/admin-upload-payload";
 import { normalizeProductDetails } from "@/lib/product-details";
 import { productPriceInputValue } from "@/lib/product-price";
@@ -70,6 +72,10 @@ function AdminProductEditPage() {
   );
   const [blurb, setBlurb] = useState(product?.blurb ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
+  const [seo, setSeo] = useState({
+    metaTitle: product?.metaTitle ?? "",
+    metaDescription: product?.metaDescription ?? "",
+  });
   const [details, setDetails] = useState(normalizeProductDetails(product?.details).join("\n"));
   const [priceFrom, setPriceFrom] = useState(
     productPriceInputValue(product?.priceFrom ?? undefined),
@@ -107,6 +113,8 @@ function AdminProductEditPage() {
         description ||
         details ||
         priceFrom ||
+        seo.metaTitle ||
+        seo.metaDescription ||
         imageFile ||
         !isActive ||
         featuredOnHomepage,
@@ -117,6 +125,8 @@ function AdminProductEditPage() {
       categoryId !== (product?.categoryId ?? "") ||
       blurb !== (product?.blurb ?? "") ||
       description !== (product?.description ?? "") ||
+      seo.metaTitle !== (product?.metaTitle ?? "") ||
+      seo.metaDescription !== (product?.metaDescription ?? "") ||
       details !== initialDetails ||
       priceFrom !== productPriceInputValue(product?.priceFrom ?? undefined) ||
       isActive !== (product?.isActive ?? true) ||
@@ -136,6 +146,7 @@ function AdminProductEditPage() {
     name,
     priceFrom,
     product,
+    seo,
   ]);
   useUnsavedChangesGuard(isDirty && !loading);
 
@@ -158,6 +169,7 @@ function AdminProductEditPage() {
       blurb,
       description,
       details,
+      ...seo,
       priceFrom: priceFrom.trim() || undefined,
       isActive,
       featuredOnHomepage: isActive ? featuredOnHomepage : false,
@@ -396,6 +408,23 @@ function AdminProductEditPage() {
                 />
               </AdminField>
             </FormSection>
+
+            <AdminSeoFields
+              value={seo}
+              defaults={getProductSeo({
+                name: name.trim() || "Product name",
+                category: categoryId as CategoryId,
+                description,
+                blurb,
+              })}
+              path={`/catalog/${slug || "product-slug"}`}
+              errors={fieldErrors}
+              onChange={(field, value) => {
+                setSeo((current) => ({ ...current, [field]: value }));
+                clearFieldError(field);
+                setSavedMessage(null);
+              }}
+            />
           </div>
 
           <div className="space-y-4" id="field-image">

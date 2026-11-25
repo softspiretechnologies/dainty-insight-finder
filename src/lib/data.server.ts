@@ -80,6 +80,8 @@ function mapCategory(row: typeof categoriesTable.$inferSelect): CatalogCategory 
     id: row.id as CategoryId,
     label: row.label,
     blurb: row.blurb,
+    metaTitle: row.metaTitle ?? undefined,
+    metaDescription: row.metaDescription ?? undefined,
     image: row.imagePath,
   };
 }
@@ -91,6 +93,8 @@ function mapProduct(row: typeof productsTable.$inferSelect): CatalogProduct {
     name: row.name,
     category: row.categoryId as CategoryId,
     blurb: row.blurb,
+    metaTitle: row.metaTitle ?? undefined,
+    metaDescription: row.metaDescription ?? undefined,
     description: row.description,
     details: normalizeProductDetails(row.details),
     image: row.imagePath,
