@@ -1,3 +1,5 @@
+import type { SiteSettingsData } from "@/types/catalog";
+
 const PLACEHOLDER_WHATSAPP = "919999999999";
 const INSTAGRAM_URL = "https://www.instagram.com/dainty.handd/";
 
@@ -32,6 +34,20 @@ export function resolveWhatsAppNumber(fromDb?: string | null) {
   const fromSettings = fromDb ? digitsOnly(fromDb) : "";
   if (fromSettings) return fromSettings;
   return WHATSAPP_NUMBER;
+}
+
+/** Public contact values shared by visible UI and structured data. */
+export function resolveSiteContact(settings?: Partial<SiteSettingsData>) {
+  const whatsappNumber = resolveWhatsAppNumber(settings?.whatsappNumber);
+  return {
+    whatsappNumber,
+    founder: settings?.founder?.trim() || site.founder,
+    email: settings?.email?.trim() || site.email,
+    instagramUrl: settings?.instagramUrl?.trim() || site.instagramUrl,
+    instagramHandle: settings?.instagramHandle?.trim() || site.instagramHandle,
+    location: settings?.location?.trim() || site.location,
+    telephone: formatTelephone(whatsappNumber),
+  };
 }
 
 /** JSON-LD telephone format, e.g. 919876543210 → +91-9876543210 */

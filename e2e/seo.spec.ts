@@ -30,3 +30,33 @@ test("sitemap includes populated category and excludes admin pages", async ({ re
   expect(xml).toContain("/catalog?category=hampers</loc>");
   expect(xml).not.toContain("/admin");
 });
+
+test("homepage exposes a consistent business identity and visible FAQ content", async ({
+  page,
+}) => {
+  const response = await page.goto("/");
+  expect(response?.status()).toBe(200);
+  const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();
+  const nodes = scripts.flatMap((script) => {
+    const data = JSON.parse(script);
+    return data["@graph"] ?? [data];
+  });
+  const organization = nodes.find((node) => node["@type"] === "Organization");
+  const website = nodes.find((node) => node["@type"] === "WebSite");
+  const faq = nodes.find((node) => node["@type"] === "FAQPage");
+  expect(organization?.name).toBe("DaintyHand");
+  expect(website?.publisher?.["@id"]).toBe(organization?.["@id"]);
+  expect(organization).not.toHaveProperty("geo");
+  expect(organization).not.toHaveProperty("address");
+  expect(faq?.mainEntity).toHaveLength(6);
+  await expect(page.getByText("Where is DaintyHand based?", { exact: true })).toBeVisible();
+});
+
+test("robots allows public search crawlers and advertises the sitemap", async ({ request }) => {
+  const response = await request.get("/robots.txt");
+  expect(response.status()).toBe(200);
+  const body = await response.text();
+  expect(body).toContain("User-agent: *");
+  expect(body).toContain("Allow: /");
+  expect(body).toMatch(/Sitemap: https?:\/\/[^\n]+\/sitemap\.xml/);
+});

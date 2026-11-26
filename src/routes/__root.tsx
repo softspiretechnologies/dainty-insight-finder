@@ -15,6 +15,7 @@ import { EMPTY_ADMIN_ROOT_CONTEXT, shouldLoadPublicRootContext } from "../lib/ad
 import { getRootPageData } from "../lib/api/catalog";
 import { matchesIncludeAdmin, resolvePwaIdentity } from "../lib/pwa-identity";
 import { siteUrl } from "../lib/site";
+import { buildWebsiteStructuredData } from "../lib/business-seo";
 import type { CatalogCategory, SiteSettingsData } from "../types/catalog";
 
 const analyticsId = import.meta.env.VITE_GA_ID?.trim();
@@ -94,7 +95,8 @@ export const Route = createRootRouteWithContext<{
     return { categories, siteSettings };
   },
   head: ({ matches }) => {
-    const identity = resolvePwaIdentity(matchesIncludeAdmin(matches));
+    const admin = matchesIncludeAdmin(matches);
+    const identity = resolvePwaIdentity(admin);
 
     return {
       meta: [
@@ -134,8 +136,6 @@ export const Route = createRootRouteWithContext<{
         { name: "apple-mobile-web-app-capable", content: "yes" },
         { name: "geo.region", content: "IN-KL" },
         { name: "geo.placename", content: "Perinthalmanna" },
-        { name: "geo.position", content: "10.9752;76.2238" },
-        { name: "ICBM", content: "10.9752, 76.2238" },
       ],
       links: [
         { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "32x32" },
@@ -144,21 +144,14 @@ export const Route = createRootRouteWithContext<{
         { rel: "stylesheet", href: appCss },
       ],
       scripts: [
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "DaintyHand",
-            alternateName: ["DaintyHand Studio", "DaintyHand Gifting Kerala"],
-            url: siteUrl("/"),
-            publisher: {
-              "@type": "Organization",
-              name: "DaintyHand",
-              logo: siteUrl("/og-image.jpg"),
-            },
-          }),
-        },
+        ...(admin
+          ? []
+          : [
+              {
+                type: "application/ld+json",
+                children: JSON.stringify(buildWebsiteStructuredData()),
+              },
+            ]),
         ...(analyticsId
           ? [
               { src: `https://www.googletagmanager.com/gtag/js?id=${analyticsId}`, async: true },
