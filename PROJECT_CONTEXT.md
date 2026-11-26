@@ -170,6 +170,8 @@ src/
 
 `/admin/blog`, `/admin/blog/$postId` — draft/publish, slug, excerpt, content, featured image, SEO fields.
 
+The bundled journal guides in `src/data/blog.ts` include local hamper ordering and bouquet buying guides. Database posts with matching slugs override the bundled entries (including unpublished rows); existing production content is never overwritten by deploy. Content priorities and editorial review guidance: `docs/SEO_CONTENT_PLAN.md`.
+
 ### Settings / Account
 
 `/admin/settings` — WhatsApp, email, Instagram, founder, location; **change password**; logout-all-sessions (bumps `session_version`); **push notification** enable/test UI.

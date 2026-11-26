@@ -17,6 +17,58 @@ export type BlogPost = {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "custom-gift-hampers-perinthalmanna-ordering-guide",
+    title: "How to Order a Custom Gift Hamper in Perinthalmanna, Malappuram",
+    category: "Gifting Guide",
+    readTime: "3 min read",
+    author: "DaintyHand",
+    date: "November 25, 2026",
+    datePublished: "2026-11-25",
+    targetKeyword: "custom gift hampers Perinthalmanna",
+    relatedCategorySlug: "hampers",
+    image: "/og-image.jpg",
+    metaTitle: "Custom Gift Hampers in Perinthalmanna: Ordering Guide",
+    metaDescription:
+      "Planning a birthday, baby shower or wedding gift in Malappuram? Learn how to choose a custom hamper, set a budget and arrange delivery with DaintyHand.",
+    excerpt:
+      "A practical guide to choosing a personalised hamper, planning your budget and arranging local or courier delivery from Perinthalmanna.",
+    content: [
+      "Ordering a custom gift hamper in Perinthalmanna starts with the person you are gifting to, the occasion, your budget and the date you need it. DaintyHand is a handcrafted gifting studio in Malappuram, Kerala, where you can browse previous creations and enquire about a personalised version.",
+      "Choose the occasion first. A birthday hamper might include chocolates, a keepsake and a message card. For a wedding or engagement, a personalised frame or ring tray may suit the celebration. For a baby shower, tell the maker whether the gift is for the baby, the parents or both. These are ideas to discuss, not fixed packages.",
+      "Set a budget before deciding the contents. Ask whether the quotation includes the gift items, packaging, personalised details and delivery. A starting price in a catalog is a guide, not necessarily the final price of your customised hamper. Share a comfortable budget so the design can be planned around it.",
+      "Personalisation makes the gift meaningful. Prepare the recipient's name, preferred colours, a short message and any date or photograph you want included. Check the spelling of names and approve the final design before production. If you are unsure about the contents, describe the recipient's interests instead of selecting every item yourself.",
+      "Plan the delivery early. Tell the studio your required date and delivery area in Perinthalmanna, elsewhere in Malappuram or another destination. Confirm local hand-delivery or courier options, charges and estimated arrival before confirming. Fragile items, fresh flowers and some food products may require different arrangements.",
+      "What should you send in your first enquiry? Include the occasion, approximate budget, date, delivery location, recipient's preferences and a reference image if you have one. Ask for the proposed contents and total quotation before approving the order. For a surprise, mention any instructions about the recipient or handover.",
+      "Browse DaintyHand's past hamper creations for inspiration, then use the contact or custom order options to discuss your own design. You do not need to choose an identical hamper; the catalog is a starting point for a conversation about your occasion.",
+    ],
+  },
+  {
+    slug: "cash-chocolate-bouquet-guide-malappuram",
+    title: "Cash or Chocolate Bouquet? A Gift Guide for Malappuram",
+    category: "Bouquets",
+    readTime: "3 min read",
+    author: "DaintyHand",
+    date: "November 25, 2026",
+    datePublished: "2026-11-25",
+    targetKeyword: "custom chocolate cash bouquet Malappuram",
+    relatedCategorySlug: "bouquets",
+    image: "/og-image.jpg",
+    metaTitle: "Cash & Chocolate Bouquets in Malappuram: Gift Guide",
+    metaDescription:
+      "Compare cash, chocolate and flower bouquets for birthdays, weddings and graduations. Learn what to confirm before ordering a custom bouquet in Malappuram.",
+    excerpt:
+      "Choose a bouquet that suits the recipient, occasion and budget, with a simple checklist for personalisation and delivery.",
+    content: [
+      "A bouquet can be more than flowers. For birthdays, graduations, engagements and celebrations in Malappuram, a cash bouquet or chocolate bouquet is a personalised alternative. DaintyHand's catalog includes cash, chocolate and flower bouquet creations that can inspire your own enquiry.",
+      "A chocolate bouquet suits someone who enjoys sweet treats. Choose the recipient's favourite chocolates, a colour palette and a message card. Ask about ingredients and allergies, and confirm how the chocolates will be protected during delivery, particularly in warm weather.",
+      "A cash bouquet is an option when you want to present money as a celebration gift. Agree the total amount of money, preferred denominations where possible, and the design. Check whether the listed starting price covers only the arrangement or also the currency itself. DaintyHand's cash bouquet listing describes its starting price as excluding the notes, so the total quotation matters.",
+      "A flower bouquet may suit a romantic occasion, a wedding congratulations or a thank-you gift. Ask about the available flowers, colour combination and how the arrangement should be transported. Fresh flowers can be seasonal and may not suit every courier journey.",
+      "How to choose between them? Think about whether the recipient would prefer a practical gift, a favourite treat or a floral arrangement. For a shared celebration, you can discuss combining a bouquet with a card or a separate keepsake. Set a budget that includes any cash, gift contents, wrapping and delivery.",
+      "When ordering a personalised bouquet in Perinthalmanna or elsewhere in Malappuram, share the occasion, colour preferences, message, budget and required date. Confirm the final contents, cost and delivery arrangements before placing the order. Send a reference image if you have a style in mind.",
+      "Explore DaintyHand's bouquet collection to see previous designs. Ask about availability and a personalised quote for the occasion rather than assuming that every photographed arrangement is ready to ship.",
+    ],
+  },
+  {
     slug: "custom-wedding-hamper-ideas-kerala",
     title: "10 Custom Wedding Hamper Ideas for Kerala Brides & Grooms",
     category: "Wedding Hampers",
