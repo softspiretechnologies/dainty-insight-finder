@@ -24,6 +24,22 @@ Production startup rejects missing `DATABASE_URL`, `ADMIN_SESSION_SECRET`, or `V
 7. Run `SITE_URL=https://your-origin.example npm run smoke`.
 8. Confirm an admin login, a representative image, `/sitemap.xml`, enquiries, and a blog post manually.
 
+## Canonical host redirects
+
+Set both build-time and runtime `VITE_SITE_URL=https://daintyhand.in` in Hostinger. In production the application returns a permanent 301 for GET and HEAD public pages on the exact www alias, preserving the path and query, including catalog filters. Admin routes, server functions, health checks, uploads and non-read requests are intentionally unaffected.
+
+The application relies on the original public hostname being present in the Request URL. A reverse proxy may serve static assets itself or hide the public hostname; use a Hostinger edge redirect if necessary. Do not redirect the canonical host back to www. The application never trusts an arbitrary forwarded host as a redirect destination.
+
+After deployment, verify the live response (not just Google's stored inspection status):
+
+```bash
+curl -sSI 'https://www.daintyhand.in/catalog?category=hampers'
+curl -sSI 'https://daintyhand.in/catalog?category=hampers'
+curl -sSI 'https://www.daintyhand.in/sitemap.xml'
+```
+
+Expect 301 with the corresponding non-www Location on the first and third requests and 200 on the canonical catalog URL. Check both TLS hostnames before changing any DNS. A public-page redirect does not itself prove production deployment or successful indexing.
+
 ## Headers and CSP
 
 The application sends `nosniff`, a strict-origin referrer policy, a restrictive permissions policy, and HSTS only when the request is confirmed as HTTPS. CSP starts in report-only mode because TanStack Start emits required inline bootstrap and JSON-LD content. Review browser/reporting violations before enforcing it; `unsafe-eval` is not permitted.
