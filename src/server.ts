@@ -1,5 +1,6 @@
 import { renderErrorPage } from "./lib/error-page";
 import { getServerConfig } from "./lib/config.server";
+import { getCanonicalRedirect } from "./lib/canonical-redirect";
 import { createErrorId, logError } from "./lib/logger.server";
 
 type ServerEntry = {
@@ -67,7 +68,13 @@ function withSecurityHeaders(request: Request, response: Response) {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      getServerConfig();
+      const config = getServerConfig();
+      const redirect = getCanonicalRedirect(
+        request,
+        config.siteUrl,
+        config.nodeEnv === "production",
+      );
+      if (redirect) return withSecurityHeaders(request, redirect);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return withSecurityHeaders(
